@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#121216" />
+    <title>Бурмалдоза — demo</title>
+    <style>
+      :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      * { box-sizing: border-box; }
+      body { margin:0; min-height:100vh; background:#121216; color:#f5f1eb; }
+      button { font:inherit; }
+      .shell { width:min(1160px,100%); margin:auto; padding:24px; }
+      header { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:28px; }
+      .brand { display:flex; align-items:center; gap:10px; font-size:20px; font-weight:850; letter-spacing:-.04em; }
+      .brand-mark { width:31px; height:31px; display:grid; place-items:center; border-radius:10px; background:#db6a38; color:#181114; }
+      .status { color:#a5a4ad; font-size:13px; }
+      .layout { display:grid; grid-template-columns:minmax(0,1.45fr) minmax(290px,.8fr); gap:18px; }
+      .panel { border:1px solid #302f37; background:#1a1a20; border-radius:25px; }
+      .game { padding:clamp(21px,4vw,42px); overflow:hidden; background:radial-gradient(circle at 50% 10%, #332116 0, #1a1a20 46%, #16161b 100%); }
+      .eyebrow { margin:0 0 7px; color:#d99b7f; font-size:12px; letter-spacing:.11em; font-weight:800; text-transform:uppercase; }
+      h1 { margin:0; font-size:clamp(32px,5vw,54px); line-height:.98; letter-spacing:-.065em; }
+      .sub { color:#aaa8b0; max-width:530px; line-height:1.45; margin:15px 0 6px; }
+      .wheel-area { min-height:315px; display:grid; place-items:center; position:relative; }
+      .wheel-area::before { content:""; width:430px; height:430px; position:absolute; border-radius:50%; background:radial-gradient(circle,rgba(219,106,56,.18),transparent 66%); filter:blur(4px); }
+      .wheel { width:min(66vw,286px); aspect-ratio:1; position:relative; z-index:1; border-radius:50%; border:9px solid #0d0d10; box-shadow:0 0 0 2px #58535a,0 20px 55px rgba(0,0,0,.48); background:conic-gradient(#e0644c 0deg 18deg,#272830 18deg 36deg,#e0644c 36deg 54deg,#272830 54deg 72deg,#e0644c 72deg 90deg,#272830 90deg 108deg,#e0644c 108deg 126deg,#272830 126deg 144deg,#e0644c 144deg 162deg,#272830 162deg 180deg,#e0644c 180deg 198deg,#272830 198deg 216deg,#e0644c 216deg 234deg,#272830 234deg 252deg,#e0644c 252deg 270deg,#272830 270deg 288deg,#e0644c 288deg 306deg,#272830 306deg 324deg,#53b78a 324deg 342deg,#272830 342deg 360deg); transition:transform 1.45s cubic-bezier(.14,.78,.22,1); }
+      .wheel::before { content:""; position:absolute; inset:-20px auto auto 50%; transform:translateX(-50%); border:11px solid transparent; border-top-color:#f2b088; z-index:2; }
+      .wheel::after { content:""; position:absolute; inset:0; margin:auto; width:20%; height:20%; border-radius:50%; background:#1b1b20; border:5px solid #ece6dd; }
+      .control { display:grid; grid-template-columns:1fr auto; gap:10px; margin-top:6px; }
+      .stake { border:1px solid #4a464d; min-width:0; border-radius:14px; background:#121216; color:#f5f1eb; padding:15px; font-weight:750; font-size:17px; }
+      .play { cursor:pointer; border:0; border-radius:14px; padding:0 24px; background:#db6a38; color:#1b1110; font-weight:900; transition:transform .15s, filter .15s; }
+      .play:hover { filter:brightness(1.12); } .play:active { transform:translateY(1px); }
+      .result { min-height:21px; margin:13px 2px 0; color:#b9b7bf; font-size:14px; }
+      .side { display:grid; gap:18px; align-content:start; }
+      .wallet { padding:21px; } .wallet small,.heading,.muted { color:#aaa8b0; }
+      .wallet strong { display:block; margin:4px 0 16px; font-size:32px; letter-spacing:-.055em; }
+      .badge { display:inline-block; padding:7px 9px; border:1px solid #59443a; background:#30221d; color:#efb69a; border-radius:999px; font-size:12px; font-weight:750; }
+      .games { padding:21px; } .heading { font-size:13px; font-weight:750; margin:0 0 11px; }
+      .cards { display:grid; gap:9px; } .game-card { display:flex; align-items:center; gap:12px; padding:12px; border:1px solid #3c3a42; background:#202027; border-radius:15px; }
+      .game-card.active { border-color:#db6a38; background:#2b1d19; } .game-icon { font-size:22px; } .game-card strong { display:block; } .game-card span { color:#a5a4ad; font-size:12px; }
+      .history { padding:21px; } .row { display:flex; justify-content:space-between; gap:14px; padding:12px 0; border-bottom:1px solid #313038; font-size:14px; } .row:last-child { border:0; }
+      .positive { color:#63c996; font-weight:800; } .negative { color:#ef7d70; font-weight:800; }
+      footer { margin-top:20px; color:#85838d; font-size:12px; line-height:1.4; }
+      @media (max-width:760px) { .shell { padding:16px; } .layout { grid-template-columns:1fr; } .side { grid-template-columns:1fr 1fr; } .history { grid-column:1/-1; } }
+      @media (max-width:480px) { .side { grid-template-columns:1fr; } .wheel-area { min-height:275px; } header { margin-bottom:18px; } }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header><div class="brand"><span class="brand-mark">Б</span> БУРМАЛДОЗА</div><span class="status">visual demo · GitHub Pages</span></header>
+      <main class="layout">
+        <section class="panel game">
+          <p class="eyebrow">виртуальная игровая комната</p>
+          <h1>Рулетка,<br>но по-человечески.</h1>
+          <p class="sub">Первый экран Mini App: баланс, понятная ставка и короткий результат. Никаких реальных денег, авторизации или платежей в демо.</p>
+          <div class="wheel-area"><div id="wheel" class="wheel" aria-label="Демонстрационная рулетка"></div></div>
+          <div class="control"><input id="stake" class="stake" type="number" value="100" min="10" max="500" aria-label="Ставка в виртуальных жетонах"><button id="play" class="play" type="button">Крутить</button></div>
+          <p id="result" class="result" aria-live="polite">Демо использует локальную симуляцию. Серверной экономики здесь нет.</p>
+        </section>
+        <aside class="side">
+          <section class="panel wallet"><small>Виртуальный баланс</small><strong id="balance">4 260 Ⓜ</strong><span class="badge">demo · без вывода</span></section>
+          <section class="panel games"><p class="heading">Игры на старте</p><div class="cards"><div class="game-card active"><span class="game-icon">◉</span><div><strong>Рулетка</strong><span>Доступна в демо</span></div></div><div class="game-card"><span class="game-icon">✦</span><div><strong>Слоты</strong><span>Следующая итерация</span></div></div><div class="game-card"><span class="game-icon">◈</span><div><strong>Дуэли</strong><span>После запуска</span></div></div></div></section>
+          <section class="panel history"><p class="heading">Как будет выглядеть история</p><div id="history"><div class="row"><span>Дневной бонус</span><b class="positive">+250 Ⓜ</b></div><div class="row"><span>Рулетка · чёрное</span><b class="negative">−100 Ⓜ</b></div><div class="row"><span>Рулетка · красное</span><b class="positive">+200 Ⓜ</b></div></div></section>
+        </aside>
+      </main>
+      <footer>«Бурмалдоза» — дизайн-прототип. В production исходы, ставки и баланс рассчитываются только на сервере; в этом билде ничего не отправляется и не сохраняется.</footer>
+    </div>
+    <script>
+      const wheel = document.getElementById('wheel');
+      const stake = document.getElementById('stake');
+      const play = document.getElementById('play');
+      const result = document.getElementById('result');
+      const balance = document.getElementById('balance');
+      const history = document.getElementById('history');
+      let credits = 4260;
+      let spin = 0;
+      play.addEventListener('click', () => {
+        const amount = Number(stake.value);
+        if (!Number.isFinite(amount) || amount < 10 || amount > 500 || amount > credits) { result.textContent = 'Для демо выбери ставку от 10 до 500 Ⓜ в пределах баланса.'; return; }
+        play.disabled = true;
+        spin += 1;
+        const won = spin % 3 !== 0;
+        wheel.style.transform = `rotate(${spin * 1080 + (won ? 36 : 108)}deg)`;
+        result.textContent = 'Рулетка крутится…';
+        window.setTimeout(() => {
+          const delta = won ? amount : -amount;
+          credits += delta;
+          balance.textContent = `${credits.toLocaleString('ru-RU')} Ⓜ`;
+          result.textContent = won ? `Красное. В демо: +${amount} Ⓜ.` : `Чёрное. В демо: −${amount} Ⓜ.`;
+          const item = document.createElement('div');
+          item.className = 'row';
+          item.innerHTML = `<span>Рулетка · ${won ? 'красное' : 'чёрное'}</span><b class="${won ? 'positive' : 'negative'}">${won ? '+' : '−'}${amount} Ⓜ</b>`;
+          history.prepend(item);
+          play.disabled = false;
+        }, 1450);
+      });
+    </script>
+  </body>
+</html>

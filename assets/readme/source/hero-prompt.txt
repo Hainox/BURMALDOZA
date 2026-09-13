@@ -1,0 +1,11 @@
+Use case: stylized-concept
+Asset type: transparent cutout subject for the Burmaldoza GitHub README hybrid hero.
+Primary request: one isolated autumn casino talisman: a small brass roulette wheel fused with a curled orange maple leaf, subtle worn metal, tactile premium game-prop styling. The roulette wheel must be the clear subject, with no people, no animals, no dice, no cards.
+Composition/framing: three-quarter view, facing slightly left, centered subject with generous transparent padding; reserve empty space around the silhouette for later SVG composition.
+Lighting/mood: warm ember rim light from the upper left, restrained dark red reflections, cinematic but clean.
+Color palette: aged brass, burnt orange, deep charcoal, warm ivory highlights.
+Constraints: genuinely transparent background; one isolated subject only; no cast shadow; no text; no letters; no logo; no watermark; no UI; no frame.
+
+Corrective pass: preserve the subject, composition, lighting, colours and all details. The central roulette spindle must have exactly four identical, clearly visible ornate brass lever arms, evenly spaced at north, east, south and west around the central axis. No extra or missing arm.
+
+Production note: the generation returned a baked editor checkerboard rather than an alpha channel. The final `hero-subject.png` removes only the border-connected neutral checkerboard pixels; `hero-subject-generated.png` preserves the unmodified generated source for traceability.

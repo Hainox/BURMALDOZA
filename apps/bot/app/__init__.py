@@ -1,0 +1,1 @@
+"""Burmaldoza Telegram bot."""

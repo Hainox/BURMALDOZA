@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
+  <title id="title">Архитектура Бурмалдозы</title>
+  <desc id="desc">Telegram и Mini App обращаются к Bot и FastAPI; API использует игровой domain, PostgreSQL ledger и Redis для идемпотентности.</desc>
+  <rect width="1200" height="360" rx="28" fill="#15161b"/>
+  <text x="62" y="76" fill="#fff7f1" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,sans-serif" font-size="42" font-weight="800">Один источник истины для игрового результата</text>
+  <text x="62" y="111" fill="#aaa8b0" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,sans-serif" font-size="21">Клиент показывает интерфейс. API проверяет запрос. Ledger фиксирует операцию.</text>
+  <g font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,sans-serif">
+    <g transform="translate(62 164)"><rect width="190" height="112" rx="18" fill="#25262e" stroke="#474951"/><text x="24" y="46" fill="#fff7f1" font-size="25" font-weight="750">Telegram</text><text x="24" y="78" fill="#b7b5be" font-size="19">команды и чат</text></g>
+    <g transform="translate(282 164)"><rect width="190" height="112" rx="18" fill="#2b1d19" stroke="#db6a38"/><text x="24" y="46" fill="#fff7f1" font-size="25" font-weight="750">Mini App</text><text x="24" y="78" fill="#e9b099" font-size="19">интерфейс игры</text></g>
+    <g transform="translate(542 164)"><rect width="240" height="112" rx="18" fill="#25262e" stroke="#474951"/><text x="24" y="46" fill="#fff7f1" font-size="25" font-weight="750">FastAPI + domain</text><text x="24" y="78" fill="#b7b5be" font-size="19">проверка и правила</text></g>
+    <g transform="translate(852 164)"><rect width="286" height="112" rx="18" fill="#25262e" stroke="#474951"/><text x="24" y="46" fill="#fff7f1" font-size="25" font-weight="750">PostgreSQL + Redis</text><text x="24" y="78" fill="#b7b5be" font-size="19">ledger и idempotency</text></g>
+  </g>
+  <g stroke="#db6a38" stroke-width="3" fill="none"><path d="M252 220H282"/><path d="M472 220H542"/><path d="M782 220H852"/></g>
+  <g fill="#db6a38"><path d="M277 214l10 6-10 6z"/><path d="M537 214l10 6-10 6z"/><path d="M847 214l10 6-10 6z"/></g>
+  <text x="62" y="324" fill="#e9a27e" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="18">V1: virtual currency only · no cash-out · no Stars payments</text>
+</svg>
