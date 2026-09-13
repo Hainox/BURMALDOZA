@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+node_modules/
+.svelte-kit/
+build/
+dist/
+coverage/
+*.sqlite3
+*.log
+.DS_Store

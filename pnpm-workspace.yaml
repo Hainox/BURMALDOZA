@@ -1,0 +1,6 @@
+packages:
+  - apps/miniapp
+
+# Approved by the repository owner; other dependency build scripts stay blocked.
+allowBuilds:
+  esbuild: true

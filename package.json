@@ -1,0 +1,10 @@
+{
+  "name": "burmaldoza",
+  "private": true,
+  "packageManager": "pnpm@11.19.0",
+  "scripts": {
+    "miniapp:dev": "pnpm --dir apps/miniapp dev",
+    "miniapp:build": "pnpm --dir apps/miniapp build",
+    "miniapp:check": "pnpm --dir apps/miniapp check"
+  }
+}
