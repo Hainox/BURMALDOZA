@@ -83,3 +83,10 @@
 - Зафиксирован стек Mini App: SvelteKit 2, Svelte 5, TypeScript, Vite и `adapter-static`; подключение Zod, Svelte Query и тестовых библиотек отложено до утверждённого BuildSpec и появления реальных API-контрактов.
 - GitHub Pages включён с источником GitHub Actions; публикация запускается изменениями `docs/pages-demo` или workflow.
 - Верификация: `git diff --check`, `docker compose config -q` с временным тестовым паролем, `uv run ruff check .`, `uv run pytest -q` (1 passed, 2 известные deprecation-предупреждения), `pnpm miniapp:check`, `pnpm miniapp:build`, синтаксис скрипта пилота и локальный браузерный сценарий выбора цвета, раунда и сброса прошли.
+
+## 2026-09-14 — ремонт и обновление локального GSD
+
+- Диагностирована рассинхронизация update-check: worker обращался к legacy-пакету, а hook-потребители читали несовпадающий cache. До правки три хука сохранены отдельно; перед global update создана проверенная копия 162 custom-записей (161 файл по SHA-256 и junction-ссылка).
+- Codex global обновлён с GSD Core `1.4.4` до `1.14.0`; `update-context` подтверждает `GLOBAL / codex`, а `check-latest-version` — latest `1.14.0`. После установки `.cmd` записал `@opengsd/gsd-core` и `update_available: false`; синтаксис worker/statusline/banner проверен.
+- Installer перенёс 67 GSD skill-каталогов из legacy `.codex/skills` и установил 72 GSD-навыка в `.agents/skills`. `agent-skills` plugin-cache и junction `skills/video-use` остались на месте. Старые context-monitor hook references/scripts удалены установщиком как устаревшие; резервная копия сохранена.
+- Открыто: installer сообщил о 357 не заменённых `.claude` path references в 118 файлах, которые могут не разрешаться в Codex; vendor-файлы вручную не менялись. До установки changelog extractor отсутствовал, поэтому preview был недоступен.
