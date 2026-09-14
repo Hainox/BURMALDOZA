@@ -85,14 +85,14 @@
         letter-spacing: -0.04em;
       }
 
-      .brand-mark {
-        display: grid;
+      .brand-avatar {
+        display: block;
         width: 2rem;
-        aspect-ratio: 1;
-        place-items: center;
-        border-radius: 0.625rem;
-        background: var(--accent);
-        color: var(--accent-ink);
+        height: 2rem;
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 50%;
+        object-fit: cover;
       }
 
       .status {
@@ -634,7 +634,7 @@
     <a class="skip-link" href="#pilot">К интерактивному пилоту</a>
     <div class="shell">
       <header class="topbar">
-        <div class="brand"><span class="brand-mark" aria-hidden="true">Б</span>БУРМАЛДОЗА</div>
+        <div class="brand"><img class="brand-avatar" src="./assets/memendoza-channel-avatar.jpg" alt="Аватар сообщества Memendoza" width="32" height="32">БУРМАЛДОЗА</div>
         <span class="status">интерактивный пилот · локальный сценарий</span>
       </header>
 

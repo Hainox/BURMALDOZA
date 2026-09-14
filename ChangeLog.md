@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Replaced the Pages demo's initial-letter mark with the Memendoza channel avatar.
 - Animated roulette spins, blackjack card dealing/reveal, and staggered slot stops in the local-only Pages demo.
 - Expanded the Pages pilot with local-only blackjack and a three-reel slot, a shared virtual balance, scripted outcomes, and keyboard-accessible game controls.
 - Removed external-project comparisons from repository copy and added a client-facing, interactive Pages pilot that uses only local virtual demo state.
