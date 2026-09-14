@@ -308,7 +308,31 @@
         content: "";
       }
 
+      .roulette-orbit {
+        position: absolute;
+        z-index: 3;
+        width: min(16rem, 64vw);
+        aspect-ratio: 1;
+        pointer-events: none;
+        transform: rotate(var(--ball-angle, 0deg));
+        transition: transform 2.4s cubic-bezier(0.12, 0.76, 0.16, 1);
+      }
+
+      .roulette-ball {
+        position: absolute;
+        top: 0.125rem;
+        left: 50%;
+        width: 0.9375rem;
+        aspect-ratio: 1;
+        border: 2px solid #fff7e9;
+        border-radius: 50%;
+        background: #f2a477;
+        box-shadow: 0 0 0 0.1875rem rgb(15 16 18 / 72%), 0 0.375rem 0.75rem rgb(0 0 0 / 42%);
+        transform: translateX(-50%);
+      }
+
       .wheel {
+        position: relative;
         width: min(16rem, 64vw);
         aspect-ratio: 1;
         z-index: 1;
@@ -323,7 +347,7 @@
           #d66458 288deg 306deg, #26282e 306deg 324deg, #58ba87 324deg 342deg, #26282e 342deg 360deg
         );
         transform: rotate(var(--rotation, 0deg));
-        transition: transform 1.25s cubic-bezier(0.14, 0.78, 0.22, 1);
+        transition: transform 2.4s cubic-bezier(0.12, 0.76, 0.16, 1);
       }
 
       .wheel::before {
@@ -386,6 +410,29 @@
         color: #191a1d;
         font-size: 1.375rem;
         font-weight: 900;
+      }
+
+      .card {
+        transform-origin: 100% 0;
+        will-change: opacity, transform;
+      }
+
+      .card.is-dealing {
+        animation: deal-card 360ms cubic-bezier(0.16, 0.84, 0.28, 1) var(--deal-delay, 0ms) both;
+      }
+
+      .card.is-revealing { animation: reveal-card 360ms cubic-bezier(0.2, 0.78, 0.3, 1) both; }
+
+      @keyframes deal-card {
+        from { opacity: 0; transform: translate(5.5rem, -3rem) rotate(12deg) scale(0.86); }
+        72% { opacity: 1; transform: translate(-0.15rem, 0.15rem) rotate(-1.5deg) scale(1); }
+        to { opacity: 1; transform: translate(0) rotate(0) scale(1); }
+      }
+
+      @keyframes reveal-card {
+        from { opacity: 0.35; transform: rotateY(88deg) scale(0.94); }
+        55% { opacity: 1; transform: rotateY(-8deg) scale(1.02); }
+        to { opacity: 1; transform: rotateY(0) scale(1); }
       }
 
       .card--red { color: #c74946; }
@@ -460,11 +507,33 @@
         color: #292225;
         font-size: clamp(2rem, 10vw, 3rem);
         transform: translateY(0);
+        will-change: filter, transform;
       }
 
-      .reel.is-spinning { animation: reel-bounce 280ms ease-in-out 3; }
+      .reel.is-spinning {
+        animation: reel-spin 150ms linear infinite;
+        filter: blur(1.4px);
+      }
 
-      @keyframes reel-bounce { 50% { transform: translateY(-0.25rem); } }
+      .reel.is-stopping { animation: reel-stop 190ms cubic-bezier(0.16, 0.88, 0.32, 1); }
+
+      .slot-frame.is-winning { animation: slot-win 720ms cubic-bezier(0.18, 0.8, 0.3, 1); }
+
+      @keyframes reel-spin {
+        from { transform: translateY(-0.6rem) scaleY(1.04); }
+        to { transform: translateY(0.6rem) scaleY(0.96); }
+      }
+
+      @keyframes reel-stop {
+        0% { transform: translateY(-0.5rem); }
+        70% { transform: translateY(0.2rem); }
+        100% { transform: translateY(0); }
+      }
+
+      @keyframes slot-win {
+        0%, 100% { box-shadow: 0 0 0 1px #583c30, 0 1rem 2rem rgb(0 0 0 / 25%); }
+        45% { box-shadow: 0 0 0 0.25rem rgb(255 216 120 / 40%), 0 1rem 2.5rem rgb(242 164 119 / 46%); }
+      }
 
       .slot-caption {
         margin: 0.75rem 0 0;
@@ -603,6 +672,7 @@
               <span class="badge">2 цвета</span>
             </div>
             <div class="roulette-stage" role="img" aria-label="Демонстрационная рулетка">
+              <div id="roulette-orbit" class="roulette-orbit" aria-hidden="true"><span class="roulette-ball"></span></div>
               <div id="wheel" class="wheel" aria-hidden="true"></div>
             </div>
             <div class="choice-group" aria-label="Выбор цвета">
@@ -705,6 +775,7 @@
       const tabs = Array.from(document.querySelectorAll('[data-game]'));
       const panels = Array.from(document.querySelectorAll('[data-panel]'));
       const wheel = document.querySelector('#wheel');
+      const rouletteOrbit = document.querySelector('#roulette-orbit');
       const roulettePlay = document.querySelector('#roulette-play');
       const rouletteResult = document.querySelector('#roulette-result');
       const choices = Array.from(document.querySelectorAll('[data-color]'));
@@ -717,13 +788,14 @@
       const blackjackStand = document.querySelector('#blackjack-stand');
       const blackjackResult = document.querySelector('#blackjack-result');
       const reels = [0, 1, 2].map((index) => document.querySelector('#reel-' + index));
+      const slotFrame = document.querySelector('.slot-frame');
       const slotSpin = document.querySelector('#slot-spin');
       const slotResult = document.querySelector('#slot-result');
 
       const rouletteSequence = [
-        { color: 'red', angle: 18 },
-        { color: 'black', angle: 198 },
-        { color: 'red', angle: 54 }
+        { color: 'red', angle: 9 },
+        { color: 'black', angle: 207 },
+        { color: 'red', angle: 45 }
       ];
 
       const blackjackScenarios = [
@@ -737,6 +809,7 @@
         { symbols: ['🔔', '🔔', '🔔'], multiplier: 2, label: 'три колокольчика' },
         { symbols: ['7️⃣', '7️⃣', '7️⃣'], multiplier: 4, label: 'три семёрки' }
       ];
+      const spinSymbols = ['🍒', '🍋', '🔔', '7️⃣', '🍀', '💎'];
 
       let credits = initialCredits;
       let selectedColor = 'red';
@@ -745,6 +818,7 @@
       let blackjackRound = 0;
       let slotRound = 0;
       let wheelRotation = 0;
+      let ballRotation = 0;
       let busy = false;
       let blackjackState = null;
 
@@ -822,6 +896,10 @@
         renderControls();
       }
 
+      function waitForAnimation(duration) {
+        return new Promise((resolve) => window.setTimeout(resolve, isReducedMotion() ? 0 : duration));
+      }
+
       function renderRouletteChoices() {
         choices.forEach((choice) => choice.setAttribute('aria-pressed', String(choice.dataset.color === selectedColor)));
       }
@@ -850,7 +928,7 @@
         return total;
       }
 
-      function renderCards(element, cards, hideLast) {
+      function renderCards(element, cards, hideLast, options = {}) {
         element.replaceChildren();
         if (cards.length === 0) {
           const placeholder = document.createElement('div');
@@ -863,6 +941,12 @@
           const visual = document.createElement('div');
           const hidden = hideLast && index === cards.length - 1;
           visual.className = 'card' + (hidden ? ' card--hidden' : '');
+          const dealOrder = (options.dealIndexes || []).indexOf(index);
+          if (dealOrder !== -1) {
+            visual.classList.add('is-dealing');
+            visual.style.setProperty('--deal-delay', ((options.dealDelay || 0) + dealOrder * 110) + 'ms');
+          }
+          if ((options.revealIndexes || []).includes(index)) visual.classList.add('is-revealing');
           if (hidden) {
             visual.textContent = '?';
             visual.setAttribute('aria-label', 'закрытая карта дилера');
@@ -875,7 +959,7 @@
         });
       }
 
-      function renderBlackjack() {
+      function renderBlackjack(options = {}) {
         if (!blackjackState) {
           renderCards(dealerCards, [], false);
           renderCards(playerCards, [], false);
@@ -884,20 +968,41 @@
           return;
         }
         const dealerHidden = !blackjackState.revealed;
-        renderCards(dealerCards, blackjackState.dealer, dealerHidden);
-        renderCards(playerCards, blackjackState.player, false);
+        renderCards(dealerCards, blackjackState.dealer, dealerHidden, {
+          dealIndexes: options.dealerDealIndexes,
+          dealDelay: options.dealerDealDelay,
+          revealIndexes: options.revealDealerIndexes
+        });
+        renderCards(playerCards, blackjackState.player, false, {
+          dealIndexes: options.playerDealIndexes,
+          dealDelay: options.playerDealDelay
+        });
         dealerTotal.textContent = dealerHidden
           ? 'видно: ' + handValue([blackjackState.dealer[0]])
           : 'сумма: ' + handValue(blackjackState.dealer);
         playerTotal.textContent = 'сумма: ' + handValue(blackjackState.player);
       }
 
-      function settleBlackjack(reason) {
+      async function settleBlackjack(reason) {
         const state = blackjackState;
+        if (!state) return;
+        setBusy(true);
         state.revealed = true;
+        const dealerDrawStart = state.dealer.length;
         while (handValue(state.dealer) < 17 && state.dealerDraw.length > 0) {
           state.dealer.push(state.dealerDraw.shift());
         }
+        const dealerDealIndexes = state.dealer
+          .map((_, index) => index)
+          .filter((index) => index >= dealerDrawStart);
+        renderBlackjack({
+          dealerDealIndexes,
+          dealerDealDelay: 180,
+          revealDealerIndexes: [1]
+        });
+        blackjackResult.textContent = 'Дилер открывает карты…';
+        await waitForAnimation(dealerDealIndexes.length > 0 ? 720 : 380);
+        if (blackjackState !== state) return;
         const playerValue = handValue(state.player);
         const dealerValue = handValue(state.dealer);
         let delta = 0;
@@ -922,7 +1027,12 @@
             ? 'Раунд завершён: ' + outcome + '. Локальный результат: −' + formatCredits(Math.abs(delta)) + '.'
             : 'Ничья: по ' + playerValue + '. Баланс не изменился.';
         blackjackState = null;
-        renderControls();
+        setBusy(false);
+      }
+
+      function setReelSymbol(reel, index, symbol) {
+        reel.textContent = symbol;
+        reel.setAttribute('aria-label', ['Первый', 'Второй', 'Третий'][index] + ' барабан: ' + symbol);
       }
 
       function resetPilot() {
@@ -932,12 +1042,15 @@
         blackjackRound = 0;
         slotRound = 0;
         wheelRotation = 0;
+        ballRotation = 0;
         stake.value = '100';
         wheel.style.setProperty('--rotation', '0deg');
+        rouletteOrbit.style.setProperty('--ball-angle', '0deg');
         reels.forEach((reel, index) => {
-          reel.textContent = ['🍒', '🍋', '🍒'][index];
-          reel.classList.remove('is-spinning');
+          setReelSymbol(reel, index, ['🍒', '🍋', '🍒'][index]);
+          reel.classList.remove('is-spinning', 'is-stopping');
         });
+        slotFrame.classList.remove('is-winning');
         renderRouletteChoices();
         renderBlackjack();
         updateBalance();
@@ -962,8 +1075,10 @@
         const amount = validateStake(rouletteResult);
         if (amount === null) return;
         const outcome = rouletteSequence[rouletteRound % rouletteSequence.length];
-        wheelRotation += 1080 + outcome.angle;
+        wheelRotation += 1800 + ((360 - outcome.angle - (wheelRotation % 360) + 360) % 360);
+        ballRotation += 1440 + ((360 - (ballRotation % 360)) % 360);
         wheel.style.setProperty('--rotation', wheelRotation + 'deg');
+        rouletteOrbit.style.setProperty('--ball-angle', ballRotation + 'deg');
         setBusy(true);
         roulettePlay.textContent = 'Рулетка крутится…';
         rouletteResult.textContent = 'Рулетка крутится…';
@@ -979,7 +1094,7 @@
             : 'Выпало ' + colorLabel(outcome.color) + '. Локальный результат: −' + formatCredits(amount) + '.';
           roulettePlay.textContent = 'Запустить раунд';
           setBusy(false);
-        }, isReducedMotion() ? 0 : 1250);
+        }, isReducedMotion() ? 0 : 2400);
       });
 
       blackjackDeal.addEventListener('click', () => {
@@ -995,21 +1110,37 @@
           revealed: false
         };
         blackjackRound += 1;
-        renderBlackjack();
-        renderControls();
-        blackjackResult.textContent = 'Карты разданы. Возьмите карту или остановитесь.';
+        setBusy(true);
+        renderBlackjack({
+          dealerDealIndexes: [0, 1],
+          dealerDealDelay: 0,
+          playerDealIndexes: [0, 1],
+          playerDealDelay: 120
+        });
+        blackjackResult.textContent = 'Карты в раздаче…';
+        window.setTimeout(() => {
+          if (!blackjackState) return;
+          blackjackResult.textContent = 'Карты разданы. Возьмите карту или остановитесь.';
+          setBusy(false);
+        }, isReducedMotion() ? 0 : 520);
       });
 
       blackjackHit.addEventListener('click', () => {
         if (!blackjackState) return;
         const nextCard = blackjackState.playerDraw.shift() || '2♣';
         blackjackState.player.push(nextCard);
-        renderBlackjack();
-        if (handValue(blackjackState.player) >= 21) {
-          settleBlackjack(handValue(blackjackState.player) > 21 ? 'bust' : 'stand');
-        } else {
-          blackjackResult.textContent = 'Карта ' + nextCard + '. Можно взять ещё одну или остановиться.';
-        }
+        setBusy(true);
+        renderBlackjack({ playerDealIndexes: [blackjackState.player.length - 1] });
+        blackjackResult.textContent = 'Карта в пути…';
+        window.setTimeout(() => {
+          if (!blackjackState) return;
+          if (handValue(blackjackState.player) >= 21) {
+            settleBlackjack(handValue(blackjackState.player) > 21 ? 'bust' : 'stand');
+          } else {
+            blackjackResult.textContent = 'Карта ' + nextCard + '. Можно взять ещё одну или остановиться.';
+            setBusy(false);
+          }
+        }, isReducedMotion() ? 0 : 390);
       });
 
       blackjackStand.addEventListener('click', () => {
@@ -1023,28 +1154,51 @@
         setBusy(true);
         slotSpin.textContent = 'Барабаны крутятся…';
         slotResult.textContent = 'Барабаны крутятся…';
-        reels.forEach((reel) => reel.classList.add('is-spinning'));
-        window.setTimeout(() => {
+        slotFrame.classList.remove('is-winning');
+        reels.forEach((reel, index) => {
+          reel.classList.remove('is-stopping');
+          reel.classList.add('is-spinning');
+          setReelSymbol(reel, index, spinSymbols[(slotRound + index) % spinSymbols.length]);
+        });
+        let cycle = 0;
+        const spinCycle = window.setInterval(() => {
           reels.forEach((reel, index) => {
-            reel.textContent = outcome.symbols[index];
-            reel.classList.remove('is-spinning');
+            if (reel.classList.contains('is-spinning')) {
+              setReelSymbol(reel, index, spinSymbols[(cycle + index * 2) % spinSymbols.length]);
+            }
           });
-          const delta = outcome.multiplier === 0 ? -amount : amount * outcome.multiplier;
-          credits += delta;
-          slotRound += 1;
-          updateBalance();
-          addHistory('Слот · ' + outcome.label, delta, delta > 0 ? 'positive' : 'negative');
-          slotResult.textContent = outcome.multiplier === 0
-            ? 'Выпало: ' + outcome.symbols.join(' ') + '. Локальный результат: −' + formatCredits(amount) + '.'
-            : 'Выпало: ' + outcome.symbols.join(' ') + '. Локальный результат: +' + formatCredits(delta) + '.';
-          slotSpin.textContent = 'Крутить барабаны';
-          setBusy(false);
-        }, isReducedMotion() ? 0 : 900);
+          cycle += 1;
+        }, 90);
+        const stopDelays = isReducedMotion() ? [0, 0, 0] : [680, 1080, 1480];
+        reels.forEach((reel, index) => {
+          window.setTimeout(() => {
+            setReelSymbol(reel, index, outcome.symbols[index]);
+            reel.classList.remove('is-spinning');
+            reel.classList.add('is-stopping');
+            window.setTimeout(() => reel.classList.remove('is-stopping'), isReducedMotion() ? 0 : 220);
+            if (index !== reels.length - 1) return;
+            window.clearInterval(spinCycle);
+            window.setTimeout(() => {
+              const delta = outcome.multiplier === 0 ? -amount : amount * outcome.multiplier;
+              credits += delta;
+              slotRound += 1;
+              updateBalance();
+              addHistory('Слот · ' + outcome.label, delta, delta > 0 ? 'positive' : 'negative');
+              if (outcome.multiplier > 0) slotFrame.classList.add('is-winning');
+              slotResult.textContent = outcome.multiplier === 0
+                ? 'Выпало: ' + outcome.symbols.join(' ') + '. Локальный результат: −' + formatCredits(amount) + '.'
+                : 'Выпало: ' + outcome.symbols.join(' ') + '. Локальный результат: +' + formatCredits(delta) + '.';
+              slotSpin.textContent = 'Крутить барабаны';
+              setBusy(false);
+            }, isReducedMotion() ? 0 : 220);
+          }, stopDelays[index]);
+        });
       });
 
       reset.addEventListener('click', resetPilot);
       renderRouletteChoices();
       renderBlackjack();
+      reels.forEach((reel, index) => setReelSymbol(reel, index, ['🍒', '🍋', '🍒'][index]));
       updateBalance();
       renderEmptyHistory();
       renderControls();
