@@ -8,13 +8,15 @@
 
 ## Публикация
 
-1. Использовать публичный репозиторий `Hainox/BURMALDOZA` (уже создан владельцем).
-2. Загрузить текущий foundation в ветку `main`.
-3. Открыть **Settings → Pages → Build and deployment → Source** и выбрать **GitHub Actions**.
-4. Запушить `main` либо запустить workflow **Deploy Pages demo** вручную.
-5. После успешного развёртывания GitHub покажет `https://hainox.github.io/BURMALDOZA/` в summary workflow. Регистр пути соответствует названию репозитория.
+1. GitHub Pages для `Hainox/BURMALDOZA` включён с источником **GitHub Actions**.
+2. Push с изменениями в `docs/pages-demo` запускает workflow **Deploy Pages demo** автоматически; его можно запустить и вручную.
+3. После успешного развёртывания пилот доступен по адресу **https://hainox.github.io/BURMALDOZA/**. Регистр пути соответствует названию репозитория.
 
 Workflow публикует отдельную HTML-страницу, а не SvelteKit-приложение. На GitHub Pages нельзя запустить Python API или Telegram polling-бота.
+
+## Откат
+
+Если опубликованный пилот работает неверно, отменить только его изменения через `git revert <commit>` и запушить `main`. Workflow опубликует предыдущую версию; данные пользователей и серверные сервисы при этом не затрагиваются.
 
 ## Ручная проверка перед показом
 

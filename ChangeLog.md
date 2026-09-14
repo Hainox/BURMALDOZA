@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Removed external-project comparisons from repository copy and added a client-facing, interactive Pages pilot that uses only local virtual demo state.
+- Documented the SvelteKit client stack and its boundaries with the FastAPI backend.
 - Reworked the README hero: removed the obscured information card, split the Russian description into readable lines, and replaced the ornament with a clean transparent roulette featuring exactly four diagonal brass levers.
 - Added a static GitHub Pages demo for the Burmaldoza visual casino concept. It uses simulated local UI state only and does not process payments, Telegram data, or real wagers.
 - Redesigned the repository landing page with a project-native hybrid hero, architecture diagram, setup path, and explicit V1 boundaries.

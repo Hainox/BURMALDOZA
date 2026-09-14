@@ -6,7 +6,7 @@
 |---|---|---|
 | Telegram bot | Python 3.12 + aiogram 3 | Асинхронные update, команды и роли. |
 | API | FastAPI + Pydantic | Mini App API, админские маршруты, OpenAPI. |
-| Mini App | SvelteKit + TypeScript + adapter-static | Совпадает с проверенным референсом YUVI, даёт компактный мобильный UI и не смешивает фронтенд с FastAPI. |
+| Mini App | SvelteKit 2 + Svelte 5 + TypeScript + Vite + adapter-static | Компактный мобильный UI, статическая сборка и чёткая граница с FastAPI. |
 | База | PostgreSQL + SQLAlchemy + Alembic | Транзакции, журнал операций и миграции. |
 | Очереди/защита | Redis | Идемпотентность, rate limit, фоновые задачи. |
 | Наблюдаемость | Sentry-compatible errors + structured logs + health endpoints | Диагностика без чтения пользовательских чатов. |
@@ -67,7 +67,7 @@ flowchart TD
 
 ## Правило для SvelteKit
 
-Mini App собирается статически через `adapter-static`; серверный рендер и серверные endpoints SvelteKit не используются. Все защищённые сценарии остаются в FastAPI, а SvelteKit отвечает за интерфейс, локальное состояние и вызов API.
+Mini App собирается статически через `adapter-static`; серверный рендер и серверные endpoints SvelteKit не используются. Все защищённые сценарии остаются в FastAPI, а SvelteKit отвечает за интерфейс, локальное состояние и вызов API. Подробный выбор зависимостей и границ — в [SvelteKit-Stack.md](./SvelteKit-Stack.md).
 
 ## Stars: отдельный будущий контур
 

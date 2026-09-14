@@ -3,97 +3,660 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#121216" />
-    <title>Бурмалдоза — demo</title>
+    <meta name="theme-color" content="#101113" />
+    <meta
+      name="description"
+      content="Интерактивный пилот интерфейса Бурмалдозы с локальным демонстрационным состоянием."
+    />
+    <title>Бурмалдоза — интерактивный пилот</title>
     <style>
-      :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      :root {
+        color-scheme: dark;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --canvas: #101113;
+        --surface: #1a1c20;
+        --surface-raised: #22252b;
+        --line: #41454e;
+        --text: #f5f0e8;
+        --muted: #c4bfc2;
+        --faint: #9a969b;
+        --accent: #f2a477;
+        --accent-ink: #28140d;
+        --positive: #9ae0b5;
+        --negative: #ff9e95;
+        --focus: #ffe0c9;
+      }
+
       * { box-sizing: border-box; }
-      body { margin:0; min-height:100vh; background:#121216; color:#f5f1eb; }
-      button { font:inherit; }
-      .shell { width:min(1160px,100%); margin:auto; padding:24px; }
-      header { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:28px; }
-      .brand { display:flex; align-items:center; gap:10px; font-size:20px; font-weight:850; letter-spacing:-.04em; }
-      .brand-mark { width:31px; height:31px; display:grid; place-items:center; border-radius:10px; background:#db6a38; color:#181114; }
-      .status { color:#a5a4ad; font-size:13px; }
-      .layout { display:grid; grid-template-columns:minmax(0,1.45fr) minmax(290px,.8fr); gap:18px; }
-      .panel { border:1px solid #302f37; background:#1a1a20; border-radius:25px; }
-      .game { padding:clamp(21px,4vw,42px); overflow:hidden; background:radial-gradient(circle at 50% 10%, #332116 0, #1a1a20 46%, #16161b 100%); }
-      .eyebrow { margin:0 0 7px; color:#d99b7f; font-size:12px; letter-spacing:.11em; font-weight:800; text-transform:uppercase; }
-      h1 { margin:0; font-size:clamp(32px,5vw,54px); line-height:.98; letter-spacing:-.065em; }
-      .sub { color:#aaa8b0; max-width:530px; line-height:1.45; margin:15px 0 6px; }
-      .wheel-area { min-height:315px; display:grid; place-items:center; position:relative; }
-      .wheel-area::before { content:""; width:430px; height:430px; position:absolute; border-radius:50%; background:radial-gradient(circle,rgba(219,106,56,.18),transparent 66%); filter:blur(4px); }
-      .wheel { width:min(66vw,286px); aspect-ratio:1; position:relative; z-index:1; border-radius:50%; border:9px solid #0d0d10; box-shadow:0 0 0 2px #58535a,0 20px 55px rgba(0,0,0,.48); background:conic-gradient(#e0644c 0deg 18deg,#272830 18deg 36deg,#e0644c 36deg 54deg,#272830 54deg 72deg,#e0644c 72deg 90deg,#272830 90deg 108deg,#e0644c 108deg 126deg,#272830 126deg 144deg,#e0644c 144deg 162deg,#272830 162deg 180deg,#e0644c 180deg 198deg,#272830 198deg 216deg,#e0644c 216deg 234deg,#272830 234deg 252deg,#e0644c 252deg 270deg,#272830 270deg 288deg,#e0644c 288deg 306deg,#272830 306deg 324deg,#53b78a 324deg 342deg,#272830 342deg 360deg); transition:transform 1.45s cubic-bezier(.14,.78,.22,1); }
-      .wheel::before { content:""; position:absolute; inset:-20px auto auto 50%; transform:translateX(-50%); border:11px solid transparent; border-top-color:#f2b088; z-index:2; }
-      .wheel::after { content:""; position:absolute; inset:0; margin:auto; width:20%; height:20%; border-radius:50%; background:#1b1b20; border:5px solid #ece6dd; }
-      .control { display:grid; grid-template-columns:1fr auto; gap:10px; margin-top:6px; }
-      .stake { border:1px solid #4a464d; min-width:0; border-radius:14px; background:#121216; color:#f5f1eb; padding:15px; font-weight:750; font-size:17px; }
-      .play { cursor:pointer; border:0; border-radius:14px; padding:0 24px; background:#db6a38; color:#1b1110; font-weight:900; transition:transform .15s, filter .15s; }
-      .play:hover { filter:brightness(1.12); } .play:active { transform:translateY(1px); }
-      .result { min-height:21px; margin:13px 2px 0; color:#b9b7bf; font-size:14px; }
-      .side { display:grid; gap:18px; align-content:start; }
-      .wallet { padding:21px; } .wallet small,.heading,.muted { color:#aaa8b0; }
-      .wallet strong { display:block; margin:4px 0 16px; font-size:32px; letter-spacing:-.055em; }
-      .badge { display:inline-block; padding:7px 9px; border:1px solid #59443a; background:#30221d; color:#efb69a; border-radius:999px; font-size:12px; font-weight:750; }
-      .games { padding:21px; } .heading { font-size:13px; font-weight:750; margin:0 0 11px; }
-      .cards { display:grid; gap:9px; } .game-card { display:flex; align-items:center; gap:12px; padding:12px; border:1px solid #3c3a42; background:#202027; border-radius:15px; }
-      .game-card.active { border-color:#db6a38; background:#2b1d19; } .game-icon { font-size:22px; } .game-card strong { display:block; } .game-card span { color:#a5a4ad; font-size:12px; }
-      .history { padding:21px; } .row { display:flex; justify-content:space-between; gap:14px; padding:12px 0; border-bottom:1px solid #313038; font-size:14px; } .row:last-child { border:0; }
-      .positive { color:#63c996; font-weight:800; } .negative { color:#ef7d70; font-weight:800; }
-      footer { margin-top:20px; color:#85838d; font-size:12px; line-height:1.4; }
-      @media (max-width:760px) { .shell { padding:16px; } .layout { grid-template-columns:1fr; } .side { grid-template-columns:1fr 1fr; } .history { grid-column:1/-1; } }
-      @media (max-width:480px) { .side { grid-template-columns:1fr; } .wheel-area { min-height:275px; } header { margin-bottom:18px; } }
+
+      body {
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
+        background: var(--canvas);
+        color: var(--text);
+      }
+
+      button,
+      input { font: inherit; }
+
+      button { touch-action: manipulation; }
+
+      :focus-visible {
+        outline: 3px solid var(--focus);
+        outline-offset: 3px;
+      }
+
+      .skip-link {
+        position: absolute;
+        top: 0.75rem;
+        left: 0.75rem;
+        z-index: 10;
+        padding: 0.75rem 1rem;
+        background: var(--text);
+        color: var(--accent-ink);
+        transform: translateY(-150%);
+      }
+
+      .skip-link:focus { transform: translateY(0); }
+
+      .shell {
+        width: min(74rem, 100%);
+        margin: 0 auto;
+        padding: 1.25rem;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.625rem;
+        font-size: 1.125rem;
+        font-weight: 850;
+        letter-spacing: -0.04em;
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 2rem;
+        aspect-ratio: 1;
+        place-items: center;
+        border-radius: 0.625rem;
+        background: var(--accent);
+        color: var(--accent-ink);
+      }
+
+      .status {
+        color: var(--muted);
+        font-size: 0.8125rem;
+        text-align: right;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 0.85fr);
+        gap: 1rem;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 1.25rem;
+        background: var(--surface);
+      }
+
+      .game {
+        min-height: 43rem;
+        padding: clamp(1.25rem, 4vw, 2.75rem);
+        background:
+          radial-gradient(circle at 76% 32%, rgb(242 164 119 / 12%), transparent 18rem),
+          var(--surface);
+      }
+
+      .eyebrow,
+      .section-heading {
+        margin: 0;
+        color: var(--accent);
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        max-width: 42rem;
+        margin: 0.625rem 0 0;
+        font-size: clamp(2.25rem, 6vw, 4.25rem);
+        line-height: 0.98;
+        letter-spacing: -0.065em;
+      }
+
+      .lead {
+        max-width: 39rem;
+        margin: 1rem 0 0;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      .principles {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 0;
+        margin: 1rem 0 0;
+        list-style: none;
+      }
+
+      .principles li,
+      .badge {
+        border: 1px solid #715141;
+        border-radius: 999px;
+        background: #2d211d;
+        color: #ffd3b8;
+        padding: 0.375rem 0.625rem;
+        font-size: 0.75rem;
+        font-weight: 750;
+      }
+
+      .wheel-stage {
+        display: grid;
+        min-height: 17.5rem;
+        place-items: center;
+        position: relative;
+      }
+
+      .wheel-stage::before {
+        position: absolute;
+        width: 22rem;
+        max-width: 84vw;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgb(242 164 119 / 16%), transparent 68%);
+        content: "";
+      }
+
+      .wheel {
+        width: min(17.5rem, 66vw);
+        aspect-ratio: 1;
+        z-index: 1;
+        border: 0.625rem solid #0a0b0d;
+        border-radius: 50%;
+        box-shadow: 0 0 0 2px #65616a, 0 1.25rem 3.5rem rgb(0 0 0 / 48%);
+        background: conic-gradient(
+          #d66458 0deg 18deg,
+          #26282e 18deg 36deg,
+          #d66458 36deg 54deg,
+          #26282e 54deg 72deg,
+          #d66458 72deg 90deg,
+          #26282e 90deg 108deg,
+          #d66458 108deg 126deg,
+          #26282e 126deg 144deg,
+          #d66458 144deg 162deg,
+          #26282e 162deg 180deg,
+          #d66458 180deg 198deg,
+          #26282e 198deg 216deg,
+          #d66458 216deg 234deg,
+          #26282e 234deg 252deg,
+          #d66458 252deg 270deg,
+          #26282e 270deg 288deg,
+          #d66458 288deg 306deg,
+          #26282e 306deg 324deg,
+          #58ba87 324deg 342deg,
+          #26282e 342deg 360deg
+        );
+        transform: rotate(var(--rotation, 0deg));
+        transition: transform 1.25s cubic-bezier(0.14, 0.78, 0.22, 1);
+      }
+
+      .wheel::before {
+        position: absolute;
+        top: -1.5rem;
+        left: 50%;
+        z-index: 2;
+        border: 0.6875rem solid transparent;
+        border-top-color: var(--accent);
+        content: "";
+        transform: translateX(-50%);
+      }
+
+      .wheel::after {
+        position: absolute;
+        inset: 0;
+        width: 21%;
+        aspect-ratio: 1;
+        margin: auto;
+        border: 0.3125rem solid #f5f0e8;
+        border-radius: 50%;
+        background: #1b1d22;
+        content: "";
+      }
+
+      .controls {
+        display: grid;
+        gap: 0.75rem;
+      }
+
+      fieldset {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 0.75rem;
+        padding: 0;
+        border: 0;
+        margin: 0;
+      }
+
+      legend {
+        grid-column: 1 / -1;
+        padding: 0;
+        margin-bottom: 0.125rem;
+        color: var(--muted);
+        font-size: 0.875rem;
+      }
+
+      .field {
+        min-width: 0;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 0.375rem;
+        color: var(--muted);
+        font-size: 0.8125rem;
+      }
+
+      input {
+        width: 100%;
+        min-width: 0;
+        border: 1px solid var(--line);
+        border-radius: 0.75rem;
+        background: #121417;
+        color: var(--text);
+        padding: 0.875rem;
+        font-size: 1rem;
+        font-weight: 750;
+      }
+
+      .choice-group {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
+        align-self: end;
+      }
+
+      .choice,
+      .reset,
+      .play {
+        min-height: 3rem;
+        cursor: pointer;
+        border: 1px solid var(--line);
+        border-radius: 0.75rem;
+        padding: 0.75rem 1rem;
+        font-weight: 850;
+        transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease;
+      }
+
+      .choice {
+        background: var(--surface-raised);
+        color: var(--text);
+      }
+
+      .choice[aria-pressed="true"] {
+        border-color: var(--accent);
+        background: #3a251c;
+        color: #ffe1cc;
+      }
+
+      .play {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: var(--accent-ink);
+      }
+
+      .reset {
+        background: transparent;
+        color: var(--text);
+      }
+
+      .choice:hover,
+      .reset:hover {
+        border-color: var(--muted);
+        background: #2b2e35;
+      }
+
+      .play:hover { background: #ffc194; }
+
+      button:active:not(:disabled) { transform: translateY(1px); }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+      }
+
+      .result {
+        min-height: 1.5rem;
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.875rem;
+        line-height: 1.45;
+      }
+
+      .side {
+        display: grid;
+        align-content: start;
+        gap: 1rem;
+      }
+
+      .side .panel { padding: 1.25rem; }
+
+      .balance {
+        display: block;
+        margin: 0.25rem 0 0.875rem;
+        font-size: 2.25rem;
+        letter-spacing: -0.055em;
+      }
+
+      .description,
+      .fine-print {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.875rem;
+        line-height: 1.45;
+      }
+
+      .checklist,
+      .history {
+        display: grid;
+        gap: 0.625rem;
+        padding: 0;
+        margin: 0.875rem 0 0;
+        list-style: none;
+      }
+
+      .checklist li {
+        position: relative;
+        padding-left: 1.25rem;
+        color: var(--muted);
+        font-size: 0.875rem;
+        line-height: 1.35;
+      }
+
+      .checklist li::before {
+        position: absolute;
+        left: 0;
+        color: var(--positive);
+        content: "✓";
+        font-weight: 800;
+      }
+
+      .history-item {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        padding-bottom: 0.625rem;
+        border-bottom: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 0.875rem;
+      }
+
+      .history-item:last-child {
+        padding-bottom: 0;
+        border-bottom: 0;
+      }
+
+      .history-item strong { color: var(--text); }
+
+      .positive { color: var(--positive) !important; }
+
+      .negative { color: var(--negative) !important; }
+
+      footer {
+        margin: 1rem 0 0;
+        color: var(--faint);
+        font-size: 0.75rem;
+        line-height: 1.45;
+      }
+
+      @media (max-width: 48rem) {
+        .layout { grid-template-columns: 1fr; }
+        .game { min-height: auto; }
+      }
+
+      @media (max-width: 32rem) {
+        .shell { padding: 1rem; }
+        .topbar { align-items: flex-start; }
+        .status { max-width: 9rem; }
+        fieldset { grid-template-columns: 1fr; }
+        .choice-group { align-self: stretch; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
     </style>
   </head>
   <body>
+    <a class="skip-link" href="#pilot">К интерактивному пилоту</a>
     <div class="shell">
-      <header><div class="brand"><span class="brand-mark">Б</span> БУРМАЛДОЗА</div><span class="status">visual demo · GitHub Pages</span></header>
-      <main class="layout">
-        <section class="panel game">
-          <p class="eyebrow">виртуальная игровая комната</p>
-          <h1>Рулетка,<br>но по-человечески.</h1>
-          <p class="sub">Первый экран Mini App: баланс, понятная ставка и короткий результат. Никаких реальных денег, авторизации или платежей в демо.</p>
-          <div class="wheel-area"><div id="wheel" class="wheel" aria-label="Демонстрационная рулетка"></div></div>
-          <div class="control"><input id="stake" class="stake" type="number" value="100" min="10" max="500" aria-label="Ставка в виртуальных жетонах"><button id="play" class="play" type="button">Крутить</button></div>
-          <p id="result" class="result" aria-live="polite">Демо использует локальную симуляцию. Серверной экономики здесь нет.</p>
+      <header class="topbar">
+        <div class="brand"><span class="brand-mark" aria-hidden="true">Б</span>БУРМАЛДОЗА</div>
+        <span class="status">интерактивный пилот · локальный сценарий</span>
+      </header>
+
+      <main id="pilot" class="layout">
+        <section class="panel game" aria-labelledby="pilot-title">
+          <p class="eyebrow">Пилот интерфейса</p>
+          <h1 id="pilot-title">Виртуальная рулетка для первого сообщества</h1>
+          <p class="lead">
+            Здесь можно проверить ощущение от главного игрового экрана: выбрать цвет, задать
+            количество виртуальных жетонов и увидеть понятный результат раунда.
+          </p>
+          <ul class="principles" aria-label="Границы пилота">
+            <li>виртуальные жетоны</li>
+            <li>без Telegram-авторизации</li>
+            <li>ничего не сохраняется</li>
+          </ul>
+
+          <div class="wheel-stage" role="img" aria-label="Демонстрационная рулетка">
+            <div id="wheel" class="wheel" aria-hidden="true"></div>
+          </div>
+
+          <form id="pilot-form" class="controls" novalidate>
+            <fieldset>
+              <legend>Настройте демонстрационный раунд</legend>
+              <div class="field">
+                <label for="stake">Виртуальные жетоны</label>
+                <input
+                  id="stake"
+                  name="stake"
+                  type="number"
+                  value="100"
+                  min="10"
+                  max="500"
+                  step="10"
+                  inputmode="numeric"
+                  aria-describedby="stake-hint"
+                />
+              </div>
+              <div class="choice-group" aria-label="Выбор цвета">
+                <button class="choice" type="button" data-color="red" aria-pressed="true">Красное</button>
+                <button class="choice" type="button" data-color="black" aria-pressed="false">Чёрное</button>
+              </div>
+            </fieldset>
+            <button id="play" class="play" type="submit">Запустить демонстрационный раунд</button>
+            <button id="reset" class="reset" type="button">Сбросить пилот</button>
+            <p id="stake-hint" class="fine-print">Для пилота доступно от 10 до 500 виртуальных жетонов.</p>
+          </form>
+          <p id="result" class="result" role="status" aria-live="polite">
+            Исходы заданы демонстрационным сценарием; серверных расчётов здесь нет.
+          </p>
         </section>
-        <aside class="side">
-          <section class="panel wallet"><small>Виртуальный баланс</small><strong id="balance">4 260 Ⓜ</strong><span class="badge">demo · без вывода</span></section>
-          <section class="panel games"><p class="heading">Игры на старте</p><div class="cards"><div class="game-card active"><span class="game-icon">◉</span><div><strong>Рулетка</strong><span>Доступна в демо</span></div></div><div class="game-card"><span class="game-icon">✦</span><div><strong>Слоты</strong><span>Следующая итерация</span></div></div><div class="game-card"><span class="game-icon">◈</span><div><strong>Дуэли</strong><span>После запуска</span></div></div></div></section>
-          <section class="panel history"><p class="heading">Как будет выглядеть история</p><div id="history"><div class="row"><span>Дневной бонус</span><b class="positive">+250 Ⓜ</b></div><div class="row"><span>Рулетка · чёрное</span><b class="negative">−100 Ⓜ</b></div><div class="row"><span>Рулетка · красное</span><b class="positive">+200 Ⓜ</b></div></div></section>
+
+        <aside class="side" aria-label="Сведения о пилоте">
+          <section class="panel">
+            <p class="section-heading">Виртуальный баланс</p>
+            <strong id="balance" class="balance">4 260 Ⓜ</strong>
+            <span class="badge">только в этом браузере</span>
+          </section>
+
+          <section class="panel">
+            <p class="section-heading">Что можно потрогать</p>
+            <ul class="checklist">
+              <li>выбор цвета и размера виртуального раунда</li>
+              <li>анимация результата и обновление интерфейса</li>
+              <li>локальная история без аккаунта и передачи данных</li>
+            </ul>
+          </section>
+
+          <section class="panel">
+            <p class="section-heading">Локальная история</p>
+            <ul id="history" class="history" aria-live="polite"></ul>
+          </section>
         </aside>
       </main>
-      <footer>«Бурмалдоза» — дизайн-прототип. В production исходы, ставки и баланс рассчитываются только на сервере; в этом билде ничего не отправляется и не сохраняется.</footer>
+
+      <footer>
+        «Бурмалдоза» — пилот интерфейса. Он не принимает платежи, не использует реальные деньги,
+        не авторизует пользователя и не сохраняет баланс после обновления страницы.
+      </footer>
     </div>
+
     <script>
-      const wheel = document.getElementById('wheel');
-      const stake = document.getElementById('stake');
-      const play = document.getElementById('play');
-      const result = document.getElementById('result');
-      const balance = document.getElementById('balance');
-      const history = document.getElementById('history');
-      let credits = 4260;
-      let spin = 0;
-      play.addEventListener('click', () => {
+      const initialCredits = 4260;
+      const wheel = document.querySelector('#wheel');
+      const stake = document.querySelector('#stake');
+      const form = document.querySelector('#pilot-form');
+      const play = document.querySelector('#play');
+      const reset = document.querySelector('#reset');
+      const balance = document.querySelector('#balance');
+      const result = document.querySelector('#result');
+      const history = document.querySelector('#history');
+      const choices = Array.from(document.querySelectorAll('[data-color]'));
+      const formatter = new Intl.NumberFormat('ru-RU');
+      const sequence = [
+        { color: 'red', angle: 18 },
+        { color: 'black', angle: 198 },
+        { color: 'red', angle: 54 }
+      ];
+
+      let credits = initialCredits;
+      let selectedColor = 'red';
+      let round = 0;
+      let rotation = 0;
+      let spinning = false;
+
+      function colorLabel(color) {
+        return color === 'red' ? 'красное' : 'чёрное';
+      }
+
+      function updateBalance() {
+        balance.textContent = `${formatter.format(credits)} Ⓜ`;
+      }
+
+      function addHistory(label, amount, kind) {
+        const item = document.createElement('li');
+        const name = document.createElement('span');
+        const delta = document.createElement('strong');
+        item.className = 'history-item';
+        name.textContent = label;
+        delta.className = kind;
+        delta.textContent = `${amount > 0 ? '+' : '−'}${formatter.format(Math.abs(amount))} Ⓜ`;
+        item.append(name, delta);
+        history.prepend(item);
+      }
+
+      function renderEmptyHistory() {
+        const item = document.createElement('li');
+        item.className = 'history-item';
+        item.textContent = 'Здесь появятся только ваши локальные демонстрационные раунды.';
+        history.replaceChildren(item);
+      }
+
+      function setControlsDisabled(disabled) {
+        spinning = disabled;
+        play.disabled = disabled;
+        reset.disabled = disabled;
+        stake.disabled = disabled;
+        choices.forEach((choice) => {
+          choice.disabled = disabled;
+        });
+        play.textContent = disabled ? 'Рулетка крутится…' : 'Запустить демонстрационный раунд';
+      }
+
+      function resetPilot() {
+        credits = initialCredits;
+        selectedColor = 'red';
+        round = 0;
+        rotation = 0;
+        stake.value = '100';
+        wheel.style.setProperty('--rotation', '0deg');
+        choices.forEach((choice) => {
+          choice.setAttribute('aria-pressed', String(choice.dataset.color === selectedColor));
+        });
+        updateBalance();
+        renderEmptyHistory();
+        result.textContent = 'Пилот сброшен. Исходы снова идут по демонстрационному сценарию.';
+      }
+
+      choices.forEach((choice) => {
+        choice.addEventListener('click', () => {
+          if (spinning) return;
+          selectedColor = choice.dataset.color;
+          choices.forEach((item) => {
+            item.setAttribute('aria-pressed', String(item.dataset.color === selectedColor));
+          });
+          result.textContent = `Выбрано: ${colorLabel(selectedColor)}.`;
+        });
+      });
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        if (spinning) return;
+
         const amount = Number(stake.value);
-        if (!Number.isFinite(amount) || amount < 10 || amount > 500 || amount > credits) { result.textContent = 'Для демо выбери ставку от 10 до 500 Ⓜ в пределах баланса.'; return; }
-        play.disabled = true;
-        spin += 1;
-        const won = spin % 3 !== 0;
-        wheel.style.transform = `rotate(${spin * 1080 + (won ? 36 : 108)}deg)`;
+        if (!Number.isFinite(amount) || amount < 10 || amount > 500 || amount > credits) {
+          result.textContent = 'Выберите от 10 до 500 виртуальных жетонов в пределах текущего баланса.';
+          stake.focus();
+          return;
+        }
+
+        const outcome = sequence[round % sequence.length];
+        rotation += 1080 + outcome.angle;
+        wheel.style.setProperty('--rotation', `${rotation}deg`);
+        setControlsDisabled(true);
         result.textContent = 'Рулетка крутится…';
+
         window.setTimeout(() => {
+          const won = selectedColor === outcome.color;
           const delta = won ? amount : -amount;
           credits += delta;
-          balance.textContent = `${credits.toLocaleString('ru-RU')} Ⓜ`;
-          result.textContent = won ? `Красное. В демо: +${amount} Ⓜ.` : `Чёрное. В демо: −${amount} Ⓜ.`;
-          const item = document.createElement('div');
-          item.className = 'row';
-          item.innerHTML = `<span>Рулетка · ${won ? 'красное' : 'чёрное'}</span><b class="${won ? 'positive' : 'negative'}">${won ? '+' : '−'}${amount} Ⓜ</b>`;
-          history.prepend(item);
-          play.disabled = false;
-        }, 1450);
+          round += 1;
+          updateBalance();
+          addHistory(
+            `Рулетка · выпало ${colorLabel(outcome.color)}`,
+            delta,
+            won ? 'positive' : 'negative'
+          );
+          result.textContent = won
+            ? `Выпало ${colorLabel(outcome.color)}. Локальный результат: +${formatter.format(amount)} Ⓜ.`
+            : `Выпало ${colorLabel(outcome.color)}. Локальный результат: −${formatter.format(amount)} Ⓜ.`;
+          setControlsDisabled(false);
+        }, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1250);
       });
+
+      reset.addEventListener('click', resetPilot);
+      updateBalance();
+      renderEmptyHistory();
     </script>
   </body>
 </html>
