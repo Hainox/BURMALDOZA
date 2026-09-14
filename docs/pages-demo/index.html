@@ -4,10 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#101113" />
-    <meta
-      name="description"
-      content="Интерактивный пилот интерфейса Бурмалдозы с локальным демонстрационным состоянием."
-    />
+    <meta name="description" content="Интерактивный пилот Бурмалдозы с локальными сценариями рулетки, блэкджека и слота." />
     <title>Бурмалдоза — интерактивный пилот</title>
     <style>
       :root {
@@ -16,6 +13,7 @@
         --canvas: #101113;
         --surface: #1a1c20;
         --surface-raised: #22252b;
+        --surface-deep: #121417;
         --line: #41454e;
         --text: #f5f0e8;
         --muted: #c4bfc2;
@@ -66,13 +64,17 @@
         padding: 1.25rem;
       }
 
-      .topbar {
+      .topbar,
+      .game-intro,
+      .hand-meta,
+      .history-item {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 1rem;
-        margin-bottom: 1.5rem;
       }
+
+      .topbar { margin-bottom: 1rem; }
 
       .brand {
         display: flex;
@@ -112,15 +114,16 @@
       }
 
       .game {
-        min-height: 43rem;
+        min-width: 0;
         padding: clamp(1.25rem, 4vw, 2.75rem);
         background:
-          radial-gradient(circle at 76% 32%, rgb(242 164 119 / 12%), transparent 18rem),
+          radial-gradient(circle at 82% 10%, rgb(242 164 119 / 10%), transparent 18rem),
           var(--surface);
       }
 
       .eyebrow,
-      .section-heading {
+      .section-heading,
+      .hand-label {
         margin: 0;
         color: var(--accent);
         font-size: 0.75rem;
@@ -137,6 +140,12 @@
         letter-spacing: -0.065em;
       }
 
+      h2 {
+        margin: 0;
+        font-size: clamp(1.25rem, 3vw, 1.75rem);
+        letter-spacing: -0.04em;
+      }
+
       .lead {
         max-width: 39rem;
         margin: 1rem 0 0;
@@ -144,7 +153,9 @@
         line-height: 1.5;
       }
 
-      .principles {
+      .principles,
+      .checklist,
+      .history {
         display: flex;
         flex-wrap: wrap;
         gap: 0.5rem;
@@ -164,51 +175,152 @@
         font-weight: 750;
       }
 
-      .wheel-stage {
+      .game-nav {
         display: grid;
-        min-height: 17.5rem;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.5rem;
+        margin: 1.5rem 0 1rem;
+      }
+
+      .game-tab,
+      .choice,
+      .secondary,
+      .play {
+        min-height: 3rem;
+        cursor: pointer;
+        border: 1px solid var(--line);
+        border-radius: 0.75rem;
+        padding: 0.75rem 1rem;
+        font-weight: 850;
+        transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease;
+      }
+
+      .game-tab,
+      .choice,
+      .secondary {
+        background: var(--surface-raised);
+        color: var(--text);
+      }
+
+      .game-tab { color: var(--muted); }
+
+      .game-tab[aria-pressed="true"],
+      .choice[aria-pressed="true"] {
+        border-color: var(--accent);
+        background: #3a251c;
+        color: #ffe1cc;
+      }
+
+      .play {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: var(--accent-ink);
+      }
+
+      .game-tab:hover,
+      .choice:hover,
+      .secondary:hover {
+        border-color: var(--muted);
+        background: #2b2e35;
+      }
+
+      .play:hover { background: #ffc194; }
+
+      button:active:not(:disabled) { transform: translateY(1px); }
+
+      button:disabled,
+      input:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+      }
+
+      .game-view { margin-top: 1.25rem; }
+
+      .game-intro { align-items: end; margin-bottom: 1rem; }
+
+      .game-description {
+        max-width: 30rem;
+        margin: 0.375rem 0 0;
+        color: var(--muted);
+        font-size: 0.9375rem;
+        line-height: 1.45;
+      }
+
+      .stake-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 0.75rem;
+        align-items: end;
+        margin: 1.25rem 0;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 0.375rem;
+        color: var(--muted);
+        font-size: 0.8125rem;
+      }
+
+      input {
+        width: 100%;
+        min-width: 0;
+        border: 1px solid var(--line);
+        border-radius: 0.75rem;
+        background: var(--surface-deep);
+        color: var(--text);
+        padding: 0.875rem;
+        font-size: 1rem;
+        font-weight: 750;
+      }
+
+      .fine-print,
+      .result,
+      .description {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.875rem;
+        line-height: 1.45;
+      }
+
+      .result { min-height: 1.5rem; margin-top: 1rem; }
+
+      .choice-group,
+      .action-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .roulette-stage {
+        display: grid;
+        min-height: 15.5rem;
         place-items: center;
         position: relative;
       }
 
-      .wheel-stage::before {
+      .roulette-stage::before {
         position: absolute;
-        width: 22rem;
+        width: 20rem;
         max-width: 84vw;
         aspect-ratio: 1;
         border-radius: 50%;
-        background: radial-gradient(circle, rgb(242 164 119 / 16%), transparent 68%);
+        background: radial-gradient(circle, rgb(242 164 119 / 14%), transparent 68%);
         content: "";
       }
 
       .wheel {
-        width: min(17.5rem, 66vw);
+        width: min(16rem, 64vw);
         aspect-ratio: 1;
         z-index: 1;
         border: 0.625rem solid #0a0b0d;
         border-radius: 50%;
         box-shadow: 0 0 0 2px #65616a, 0 1.25rem 3.5rem rgb(0 0 0 / 48%);
         background: conic-gradient(
-          #d66458 0deg 18deg,
-          #26282e 18deg 36deg,
-          #d66458 36deg 54deg,
-          #26282e 54deg 72deg,
-          #d66458 72deg 90deg,
-          #26282e 90deg 108deg,
-          #d66458 108deg 126deg,
-          #26282e 126deg 144deg,
-          #d66458 144deg 162deg,
-          #26282e 162deg 180deg,
-          #d66458 180deg 198deg,
-          #26282e 198deg 216deg,
-          #d66458 216deg 234deg,
-          #26282e 234deg 252deg,
-          #d66458 252deg 270deg,
-          #26282e 270deg 288deg,
-          #d66458 288deg 306deg,
-          #26282e 306deg 324deg,
-          #58ba87 324deg 342deg,
-          #26282e 342deg 360deg
+          #d66458 0deg 18deg, #26282e 18deg 36deg, #d66458 36deg 54deg, #26282e 54deg 72deg,
+          #d66458 72deg 90deg, #26282e 90deg 108deg, #d66458 108deg 126deg, #26282e 126deg 144deg,
+          #d66458 144deg 162deg, #26282e 162deg 180deg, #d66458 180deg 198deg, #26282e 198deg 216deg,
+          #d66458 216deg 234deg, #26282e 234deg 252deg, #d66458 252deg 270deg, #26282e 270deg 288deg,
+          #d66458 288deg 306deg, #26282e 306deg 324deg, #58ba87 324deg 342deg, #26282e 342deg 360deg
         );
         transform: rotate(var(--rotation, 0deg));
         transition: transform 1.25s cubic-bezier(0.14, 0.78, 0.22, 1);
@@ -237,113 +349,128 @@
         content: "";
       }
 
-      .controls {
+      .blackjack-table {
         display: grid;
-        gap: 0.75rem;
+        gap: 1rem;
+        min-height: 15.5rem;
+        padding: 1rem;
+        border: 1px solid #496f5a;
+        border-radius: 1rem;
+        background: #183126;
       }
 
-      fieldset {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 0.75rem;
-        padding: 0;
-        border: 0;
-        margin: 0;
-      }
+      .hand { display: grid; gap: 0.5rem; }
 
-      legend {
-        grid-column: 1 / -1;
-        padding: 0;
-        margin-bottom: 0.125rem;
-        color: var(--muted);
-        font-size: 0.875rem;
-      }
-
-      .field {
-        min-width: 0;
-      }
-
-      label {
-        display: block;
-        margin-bottom: 0.375rem;
-        color: var(--muted);
+      .hand-total {
+        color: #d7eadc;
         font-size: 0.8125rem;
-      }
-
-      input {
-        width: 100%;
-        min-width: 0;
-        border: 1px solid var(--line);
-        border-radius: 0.75rem;
-        background: #121417;
-        color: var(--text);
-        padding: 0.875rem;
-        font-size: 1rem;
         font-weight: 750;
       }
 
-      .choice-group {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+      .cards {
+        display: flex;
+        flex-wrap: wrap;
         gap: 0.5rem;
-        align-self: end;
+        min-height: 5.25rem;
       }
 
-      .choice,
-      .reset,
-      .play {
-        min-height: 3rem;
-        cursor: pointer;
-        border: 1px solid var(--line);
-        border-radius: 0.75rem;
-        padding: 0.75rem 1rem;
-        font-weight: 850;
-        transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease;
+      .card,
+      .card-placeholder {
+        display: grid;
+        width: 3.75rem;
+        height: 5.25rem;
+        place-items: center;
+        border: 1px solid #d7d2c8;
+        border-radius: 0.5rem;
+        background: #f5f0e8;
+        color: #191a1d;
+        font-size: 1.375rem;
+        font-weight: 900;
       }
 
-      .choice {
-        background: var(--surface-raised);
-        color: var(--text);
-      }
+      .card--red { color: #c74946; }
 
-      .choice[aria-pressed="true"] {
-        border-color: var(--accent);
-        background: #3a251c;
+      .card--hidden {
+        border-color: #e6b891;
+        background: repeating-linear-gradient(45deg, #402b24 0 0.35rem, #2d211d 0.35rem 0.7rem);
         color: #ffe1cc;
       }
 
-      .play {
-        border-color: var(--accent);
-        background: var(--accent);
-        color: var(--accent-ink);
-      }
-
-      .reset {
+      .card-placeholder {
+        width: auto;
+        min-width: 9rem;
+        padding: 0.75rem;
+        border-style: dashed;
         background: transparent;
-        color: var(--text);
+        color: #c2d0c6;
+        font-size: 0.8125rem;
+        font-weight: 650;
+        text-align: center;
       }
 
-      .choice:hover,
-      .reset:hover {
-        border-color: var(--muted);
-        background: #2b2e35;
-      }
-
-      .play:hover { background: #ffc194; }
-
-      button:active:not(:disabled) { transform: translateY(1px); }
-
-      button:disabled {
-        cursor: not-allowed;
-        opacity: 0.6;
-      }
-
-      .result {
-        min-height: 1.5rem;
+      .table-divider {
+        border: 0;
+        border-top: 1px solid rgb(215 234 220 / 30%);
         margin: 0;
-        color: var(--muted);
-        font-size: 0.875rem;
-        line-height: 1.45;
+      }
+
+      .slot-machine {
+        display: grid;
+        min-height: 15.5rem;
+        place-items: center;
+        padding: 1rem;
+        border: 1px solid #70564a;
+        border-radius: 1rem;
+        background: #2b2421;
+      }
+
+      .slot-frame {
+        width: min(100%, 28rem);
+        padding: clamp(0.75rem, 3vw, 1.25rem);
+        border: 0.375rem solid #dd9b6f;
+        border-radius: 1rem;
+        background: #151619;
+        box-shadow: 0 0 0 1px #583c30, 0 1rem 2rem rgb(0 0 0 / 25%);
+      }
+
+      .slot-name {
+        margin: 0 0 0.75rem;
+        color: #ffd3b8;
+        font-size: 0.75rem;
+        font-weight: 850;
+        letter-spacing: 0.12em;
+        text-align: center;
+        text-transform: uppercase;
+      }
+
+      .reels {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.5rem;
+      }
+
+      .reel {
+        display: grid;
+        min-height: clamp(4.75rem, 20vw, 6.5rem);
+        place-items: center;
+        overflow: hidden;
+        border: 1px solid #65554e;
+        border-radius: 0.625rem;
+        background: #f5f0e8;
+        color: #292225;
+        font-size: clamp(2rem, 10vw, 3rem);
+        transform: translateY(0);
+      }
+
+      .reel.is-spinning { animation: reel-bounce 280ms ease-in-out 3; }
+
+      @keyframes reel-bounce { 50% { transform: translateY(-0.25rem); } }
+
+      .slot-caption {
+        margin: 0.75rem 0 0;
+        color: #d7c0b3;
+        font-size: 0.8125rem;
+        text-align: center;
       }
 
       .side {
@@ -361,21 +488,11 @@
         letter-spacing: -0.055em;
       }
 
-      .description,
-      .fine-print {
-        margin: 0;
-        color: var(--muted);
-        font-size: 0.875rem;
-        line-height: 1.45;
-      }
-
       .checklist,
       .history {
         display: grid;
         gap: 0.625rem;
-        padding: 0;
-        margin: 0.875rem 0 0;
-        list-style: none;
+        margin-top: 0.875rem;
       }
 
       .checklist li {
@@ -395,9 +512,7 @@
       }
 
       .history-item {
-        display: flex;
-        justify-content: space-between;
-        gap: 1rem;
+        align-items: start;
         padding-bottom: 0.625rem;
         border-bottom: 1px solid var(--line);
         color: var(--muted);
@@ -410,9 +525,7 @@
       }
 
       .history-item strong { color: var(--text); }
-
       .positive { color: var(--positive) !important; }
-
       .negative { color: var(--negative) !important; }
 
       footer {
@@ -424,15 +537,16 @@
 
       @media (max-width: 48rem) {
         .layout { grid-template-columns: 1fr; }
-        .game { min-height: auto; }
+        .game-intro { align-items: start; }
       }
 
       @media (max-width: 32rem) {
         .shell { padding: 1rem; }
         .topbar { align-items: flex-start; }
         .status { max-width: 9rem; }
-        fieldset { grid-template-columns: 1fr; }
-        .choice-group { align-self: stretch; }
+        .stake-row { grid-template-columns: 1fr; }
+        .game-nav { gap: 0.375rem; }
+        .game-tab { padding-inline: 0.5rem; font-size: 0.8125rem; }
       }
 
       @media (prefers-reduced-motion: reduce) {
@@ -440,6 +554,8 @@
         *::before,
         *::after {
           scroll-behavior: auto !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
           transition-duration: 0.01ms !important;
         }
       }
@@ -456,50 +572,96 @@
       <main id="pilot" class="layout">
         <section class="panel game" aria-labelledby="pilot-title">
           <p class="eyebrow">Пилот интерфейса</p>
-          <h1 id="pilot-title">Виртуальная рулетка для первого сообщества</h1>
-          <p class="lead">
-            Здесь можно проверить ощущение от главного игрового экрана: выбрать цвет, задать
-            количество виртуальных жетонов и увидеть понятный результат раунда.
-          </p>
+          <h1 id="pilot-title">Виртуальный игровой стол</h1>
+          <p class="lead">Выберите игру, задайте число виртуальных жетонов и пройдите короткий сценарий. Это проверка интерфейса: без аккаунта, сети и реальных денег.</p>
           <ul class="principles" aria-label="Границы пилота">
             <li>виртуальные жетоны</li>
             <li>без Telegram-авторизации</li>
             <li>ничего не сохраняется</li>
           </ul>
 
-          <div class="wheel-stage" role="img" aria-label="Демонстрационная рулетка">
-            <div id="wheel" class="wheel" aria-hidden="true"></div>
+          <nav class="game-nav" aria-label="Выбор демонстрационной игры">
+            <button class="game-tab" type="button" data-game="roulette" aria-pressed="true">Рулетка</button>
+            <button class="game-tab" type="button" data-game="blackjack" aria-pressed="false">Блэкджек</button>
+            <button class="game-tab" type="button" data-game="slot" aria-pressed="false">Слот</button>
+          </nav>
+
+          <div class="stake-row">
+            <div>
+              <label for="stake">Виртуальные жетоны</label>
+              <input id="stake" name="stake" type="number" value="100" min="10" max="500" step="10" inputmode="numeric" aria-describedby="stake-hint" />
+            </div>
+            <p id="stake-hint" class="fine-print">От 10 до 500 Ⓜ в пределах баланса.</p>
           </div>
 
-          <form id="pilot-form" class="controls" novalidate>
-            <fieldset>
-              <legend>Настройте демонстрационный раунд</legend>
-              <div class="field">
-                <label for="stake">Виртуальные жетоны</label>
-                <input
-                  id="stake"
-                  name="stake"
-                  type="number"
-                  value="100"
-                  min="10"
-                  max="500"
-                  step="10"
-                  inputmode="numeric"
-                  aria-describedby="stake-hint"
-                />
+          <section class="game-view" data-panel="roulette" aria-labelledby="roulette-title">
+            <div class="game-intro">
+              <div>
+                <h2 id="roulette-title">Рулетка</h2>
+                <p class="game-description">Выберите цвет и посмотрите результат локального раунда.</p>
               </div>
-              <div class="choice-group" aria-label="Выбор цвета">
-                <button class="choice" type="button" data-color="red" aria-pressed="true">Красное</button>
-                <button class="choice" type="button" data-color="black" aria-pressed="false">Чёрное</button>
+              <span class="badge">2 цвета</span>
+            </div>
+            <div class="roulette-stage" role="img" aria-label="Демонстрационная рулетка">
+              <div id="wheel" class="wheel" aria-hidden="true"></div>
+            </div>
+            <div class="choice-group" aria-label="Выбор цвета">
+              <button class="choice" type="button" data-color="red" aria-pressed="true">Красное</button>
+              <button class="choice" type="button" data-color="black" aria-pressed="false">Чёрное</button>
+            </div>
+            <div class="action-row"><button id="roulette-play" class="play" type="button">Запустить раунд</button></div>
+            <p id="roulette-result" class="result" role="status" aria-live="polite">Выберите цвет. Исход задан демонстрационным сценарием.</p>
+          </section>
+
+          <section class="game-view" data-panel="blackjack" aria-labelledby="blackjack-title" hidden>
+            <div class="game-intro">
+              <div>
+                <h2 id="blackjack-title">Блэкджек</h2>
+                <p class="game-description">Раздайте карты, затем возьмите ещё одну или остановитесь.</p>
               </div>
-            </fieldset>
-            <button id="play" class="play" type="submit">Запустить демонстрационный раунд</button>
-            <button id="reset" class="reset" type="button">Сбросить пилот</button>
-            <p id="stake-hint" class="fine-print">Для пилота доступно от 10 до 500 виртуальных жетонов.</p>
-          </form>
-          <p id="result" class="result" role="status" aria-live="polite">
-            Исходы заданы демонстрационным сценарием; серверных расчётов здесь нет.
-          </p>
+              <span class="badge">действия игрока</span>
+            </div>
+            <div class="blackjack-table">
+              <div class="hand">
+                <div class="hand-meta"><span class="hand-label">Дилер</span><span id="dealer-total" class="hand-total">карты закрыты</span></div>
+                <div id="dealer-cards" class="cards"></div>
+              </div>
+              <hr class="table-divider" />
+              <div class="hand">
+                <div class="hand-meta"><span class="hand-label">Вы</span><span id="player-total" class="hand-total">ожидается раздача</span></div>
+                <div id="player-cards" class="cards"></div>
+              </div>
+            </div>
+            <div class="action-row">
+              <button id="blackjack-deal" class="play" type="button">Раздать карты</button>
+              <button id="blackjack-hit" class="secondary" type="button" disabled>Взять карту</button>
+              <button id="blackjack-stand" class="secondary" type="button" disabled>Стоп</button>
+            </div>
+            <p id="blackjack-result" class="result" role="status" aria-live="polite">Сценарий колоды фиксирован только для демонстрации интерфейса.</p>
+          </section>
+
+          <section class="game-view" data-panel="slot" aria-labelledby="slot-title" hidden>
+            <div class="game-intro">
+              <div>
+                <h2 id="slot-title">Базовый слот</h2>
+                <p class="game-description">Три барабана, одна линия и короткая анимация результата.</p>
+              </div>
+              <span class="badge">3 барабана</span>
+            </div>
+            <div class="slot-machine">
+              <div class="slot-frame">
+                <p class="slot-name">Бурмалдоза 3×1</p>
+                <div class="reels" aria-label="Барабаны слота">
+                  <div id="reel-0" class="reel" aria-label="Первый барабан">🍒</div>
+                  <div id="reel-1" class="reel" aria-label="Второй барабан">🍋</div>
+                  <div id="reel-2" class="reel" aria-label="Третий барабан">🍒</div>
+                </div>
+                <p class="slot-caption">Совпадение трёх символов даёт локальный выигрыш.</p>
+              </div>
+            </div>
+            <div class="action-row"><button id="slot-spin" class="play" type="button">Крутить барабаны</button></div>
+            <p id="slot-result" class="result" role="status" aria-live="polite">Исходы меняются по демонстрационному сценарию.</p>
+          </section>
         </section>
 
         <aside class="side" aria-label="Сведения о пилоте">
@@ -508,71 +670,98 @@
             <strong id="balance" class="balance">4 260 Ⓜ</strong>
             <span class="badge">только в этом браузере</span>
           </section>
-
           <section class="panel">
             <p class="section-heading">Что можно потрогать</p>
             <ul class="checklist">
-              <li>выбор цвета и размера виртуального раунда</li>
-              <li>анимация результата и обновление интерфейса</li>
-              <li>локальная история без аккаунта и передачи данных</li>
+              <li>три независимых игровых сценария</li>
+              <li>выбор действия и размера виртуального раунда</li>
+              <li>общий баланс и локальная история</li>
             </ul>
           </section>
-
           <section class="panel">
             <p class="section-heading">Локальная история</p>
             <ul id="history" class="history" aria-live="polite"></ul>
           </section>
+          <section class="panel">
+            <button id="reset" class="secondary" type="button">Сбросить пилот</button>
+            <p class="fine-print">Сброс возвращает стартовый баланс и очищает историю в этой вкладке.</p>
+          </section>
         </aside>
       </main>
 
-      <footer>
-        «Бурмалдоза» — пилот интерфейса. Он не принимает платежи, не использует реальные деньги,
-        не авторизует пользователя и не сохраняет баланс после обновления страницы.
-      </footer>
+      <footer>«Бурмалдоза» — пилот интерфейса. Он не принимает платежи, не использует реальные деньги, не авторизует пользователя и не сохраняет баланс после обновления страницы.</footer>
     </div>
 
     <script>
       const initialCredits = 4260;
-      const wheel = document.querySelector('#wheel');
-      const stake = document.querySelector('#stake');
-      const form = document.querySelector('#pilot-form');
-      const play = document.querySelector('#play');
-      const reset = document.querySelector('#reset');
-      const balance = document.querySelector('#balance');
-      const result = document.querySelector('#result');
-      const history = document.querySelector('#history');
-      const choices = Array.from(document.querySelectorAll('[data-color]'));
+      const minimumStake = 10;
+      const maximumStake = 500;
       const formatter = new Intl.NumberFormat('ru-RU');
-      const sequence = [
+
+      const balance = document.querySelector('#balance');
+      const stake = document.querySelector('#stake');
+      const reset = document.querySelector('#reset');
+      const history = document.querySelector('#history');
+      const tabs = Array.from(document.querySelectorAll('[data-game]'));
+      const panels = Array.from(document.querySelectorAll('[data-panel]'));
+      const wheel = document.querySelector('#wheel');
+      const roulettePlay = document.querySelector('#roulette-play');
+      const rouletteResult = document.querySelector('#roulette-result');
+      const choices = Array.from(document.querySelectorAll('[data-color]'));
+      const dealerCards = document.querySelector('#dealer-cards');
+      const playerCards = document.querySelector('#player-cards');
+      const dealerTotal = document.querySelector('#dealer-total');
+      const playerTotal = document.querySelector('#player-total');
+      const blackjackDeal = document.querySelector('#blackjack-deal');
+      const blackjackHit = document.querySelector('#blackjack-hit');
+      const blackjackStand = document.querySelector('#blackjack-stand');
+      const blackjackResult = document.querySelector('#blackjack-result');
+      const reels = [0, 1, 2].map((index) => document.querySelector('#reel-' + index));
+      const slotSpin = document.querySelector('#slot-spin');
+      const slotResult = document.querySelector('#slot-result');
+
+      const rouletteSequence = [
         { color: 'red', angle: 18 },
         { color: 'black', angle: 198 },
         { color: 'red', angle: 54 }
       ];
 
+      const blackjackScenarios = [
+        { player: ['10♠', '6♥'], dealer: ['9♣', '6♦'], playerDraw: ['5♦'], dealerDraw: ['5♣'] },
+        { player: ['8♠', '8♥'], dealer: ['10♣', '7♦'], playerDraw: ['K♦'], dealerDraw: [] },
+        { player: ['J♠', 'Q♥'], dealer: ['10♣', 'K♦'], playerDraw: ['2♦'], dealerDraw: [] }
+      ];
+
+      const slotSequence = [
+        { symbols: ['🍒', '🍋', '🍒'], multiplier: 0, label: 'линия не совпала' },
+        { symbols: ['🔔', '🔔', '🔔'], multiplier: 2, label: 'три колокольчика' },
+        { symbols: ['7️⃣', '7️⃣', '7️⃣'], multiplier: 4, label: 'три семёрки' }
+      ];
+
       let credits = initialCredits;
       let selectedColor = 'red';
-      let round = 0;
-      let rotation = 0;
-      let spinning = false;
+      let activeGame = 'roulette';
+      let rouletteRound = 0;
+      let blackjackRound = 0;
+      let slotRound = 0;
+      let wheelRotation = 0;
+      let busy = false;
+      let blackjackState = null;
+
+      function isReducedMotion() {
+        return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      }
+
+      function formatCredits(value) {
+        return formatter.format(value) + ' Ⓜ';
+      }
 
       function colorLabel(color) {
         return color === 'red' ? 'красное' : 'чёрное';
       }
 
       function updateBalance() {
-        balance.textContent = `${formatter.format(credits)} Ⓜ`;
-      }
-
-      function addHistory(label, amount, kind) {
-        const item = document.createElement('li');
-        const name = document.createElement('span');
-        const delta = document.createElement('strong');
-        item.className = 'history-item';
-        name.textContent = label;
-        delta.className = kind;
-        delta.textContent = `${amount > 0 ? '+' : '−'}${formatter.format(Math.abs(amount))} Ⓜ`;
-        item.append(name, delta);
-        history.prepend(item);
+        balance.textContent = formatCredits(credits);
       }
 
       function renderEmptyHistory() {
@@ -582,81 +771,283 @@
         history.replaceChildren(item);
       }
 
-      function setControlsDisabled(disabled) {
-        spinning = disabled;
-        play.disabled = disabled;
-        reset.disabled = disabled;
-        stake.disabled = disabled;
-        choices.forEach((choice) => {
-          choice.disabled = disabled;
+      function addHistory(label, amount, kind) {
+        const item = document.createElement('li');
+        const name = document.createElement('span');
+        const delta = document.createElement('strong');
+        item.className = 'history-item';
+        name.textContent = label;
+        delta.className = kind;
+        delta.textContent = (amount > 0 ? '+' : amount < 0 ? '−' : '±') + formatCredits(Math.abs(amount));
+        item.append(name, delta);
+        history.prepend(item);
+      }
+
+      function stakeAmount() {
+        const amount = Number(stake.value);
+        if (!Number.isFinite(amount) || amount < minimumStake || amount > maximumStake || amount > credits) return null;
+        return amount;
+      }
+
+      function validateStake(resultElement) {
+        const amount = stakeAmount();
+        if (amount !== null) return amount;
+        resultElement.textContent = 'Выберите от 10 до 500 виртуальных жетонов в пределах текущего баланса.';
+        stake.focus();
+        return null;
+      }
+
+      function renderControls() {
+        const blackjackActive = Boolean(blackjackState);
+        stake.disabled = busy || blackjackActive;
+        reset.disabled = busy || blackjackActive;
+        tabs.forEach((tab) => { tab.disabled = busy || blackjackActive; });
+        roulettePlay.disabled = busy || blackjackActive;
+        choices.forEach((choice) => { choice.disabled = busy || blackjackActive; });
+        slotSpin.disabled = busy || blackjackActive;
+        blackjackDeal.disabled = busy || blackjackActive;
+        blackjackHit.disabled = busy || !blackjackActive;
+        blackjackStand.disabled = busy || !blackjackActive;
+      }
+
+      function selectGame(name) {
+        if (busy || blackjackState) return;
+        activeGame = name;
+        tabs.forEach((tab) => tab.setAttribute('aria-pressed', String(tab.dataset.game === activeGame)));
+        panels.forEach((panel) => { panel.hidden = panel.dataset.panel !== activeGame; });
+      }
+
+      function setBusy(nextBusy) {
+        busy = nextBusy;
+        renderControls();
+      }
+
+      function renderRouletteChoices() {
+        choices.forEach((choice) => choice.setAttribute('aria-pressed', String(choice.dataset.color === selectedColor)));
+      }
+
+      function cardRank(card) { return card.slice(0, -1); }
+      function cardSuit(card) { return card.slice(-1); }
+
+      function handValue(cards) {
+        let total = 0;
+        let aces = 0;
+        cards.forEach((card) => {
+          const rank = cardRank(card);
+          if (rank === 'A') {
+            total += 11;
+            aces += 1;
+          } else if (['K', 'Q', 'J', '10'].includes(rank)) {
+            total += 10;
+          } else {
+            total += Number(rank);
+          }
         });
-        play.textContent = disabled ? 'Рулетка крутится…' : 'Запустить демонстрационный раунд';
+        while (total > 21 && aces > 0) {
+          total -= 10;
+          aces -= 1;
+        }
+        return total;
+      }
+
+      function renderCards(element, cards, hideLast) {
+        element.replaceChildren();
+        if (cards.length === 0) {
+          const placeholder = document.createElement('div');
+          placeholder.className = 'card-placeholder';
+          placeholder.textContent = 'Раздайте карты';
+          element.append(placeholder);
+          return;
+        }
+        cards.forEach((card, index) => {
+          const visual = document.createElement('div');
+          const hidden = hideLast && index === cards.length - 1;
+          visual.className = 'card' + (hidden ? ' card--hidden' : '');
+          if (hidden) {
+            visual.textContent = '?';
+            visual.setAttribute('aria-label', 'закрытая карта дилера');
+          } else {
+            visual.textContent = card;
+            visual.setAttribute('aria-label', 'карта ' + card);
+            if (['♥', '♦'].includes(cardSuit(card))) visual.classList.add('card--red');
+          }
+          element.append(visual);
+        });
+      }
+
+      function renderBlackjack() {
+        if (!blackjackState) {
+          renderCards(dealerCards, [], false);
+          renderCards(playerCards, [], false);
+          dealerTotal.textContent = 'карты закрыты';
+          playerTotal.textContent = 'ожидается раздача';
+          return;
+        }
+        const dealerHidden = !blackjackState.revealed;
+        renderCards(dealerCards, blackjackState.dealer, dealerHidden);
+        renderCards(playerCards, blackjackState.player, false);
+        dealerTotal.textContent = dealerHidden
+          ? 'видно: ' + handValue([blackjackState.dealer[0]])
+          : 'сумма: ' + handValue(blackjackState.dealer);
+        playerTotal.textContent = 'сумма: ' + handValue(blackjackState.player);
+      }
+
+      function settleBlackjack(reason) {
+        const state = blackjackState;
+        state.revealed = true;
+        while (handValue(state.dealer) < 17 && state.dealerDraw.length > 0) {
+          state.dealer.push(state.dealerDraw.shift());
+        }
+        const playerValue = handValue(state.player);
+        const dealerValue = handValue(state.dealer);
+        let delta = 0;
+        let outcome = 'ничья';
+        if (reason === 'bust' || playerValue > 21) {
+          delta = -state.stake;
+          outcome = 'перебор';
+        } else if (dealerValue > 21 || playerValue > dealerValue) {
+          delta = state.stake;
+          outcome = dealerValue > 21 ? 'дилер перебрал' : 'выше сумма';
+        } else if (playerValue < dealerValue) {
+          delta = -state.stake;
+          outcome = 'выше сумма у дилера';
+        }
+        credits += delta;
+        updateBalance();
+        renderBlackjack();
+        addHistory('Блэкджек · ' + outcome, delta, delta > 0 ? 'positive' : delta < 0 ? 'negative' : '');
+        blackjackResult.textContent = delta > 0
+          ? 'Выигрыш: ' + outcome + '. Локальный результат: +' + formatCredits(delta) + '.'
+          : delta < 0
+            ? 'Раунд завершён: ' + outcome + '. Локальный результат: −' + formatCredits(Math.abs(delta)) + '.'
+            : 'Ничья: по ' + playerValue + '. Баланс не изменился.';
+        blackjackState = null;
+        renderControls();
       }
 
       function resetPilot() {
         credits = initialCredits;
         selectedColor = 'red';
-        round = 0;
-        rotation = 0;
+        rouletteRound = 0;
+        blackjackRound = 0;
+        slotRound = 0;
+        wheelRotation = 0;
         stake.value = '100';
         wheel.style.setProperty('--rotation', '0deg');
-        choices.forEach((choice) => {
-          choice.setAttribute('aria-pressed', String(choice.dataset.color === selectedColor));
+        reels.forEach((reel, index) => {
+          reel.textContent = ['🍒', '🍋', '🍒'][index];
+          reel.classList.remove('is-spinning');
         });
+        renderRouletteChoices();
+        renderBlackjack();
         updateBalance();
         renderEmptyHistory();
-        result.textContent = 'Пилот сброшен. Исходы снова идут по демонстрационному сценарию.';
+        rouletteResult.textContent = 'Пилот сброшен. Исходы снова идут по демонстрационному сценарию.';
+        blackjackResult.textContent = 'Сценарий колоды фиксирован только для демонстрации интерфейса.';
+        slotResult.textContent = 'Исходы меняются по демонстрационному сценарию.';
+        renderControls();
       }
+
+      tabs.forEach((tab) => tab.addEventListener('click', () => selectGame(tab.dataset.game)));
 
       choices.forEach((choice) => {
         choice.addEventListener('click', () => {
-          if (spinning) return;
           selectedColor = choice.dataset.color;
-          choices.forEach((item) => {
-            item.setAttribute('aria-pressed', String(item.dataset.color === selectedColor));
-          });
-          result.textContent = `Выбрано: ${colorLabel(selectedColor)}.`;
+          renderRouletteChoices();
+          rouletteResult.textContent = 'Выбрано: ' + colorLabel(selectedColor) + '.';
         });
       });
 
-      form.addEventListener('submit', (event) => {
-        event.preventDefault();
-        if (spinning) return;
-
-        const amount = Number(stake.value);
-        if (!Number.isFinite(amount) || amount < 10 || amount > 500 || amount > credits) {
-          result.textContent = 'Выберите от 10 до 500 виртуальных жетонов в пределах текущего баланса.';
-          stake.focus();
-          return;
-        }
-
-        const outcome = sequence[round % sequence.length];
-        rotation += 1080 + outcome.angle;
-        wheel.style.setProperty('--rotation', `${rotation}deg`);
-        setControlsDisabled(true);
-        result.textContent = 'Рулетка крутится…';
-
+      roulettePlay.addEventListener('click', () => {
+        const amount = validateStake(rouletteResult);
+        if (amount === null) return;
+        const outcome = rouletteSequence[rouletteRound % rouletteSequence.length];
+        wheelRotation += 1080 + outcome.angle;
+        wheel.style.setProperty('--rotation', wheelRotation + 'deg');
+        setBusy(true);
+        roulettePlay.textContent = 'Рулетка крутится…';
+        rouletteResult.textContent = 'Рулетка крутится…';
         window.setTimeout(() => {
           const won = selectedColor === outcome.color;
           const delta = won ? amount : -amount;
           credits += delta;
-          round += 1;
+          rouletteRound += 1;
           updateBalance();
-          addHistory(
-            `Рулетка · выпало ${colorLabel(outcome.color)}`,
-            delta,
-            won ? 'positive' : 'negative'
-          );
-          result.textContent = won
-            ? `Выпало ${colorLabel(outcome.color)}. Локальный результат: +${formatter.format(amount)} Ⓜ.`
-            : `Выпало ${colorLabel(outcome.color)}. Локальный результат: −${formatter.format(amount)} Ⓜ.`;
-          setControlsDisabled(false);
-        }, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1250);
+          addHistory('Рулетка · выпало ' + colorLabel(outcome.color), delta, won ? 'positive' : 'negative');
+          rouletteResult.textContent = won
+            ? 'Выпало ' + colorLabel(outcome.color) + '. Локальный результат: +' + formatCredits(amount) + '.'
+            : 'Выпало ' + colorLabel(outcome.color) + '. Локальный результат: −' + formatCredits(amount) + '.';
+          roulettePlay.textContent = 'Запустить раунд';
+          setBusy(false);
+        }, isReducedMotion() ? 0 : 1250);
+      });
+
+      blackjackDeal.addEventListener('click', () => {
+        const amount = validateStake(blackjackResult);
+        if (amount === null) return;
+        const scenario = blackjackScenarios[blackjackRound % blackjackScenarios.length];
+        blackjackState = {
+          dealer: [...scenario.dealer],
+          player: [...scenario.player],
+          playerDraw: [...scenario.playerDraw],
+          dealerDraw: [...scenario.dealerDraw],
+          stake: amount,
+          revealed: false
+        };
+        blackjackRound += 1;
+        renderBlackjack();
+        renderControls();
+        blackjackResult.textContent = 'Карты разданы. Возьмите карту или остановитесь.';
+      });
+
+      blackjackHit.addEventListener('click', () => {
+        if (!blackjackState) return;
+        const nextCard = blackjackState.playerDraw.shift() || '2♣';
+        blackjackState.player.push(nextCard);
+        renderBlackjack();
+        if (handValue(blackjackState.player) >= 21) {
+          settleBlackjack(handValue(blackjackState.player) > 21 ? 'bust' : 'stand');
+        } else {
+          blackjackResult.textContent = 'Карта ' + nextCard + '. Можно взять ещё одну или остановиться.';
+        }
+      });
+
+      blackjackStand.addEventListener('click', () => {
+        if (blackjackState) settleBlackjack('stand');
+      });
+
+      slotSpin.addEventListener('click', () => {
+        const amount = validateStake(slotResult);
+        if (amount === null) return;
+        const outcome = slotSequence[slotRound % slotSequence.length];
+        setBusy(true);
+        slotSpin.textContent = 'Барабаны крутятся…';
+        slotResult.textContent = 'Барабаны крутятся…';
+        reels.forEach((reel) => reel.classList.add('is-spinning'));
+        window.setTimeout(() => {
+          reels.forEach((reel, index) => {
+            reel.textContent = outcome.symbols[index];
+            reel.classList.remove('is-spinning');
+          });
+          const delta = outcome.multiplier === 0 ? -amount : amount * outcome.multiplier;
+          credits += delta;
+          slotRound += 1;
+          updateBalance();
+          addHistory('Слот · ' + outcome.label, delta, delta > 0 ? 'positive' : 'negative');
+          slotResult.textContent = outcome.multiplier === 0
+            ? 'Выпало: ' + outcome.symbols.join(' ') + '. Локальный результат: −' + formatCredits(amount) + '.'
+            : 'Выпало: ' + outcome.symbols.join(' ') + '. Локальный результат: +' + formatCredits(delta) + '.';
+          slotSpin.textContent = 'Крутить барабаны';
+          setBusy(false);
+        }, isReducedMotion() ? 0 : 900);
       });
 
       reset.addEventListener('click', resetPilot);
+      renderRouletteChoices();
+      renderBlackjack();
       updateBalance();
       renderEmptyHistory();
+      renderControls();
     </script>
   </body>
 </html>

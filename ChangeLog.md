@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Expanded the Pages pilot with local-only blackjack and a three-reel slot, a shared virtual balance, scripted outcomes, and keyboard-accessible game controls.
 - Removed external-project comparisons from repository copy and added a client-facing, interactive Pages pilot that uses only local virtual demo state.
 - Documented the SvelteKit client stack and its boundaries with the FastAPI backend.
 - Reworked the README hero: removed the obscured information card, split the Russian description into readable lines, and replaced the ornament with a clean transparent roulette featuring exactly four diagonal brass levers.
