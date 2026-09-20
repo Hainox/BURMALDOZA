@@ -1,4 +1,7 @@
-FROM ghcr.io/astral-sh/uv:0.12.15-python3.12-bookworm-slim
+FROM ghcr.io/astral-sh/uv:0.12.15 AS uv
+FROM python:3.12-slim-bookworm
+
+COPY --from=uv /uv /uvx /bin/
 
 WORKDIR /app
 

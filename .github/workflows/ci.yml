@@ -85,6 +85,12 @@ jobs:
       - name: Mini App build
         run: pnpm miniapp:build
 
+      - name: Docker Compose image build
+        env:
+          POSTGRES_PASSWORD: ci-build-only
+          BOT_TOKEN: ci-build-only
+        run: docker compose build api bot miniapp
+
       - name: Mini App e2e
         run: pnpm miniapp:e2e
 
