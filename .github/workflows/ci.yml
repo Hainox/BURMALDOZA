@@ -73,6 +73,9 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install Playwright browser
+        run: pnpm --dir apps/miniapp exec playwright install --with-deps chromium
+
       - name: Mini App check
         run: pnpm miniapp:check
 
@@ -81,6 +84,9 @@ jobs:
 
       - name: Mini App build
         run: pnpm miniapp:build
+
+      - name: Mini App e2e
+        run: pnpm miniapp:e2e
 
       - name: Generate Monte Carlo evidence
         run: |
