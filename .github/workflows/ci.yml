@@ -62,13 +62,13 @@ jobs:
       - name: Python tests
         run: uv run --locked pytest -q
 
+      - name: Enable pnpm
+        run: corepack enable && corepack prepare pnpm@11.19.0 --activate
+
       - uses: actions/setup-node@v6
         with:
           node-version: "24"
           cache: pnpm
-
-      - name: Enable pnpm
-        run: corepack enable && corepack prepare pnpm@11.19.0 --activate
 
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
