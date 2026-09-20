@@ -1,0 +1,14 @@
+{
+  "hit_rate": 0.47395,
+  "max_drawdown": 5200,
+  "p50_ending_bankroll": 1000720.0,
+  "p5_ending_bankroll": 998620.0,
+  "p95_ending_bankroll": 1002590.0,
+  "rtp": 0.99892,
+  "ruleset_version": "slot-skeleton-1",
+  "seed": 42,
+  "source_commit": "ef2ac4e568f6878d865615c4c9fc70ac5d9c4213",
+  "trials": 100000,
+  "variance": 194.95988336,
+  "simulation_command": "python -m devtools.monte_carlo.slot --trials 100000 --bet 10 --seed 42 --json"
+}

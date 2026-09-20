@@ -15,18 +15,18 @@
 | Локальное состояние | Svelte 5 runes: `$state`, `$derived`, `$effect` | Состояние экрана живёт рядом с экраном; глобальный store не добавляется без общей потребности. |
 | Telegram bridge | Тонкий внутренний адаптер над `window.Telegram.WebApp` | Вызовы Telegram не размазываются по компонентам; `initData` проверяет только FastAPI. |
 | HTTP | Типизированный `fetch`-клиент поверх API-контрактов | Клиент не рассчитывает баланс, исходы или лимиты. |
-| Схемы на границе | Zod | Добавляется вместе с реальными API-формами, чтобы валидировать только ввод и ответы, а не дублировать серверные правила. |
-| Server state | `@tanstack/svelte-query` | Добавляется с первым read/write API: кеш, загрузка, retry и инвалидация остаются единообразными. |
+| Схемы на границе | Pydantic contracts на API + typed client boundary | Zod можно добавить вместе с реальными API-формами; клиент не дублирует серверные правила. |
+| Server state | Минимальный Svelte state + `ApiClient` | Query/cache слой добавляется после подключения реального read/write lifecycle, а не в demo. |
 | Стили | CSS custom properties и scoped Svelte CSS | Палитра и интервалы задаются токенами; Tailwind не нужен, пока нет повторяемого набора utility-паттернов. |
-| Component tests | Vitest + Testing Library | Проверяют сценарии компонентов без Telegram. |
-| Критические UI-пути | Playwright | Проверяет запуск, ввод ставки, ошибку, результат и мобильные размеры до подключения реальной экономики. |
+| Motion/domain UI tests | Vitest | Проверяют чистый reducer без Telegram и браузера. |
+| Критические UI-пути | Playwright | Specs проверяют dashboard, reduced motion, confirmed result и reconnect; запуск требует browser runtime. |
 
 ## Почему это подходит
 
 - `adapter-static` даёт переносимый статический build для CDN и GitHub Pages; API и бот разворачиваются отдельно.
 - Svelte 5 runes дают явное состояние без внешнего store для простых экранов.
 - Слои Telegram, HTTP и UI остаются раздельными, поэтому браузерный пилот не получает скрытых привилегий Mini App.
-- Новые runtime-зависимости не добавляются в Draft-этапе: сначала утверждаются первая игра, правила экономики и API-контракты из BuildSpec.
+- Foundation dependencies установлены и lock-файлы зафиксированы; новые runtime-зависимости добавляются только вместе с API-контрактом и тестом, который их оправдывает.
 
 ## Целевая раскладка Mini App
 
@@ -35,7 +35,7 @@ apps/miniapp/src/
   lib/
     components/       # маленькие переиспользуемые UI-компоненты
     features/         # home, game, wallet, leaderboard
-    platform/telegram.ts
+    telegram/webapp.ts
     api/client.ts
   routes/             # экраны и навигация
 ```

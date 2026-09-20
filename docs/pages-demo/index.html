@@ -635,16 +635,16 @@
     <div class="shell">
       <header class="topbar">
         <div class="brand"><img class="brand-avatar" src="./assets/memendoza-channel-avatar.jpg" alt="Аватар сообщества Memendoza" width="32" height="32">БУРМАЛДОЗА</div>
-        <span class="status">интерактивный пилот · локальный сценарий</span>
+        <span class="status">DEMO ONLY · детерминированный локальный сценарий</span>
       </header>
 
       <main id="pilot" class="layout">
         <section class="panel game" aria-labelledby="pilot-title">
-          <p class="eyebrow">Пилот интерфейса</p>
-          <h1 id="pilot-title">Виртуальный игровой стол</h1>
-          <p class="lead">Выберите игру, задайте число виртуальных жетонов и пройдите короткий сценарий. Это проверка интерфейса: без аккаунта, сети и реальных денег.</p>
+          <p class="eyebrow">Pages demo · без сервера</p>
+          <h1 id="pilot-title">Визуальный игровой пилот</h1>
+          <p class="lead">Выберите комнату, задайте число Jokergem и пройдите короткий локальный сценарий. Это не server-authoritative Mini App: без аккаунта, сети и реальных денег.</p>
           <ul class="principles" aria-label="Границы пилота">
-            <li>виртуальные жетоны</li>
+            <li>Jokergem в памяти вкладки</li>
             <li>без Telegram-авторизации</li>
             <li>ничего не сохраняется</li>
           </ul>
@@ -657,17 +657,17 @@
 
           <div class="stake-row">
             <div>
-              <label for="stake">Виртуальные жетоны</label>
+              <label for="stake">Jokergem</label>
               <input id="stake" name="stake" type="number" value="100" min="10" max="500" step="10" inputmode="numeric" aria-describedby="stake-hint" />
             </div>
-            <p id="stake-hint" class="fine-print">От 10 до 500 Ⓜ в пределах баланса.</p>
+            <p id="stake-hint" class="fine-print">От 10 до 500 JG в пределах локального баланса.</p>
           </div>
 
           <section class="game-view" data-panel="roulette" aria-labelledby="roulette-title">
             <div class="game-intro">
               <div>
-                <h2 id="roulette-title">Рулетка</h2>
-                <p class="game-description">Выберите цвет и посмотрите результат локального раунда.</p>
+                <h2 id="roulette-title">Legacy рулетка</h2>
+                <p class="game-description">Demo-only панель для проверки старой визуальной механики.</p>
               </div>
               <span class="badge">2 цвета</span>
             </div>
@@ -713,8 +713,8 @@
           <section class="game-view" data-panel="slot" aria-labelledby="slot-title" hidden>
             <div class="game-intro">
               <div>
-                <h2 id="slot-title">Базовый слот</h2>
-                <p class="game-description">Три барабана, одна линия и короткая анимация результата.</p>
+                <h2 id="slot-title">Legacy 3×1 слот</h2>
+                <p class="game-description">Demo-only предшественник нового server-authoritative 3×7 Slot.</p>
               </div>
               <span class="badge">3 барабана</span>
             </div>
@@ -736,15 +736,15 @@
 
         <aside class="side" aria-label="Сведения о пилоте">
           <section class="panel">
-            <p class="section-heading">Виртуальный баланс</p>
-            <strong id="balance" class="balance">4 260 Ⓜ</strong>
-            <span class="badge">только в этом браузере</span>
+            <p class="section-heading">Локальный Jokergem</p>
+            <strong id="balance" class="balance">4 260 JG</strong>
+            <span class="badge">только в памяти вкладки</span>
           </section>
           <section class="panel">
             <p class="section-heading">Что можно потрогать</p>
             <ul class="checklist">
               <li>три независимых игровых сценария</li>
-              <li>выбор действия и размера виртуального раунда</li>
+              <li>выбор действия и размера локального раунда</li>
               <li>общий баланс и локальная история</li>
             </ul>
           </section>
@@ -827,7 +827,7 @@
       }
 
       function formatCredits(value) {
-        return formatter.format(value) + ' Ⓜ';
+        return formatter.format(value) + ' JG';
       }
 
       function colorLabel(color) {
@@ -866,7 +866,7 @@
       function validateStake(resultElement) {
         const amount = stakeAmount();
         if (amount !== null) return amount;
-        resultElement.textContent = 'Выберите от 10 до 500 виртуальных жетонов в пределах текущего баланса.';
+        resultElement.textContent = 'Выберите от 10 до 500 JG в пределах локального баланса.';
         stake.focus();
         return null;
       }

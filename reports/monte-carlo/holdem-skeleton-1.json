@@ -1,0 +1,11 @@
+{
+  "equity": 0.23942,
+  "loss_rate": 0.76058,
+  "ruleset_version": "holdem-skeleton-1",
+  "seed": 42,
+  "source_commit": "ef2ac4e568f6878d865615c4c9fc70ac5d9c4213",
+  "tie_rate": 0.0,
+  "trials": 100000,
+  "win_rate": 0.23942,
+  "simulation_command": "python -m devtools.monte_carlo.holdem --trials 100000 --seed 42 --json"
+}

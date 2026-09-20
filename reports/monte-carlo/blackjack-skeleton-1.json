@@ -1,0 +1,15 @@
+{
+  "average_net_delta": -1.42387,
+  "confidence_interval_high": -1.2722131835470802,
+  "confidence_interval_low": -1.5755268164529197,
+  "loss_rate": 0.49246,
+  "push_rate": 0.09447,
+  "ruleset_version": "blackjack-gfl-skeleton-1",
+  "seed": 42,
+  "source_commit": "ef2ac4e568f6878d865615c4c9fc70ac5d9c4213",
+  "strategy": "basic-hit-stand",
+  "trials": 100000,
+  "variance": 598.7034042231,
+  "win_rate": 0.41307,
+  "simulation_command": "python -m devtools.monte_carlo.blackjack --trials 100000 --bet 25 --seed 42 --json"
+}

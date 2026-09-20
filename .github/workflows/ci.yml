@@ -1,0 +1,96 @@
+name: Verify game platform
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    env:
+      TEST_DATABASE_URL: postgresql+asyncpg://burmaldoza:local-test@localhost:5432/burmaldoza
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: burmaldoza
+          POSTGRES_USER: burmaldoza
+          POSTGRES_PASSWORD: local-test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U burmaldoza -d burmaldoza"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.15"
+          enable-cache: true
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: uv sync --locked --all-groups
+
+      - name: Python lint
+        run: uv run --locked ruff check .
+
+      - name: Python tests
+        run: uv run --locked pytest -q
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: pnpm
+
+      - name: Enable pnpm
+        run: corepack enable && corepack prepare pnpm@11.19.0 --activate
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Mini App check
+        run: pnpm miniapp:check
+
+      - name: Mini App unit tests
+        run: pnpm miniapp:test
+
+      - name: Mini App build
+        run: pnpm miniapp:build
+
+      - name: Generate Monte Carlo evidence
+        run: |
+          mkdir -p reports/monte-carlo
+          python -m devtools.monte_carlo.slot --trials 100000 --bet 10 --seed 42 --json > reports/monte-carlo/slot-skeleton-1.json
+          python -m devtools.monte_carlo.blackjack --trials 100000 --bet 25 --seed 42 --json > reports/monte-carlo/blackjack-skeleton-1.json
+          python -m devtools.monte_carlo.holdem --trials 100000 --seed 42 --json > reports/monte-carlo/holdem-skeleton-1.json
+
+      - name: Upload Monte Carlo evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: monte-carlo-reports
+          path: reports/monte-carlo/*.json

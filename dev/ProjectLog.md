@@ -103,3 +103,15 @@
 - Добавлены переходы рулетки, последовательная раздача/раскрытие карт блэкджека и независимые остановки барабанов слота; действия блокируются на время перехода.
 - Верификация: `git diff --check`, синтаксис встроенного JavaScript; отдельный headless Edge проверил раунд каждой игры, сброс состояния, нулевые ошибки/предупреждения консоли и отсутствие внешних запросов. На ширине 390 px горизонтального переполнения нет; завершённое состояние слота проверено после конца stop-анимаций.
 - Открыто по этому изменению: нет.
+
+## 2026-09-20 — server-authoritative game platform foundation
+
+- Зафиксированы три комнаты первого skeleton: 3×7 Slot, Blackjack GFL и heads-up Hold’em / RGG Poker.
+- Добавлены pure domain rules, OS-backed CSPRNG adapter, deterministic Monte Carlo runners, PostgreSQL/Alembic models, atomic Jokergem ledger, Telegram `initData` verification, room snapshots/events, reconnect handling и safe aiogram commands.
+- Jokergem (`JOKERGEM`) оставлен provisional display name. Baseline economy: welcome `1000`, daily `250`, relief `300` below `50` once per `72h`; real money, Stars, withdrawal and exchange remain out of scope.
+- Собран native mobile-first Mini App shell: dashboard, balance, three room views, safe areas, focus states, reduced-motion reducer, explicit `SERVER CONFIRMED · DEMO` boundary и CSS choreography for resolving/outcome/settle states.
+- Верификация backend: `uv run --locked pytest -q` — 68 passed, 3 PostgreSQL integration tests skipped без `TEST_DATABASE_URL`; `uv run --locked ruff check .` — clean; `uv lock --check` — clean. Отдельный запуск integration с `TEST_DATABASE_URL=postgresql+asyncpg://...@127.0.0.1:5432/...` проведён и дал ожидаемый `ConnectionRefusedError`, потому что PostgreSQL/Docker в текущем runtime отсутствует.
+- Верификация Mini App: `pnpm install --frozen-lockfile`, `uv sync --locked --all-groups`, `pnpm miniapp:check` — 0 errors/0 warnings; `pnpm miniapp:test` — 4 passed; `pnpm miniapp:build` — passed.
+- E2E-сценарии добавлены для dashboard, reduced motion, result confirmation и reconnect. Запуск остановлен до тестов: в окружении нет Chromium, а CDN Playwright вернул timeout/502 при установке browser runtime. Это открытый инфраструктурный блокер, не зелёный результат.
+- Добавлены Dockerfile для API, bot и Mini App, Compose services `postgres`, `redis`, `api`, `bot`, `miniapp` и обязательный CI job с PostgreSQL/Redis services и Monte Carlo artifacts. YAML/JSON/offline Alembic проверены; `POSTGRES_PASSWORD=local-test BOT_TOKEN=placeholder docker compose config -q` проведён и заблокирован отсутствующим бинарником `docker`.
+- Зафиксированы отчёты `reports/monte-carlo/*.json`: 100 000 trials, seed `42`, ruleset version и source commit для трёх skeleton-симуляций. Эти числа не являются approval монетизации или юридической оценкой.

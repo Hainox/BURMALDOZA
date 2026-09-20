@@ -4,130 +4,91 @@
 
 # Бурмалдоза
 
-Виртуальное казино и игровой слой для Telegram-сообщества. Первый запуск планируется для Memendoza: игры — в Mini App, общение — в чате.
+Игровой слой для Telegram-сообщества Memendoza: бот — точка входа, Mini App — игровой лаунж, FastAPI — источник подтверждённого состояния.
 
-[Открыть интерактивный пилот](https://hainox.github.io/BURMALDOZA/) · [Запустить локально](#разработка) · [Роадмап](./docs/Development-Roadmap.md) · [Техническая архитектура](./docs/Technical-Architecture.md)
+[Открыть Pages-пилот](https://hainox.github.io/BURMALDOZA/) · [Локальный запуск](./docs/Local-Setup.md) · [BuildSpec](./dev/BuildSpec.md) · [Архитектура](./docs/Technical-Architecture.md)
 
-> Сейчас это **дизайн-прототип и технический каркас**, не работающий Telegram-бот. Серверная экономика, авторизация, игровые команды и платежи ещё не реализованы. [BuildSpec](./dev/BuildSpec.md) остаётся черновиком.
+> В репозитории есть два контура: автономный Pages-demo для визуальной идеи и server-authoritative foundation для будущего Telegram Mini App. Pages-demo не подключён к API, базе, платежам или реальному балансу.
 
-## Демо
+## Что собрано
 
-Интерактивный пилот показывает предполагаемый интерфейс: виртуальный баланс, рулетку, базовый слот, блэкджек, результат и историю. Его можно открыть по адресу **https://hainox.github.io/BURMALDOZA/**. Для локального запуска достаточно Python — Node.js, Docker и Telegram-аккаунт не нужны.
+| Часть | Сейчас | Граница |
+|---|---|---|
+| Domain | 3×7 Slot, Blackjack GFL, heads-up Hold’em / RGG Poker | чистые правила, CSPRNG adapter, seeded Monte Carlo вне request path |
+| Economy | Jokergem (`JOKERGEM`), welcome/daily/relief baseline | целые единицы, append-only ledger, no cash value |
+| API | FastAPI auth, wallet, rooms, snapshots/events, reconnect | raw Telegram `initData`, idempotency, state version |
+| Bot | aiogram `/start`, `/casino`, `/balance`, `/top`, `/help` | ответы по явной команде, API-backed balance/top |
+| Mini App | SvelteKit shell, три room views, safe areas, reduced motion | UI получает подтверждённый результат; локальный skeleton помечен DEMO |
+| Runtime | Dockerfile API/bot/Mini App, Compose, CI | PostgreSQL 16, Redis 7, health checks |
 
-Из корня репозитория:
+## Игровые комнаты
 
-```bash
-python -m http.server 4173 --bind 127.0.0.1 --directory docs/pages-demo
-```
+- **3×7 Slot** — три барабана, семь рядов и payline choreography.
+- **Blackjack GFL** — Hit / Stand / Double, dealer hole-card и staggered deal.
+- **Hold’em / RGG Poker** — два места, один pot, Fold / Check / Call / Raise.
 
-Откройте **http://localhost:4173/**.
+У всех комнат одна state-driven последовательность: `intent → accepted → resolving → confirmed outcome → settle`. Анимация не генерирует исход; она объясняет уже подтверждённое событие. При reduced motion промежуточные эффекты схлопываются, но legal actions и result explanation остаются.
 
-- Стартовый баланс — 4 260 демонстрационных жетонов; размер виртуального раунда — от 10 до 500.
-- Рулетка, блэкджек и слот работают только как последовательные сценарии в браузере. Это не случайные игры и не модели вероятностей будущих игр.
-- После обновления страницы баланс и история сбрасываются. Демо не отправляет игровые данные на сервер, не сохраняет их и не принимает платежи.
-- В блэкджеке доступны «Взять карту» и «Стоп»; слот содержит три барабана и одну демонстрационную линию.
+## Jokergem v0.1
 
-Для показа через GitHub Pages используется [workflow](./.github/workflows/deploy-pages.yml). Каждый push с изменениями пилота автоматически создаёт новый deploy; состояние видно в [Actions](https://github.com/Hainox/BURMALDOZA/actions).
+Название provisional и может быть заменено без миграции целочисленных балансов.
 
-Пошаговая инструкция и ручные проверки: [Pages-Deploy.md](./docs/Pages-Deploy.md).
+- welcome: `1 000` один раз;
+- daily: `250` раз в 24 часа;
+- relief: `300` при балансе ниже `50`, не чаще раза в 72 часа;
+- нет покупки, вывода, обмена, Stars, призов и реальных денег.
 
-## Что есть в репозитории
-
-| Часть | Реализовано сейчас | Дальше, после утверждения ТЗ |
-| --- | --- | --- |
-| Демо | Автономный HTML/CSS/JS-пилот: рулетка, блэкджек и слот | Перенос утверждённого интерфейса в Mini App |
-| Mini App | SvelteKit + TypeScript, стартовая страница, `adapter-static` | Telegram-авторизация, игры, история и рейтинг |
-| API | FastAPI, `GET /health`, unit-тест | Проверка `initData`, игровые запросы, лимиты и роли |
-| Бот | Чтение и проверка обязательной конфигурации | Запуск aiogram, команды и привязка чата |
-| Данные | Compose-сервисы PostgreSQL и Redis; каркасы domain/contracts | Миграции, журнал операций и идемпотентность |
-| Документация | Vision, черновик BuildSpec, дизайн-концепция, роадмап | Точное ТЗ администратора и критерии приёмки |
-
-**Pages-демо и SvelteKit-приложение — разные части проекта.** Текущий Pages workflow публикует `docs/pages-demo`, а не сборку `apps/miniapp`.
-
-## К чему идём
-
-Пользователь открывает игру из Telegram. Mini App показывает интерфейс, API проверяет пользователя и запрос, сервер рассчитывает исход, PostgreSQL хранит журнал операций. Redis планируется использовать для лимитов и вспомогательного состояния; защита от двойного списания должна обеспечиваться транзакциями и ограничениями БД.
-
-<p align="center">
-  <img src="./assets/readme/architecture.svg" width="100%" alt="Целевая архитектура, ещё не реализована: вход из Telegram, интерфейс Mini App, FastAPI с игровыми правилами, PostgreSQL и Redis.">
-</p>
-
-Изоляция интерфейса, правил и хранения позволит добавлять игры без переписывания бота. Сейчас схема описывает направление разработки, а не действующую интеграцию.
-
-Границы первого релиза:
-
-- Одна стартовая игра и один целевой чат. Точные правила, лимиты и роли ещё нужно утвердить.
-- Только виртуальные жетоны: без вывода, обмена, реальных денег и покупки шансов.
-- Донат через Telegram Stars рассматривается отдельно и не входит в текущий билд.
-- Никакого сбора истории чатов, публикации от имени пользователя или автоматических рассылок по умолчанию.
+Это техническая baseline-конфигурация для закрытого теста, а не обещание дохода и не решение о монетизации.
 
 ## Разработка
 
-Для технического каркаса нужны Python 3.12+, `uv`, Node.js 24+ и pnpm **11.19.0** (версия указана в `package.json`). Docker Engine с Compose нужен только для локальных PostgreSQL/Redis.
-
 ```bash
-git clone https://github.com/Hainox/BURMALDOZA.git
-cd BURMALDOZA
-uv sync --locked --all-groups
+cp .env.example .env
 pnpm install --frozen-lockfile
+uv sync --locked --all-groups
+pnpm --dir apps/miniapp exec playwright install chromium
 ```
 
-Версии зависимостей сохранены в `uv.lock` и `pnpm-lock.yaml`. Владелец разрешил install-script только для `esbuild` в `pnpm-workspace.yaml`; новые пакеты с такими скриптами требуют отдельной проверки. Подробности — в [Local-Setup.md](./docs/Local-Setup.md).
+Полная Compose-инструкция и правила секретов: [docs/Local-Setup.md](./docs/Local-Setup.md).
 
-API запускается отдельно:
-
-```bash
-uv run uvicorn app.main:app --app-dir apps/api --reload
-```
-
-Проверка: **http://127.0.0.1:8000/health** должна вернуть `{"status":"ok","service":"api"}`. Этот endpoint проверяет только доступность API, не БД и не готовность игрового контура.
-
-В другом терминале можно открыть стартовую страницу SvelteKit:
+Основные проверки:
 
 ```bash
-pnpm miniapp:dev
-```
-
-Бот пока не имеет команды запуска и обработчиков Telegram. Токен для демо, стартовой страницы и `/health` не нужен. Подготовка `.env` и базы описана в [Local-Setup.md](./docs/Local-Setup.md); реальные секреты не коммитьте.
-
-## Проверки
-
-После установки зависимостей:
-
-```bash
-uv run pytest -q
-uv run ruff check .
+uv run --locked ruff check .
+uv run --locked pytest -q
 pnpm miniapp:check
+pnpm miniapp:test
 pnpm miniapp:build
-docker compose config -q
+pnpm miniapp:e2e
 ```
 
-Последняя команда требует локальной `.env` с `POSTGRES_PASSWORD`. Проверка конфигурации Compose не заменяет запуск сервисов.
+Monte Carlo evidence:
 
-При подготовке публикации:
+```bash
+python -m devtools.monte_carlo.slot --trials 100000 --bet 10 --seed 42 --json
+python -m devtools.monte_carlo.blackjack --trials 100000 --bet 25 --seed 42 --json
+python -m devtools.monte_carlo.holdem --trials 100000 --seed 42 --json
+```
 
-- `pytest`: 1 тест пройден; 2 deprecation-предупреждения зависимостей Starlette/httpx/AnyIO.
-- `ruff`: ошибок нет; `svelte-check`: 0 ошибок и 0 предупреждений; статическая SvelteKit-сборка завершилась успешно.
-- Аудит обоих изображений README, проверка локальных ссылок, JSON/SVG и синтаксиса Python пройдены.
-- Синтаксис встроенного JavaScript и структура HTML пилота прошли локальную проверку. В браузере проверены рулетка, раздача и ход в блэкджеке, спин слота, валидация ставки, общий баланс, блокировка параллельных действий и сброс.
-- Docker/Compose не проверены: Docker отсутствует в окружении. Браузерная проверка на телефоне и компьютере остаётся по [чек-листу](./docs/Pages-Deploy.md).
+CI повторяет Python lint/tests, Mini App check/test/build, PostgreSQL/Redis services и сохраняет три JSON-отчёта как artifact.
 
-Успешная сборка каркаса не означает готовность игровых функций или production-релиза.
+## Проверенное состояние этой ветки
 
-## Документы и следующие решения
+- Python dependencies установлены через `uv sync --locked --all-groups`.
+- Node dependencies установлены через `pnpm install --frozen-lockfile`.
+- `uv run --locked pytest -q`: 68 passed; PostgreSQL integration требуют доступный Docker service.
+- `uv run --locked ruff check .`: clean.
+- `pnpm miniapp:check`: 0 errors/0 warnings.
+- `pnpm miniapp:test`: 4 passed.
+- `pnpm miniapp:build`: passed.
+- Playwright specs добавлены, но локальный запуск требует Chromium; в текущей среде CDN Playwright вернул timeout/502, поэтому этот пункт не маскируется как пройденный.
 
-| Документ | Для чего |
-| --- | --- |
-| [Vision](./dev/Vision.md) | Назначение продукта и постоянные границы |
-| [BuildSpec](./dev/BuildSpec.md) | Черновик состава первого релиза и приёмки |
-| [Роадмап разработки](./docs/Development-Roadmap.md) | Этапы, зависимости и ориентировочные сроки |
-| [Что нужно от владельца](./docs/Roadmap-and-Inputs.md) | Входные данные и решения для разработки |
-| [Дизайн-концепция](./docs/Design-Concept.md) | Экраны и направление интерфейса |
-| [Архитектура](./docs/Technical-Architecture.md) | Компоненты и ответственность модулей |
-| [Журнал проекта](./dev/ProjectLog.md) | Принятые решения, проверки и незавершённая работа |
+## Документы
 
-Следующий шаг — согласовать первую игру, экономику и лимиты, целевой чат и администраторов, затем утвердить BuildSpec. Привязка Telegram и платёжный контур до этого не включаются.
+- [BuildSpec](./dev/BuildSpec.md) — комнаты, экономика, границы и критерии приёмки.
+- [Роадмап](./docs/Development-Roadmap.md) — foundation → tests → QA → thematic content.
+- [Техническая архитектура](./docs/Technical-Architecture.md) — границы модулей и финальный стек.
+- [Design concept](./docs/Design-Concept.md) — native UI и motion system.
+- [Project log](./dev/ProjectLog.md) — решения и evidence.
 
-## Лицензия
-
-Лицензия пока не выбрана; файл `LICENSE` отсутствует. Выбор лицензии остаётся за владельцем проекта.
+Лицензия пока не выбрана; файл `LICENSE` отсутствует.

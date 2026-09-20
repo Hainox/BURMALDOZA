@@ -2,41 +2,75 @@
 
 ## Требования
 
-- Python 3.12+ и менеджер зависимостей `uv` для команд ниже.
-- Node.js 24+ и pnpm 11.19.0 (зафиксирован в `package.json`).
-- Docker Engine с Docker Compose для PostgreSQL и Redis.
+- Python 3.12+ и `uv`.
+- Node.js 24+ и pnpm `11.19.0`.
+- Docker Desktop с Compose v2 для PostgreSQL, Redis и контейнеров проекта.
+- Chromium для Playwright e2e; устанавливается отдельной командой ниже.
 
-## Подготовка
+## Подготовка зависимостей
 
 ```bash
 cp .env.example .env
-# Задайте локальное значение POSTGRES_PASSWORD в .env.
+# Задайте POSTGRES_PASSWORD и свежий BOT_TOKEN.
+# Не используйте токен, который был отправлен в чат или коммит.
 pnpm install --frozen-lockfile
 uv sync --locked --all-groups
-docker compose up -d postgres redis
+pnpm --dir apps/miniapp exec playwright install chromium
 ```
+
+Если CDN браузера недоступен, установите Chromium на хосте и укажите `executablePath` в локальном Playwright config; пропущенный browser runtime нельзя считать зелёным e2e.
+
+## Полный Compose-контур
+
+```bash
+docker compose config -q
+docker compose up -d postgres redis api bot miniapp
+curl --fail http://localhost:8000/health/live
+curl --fail http://localhost:8000/health/ready
+```
+
+Сервисы:
+
+- `postgres` — PostgreSQL 16, durable volumes;
+- `redis` — Redis 7 AOF, locks/presence/pub-sub boundary;
+- `api` — Alembic upgrade + FastAPI на `API_PORT`;
+- `bot` — aiogram polling, требует свежий `BOT_TOKEN`;
+- `miniapp` — статический SvelteKit build через nginx на `MINIAPP_PORT`.
+
+Остановить disposable stack без удаления данных:
+
+```bash
+docker compose down
+```
+
+Для удаления локальных volumes требуется отдельное осознанное действие `docker compose down -v`.
 
 ## Проверки
 
 ```bash
-uv run pytest -q
-uv run ruff check .
+git diff --check
+uv run --locked ruff check .
+uv run --locked pytest -q
 pnpm miniapp:check
+pnpm miniapp:test
 pnpm miniapp:build
-POSTGRES_PASSWORD=local-test-value docker compose config -q
+pnpm miniapp:e2e
 ```
 
-Последняя строка использует синтаксис Bash. В PowerShell задайте `POSTGRES_PASSWORD` в локальной `.env` и выполните `docker compose config -q`.
-
-## Одобрение install-script
-
-Владелец проекта одобрил install-script `esbuild`; разрешение внесено в `pnpm-workspace.yaml`, а проверенная версия `0.28.2` зафиксирована в lockfile. Остальные пакеты автоматически не одобряются. Если при изменении зависимостей появляется `ERR_PNPM_IGNORED_BUILDS`, сначала просмотрите новый скрипт, затем отдельно решите вопрос доверия; не отключайте защиту глобально. Статическое Pages-демо не использует pnpm или esbuild.
-
-## Запуск заготовленных сервисов
+Интеграционные тесты автоматически подключаются, если задан:
 
 ```bash
-uv run uvicorn app.main:app --app-dir apps/api --reload
-pnpm miniapp:dev
+TEST_DATABASE_URL=postgresql+asyncpg://burmaldoza:local-test@localhost:5432/burmaldoza uv run --locked pytest tests/integration -q
 ```
 
-У бота пока есть только проверка конфигурации; polling/webhook runner и обработчики команд отсутствуют. Заполнение `BOT_TOKEN` и `MINIAPP_URL` само по себе не запускает бота. Реализация ожидает утверждения BuildSpec.
+Миграции можно проверить отдельно в disposable PostgreSQL:
+
+```bash
+uv run alembic upgrade head
+uv run alembic downgrade base
+uv run alembic upgrade head
+```
+
+## Без Docker
+
+`pnpm miniapp:check`, `pnpm miniapp:test`, `pnpm miniapp:build`, Python unit-тесты и линтер работают локально. PostgreSQL integration, Alembic online cycle и Compose health checks требуют Docker/Compose; отсутствие Docker не маскируется skip-ами как успешный release check.

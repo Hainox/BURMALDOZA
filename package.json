@@ -5,6 +5,11 @@
   "scripts": {
     "miniapp:dev": "pnpm --dir apps/miniapp dev",
     "miniapp:build": "pnpm --dir apps/miniapp build",
-    "miniapp:check": "pnpm --dir apps/miniapp check"
+    "miniapp:check": "pnpm --dir apps/miniapp check",
+    "test:py": "uv run --locked pytest -q",
+    "lint:py": "uv run --locked ruff check .",
+    "miniapp:test": "pnpm --dir apps/miniapp exec vitest run",
+    "miniapp:e2e": "pnpm --dir apps/miniapp exec playwright test",
+    "verify": "pnpm miniapp:check && pnpm miniapp:test && pnpm miniapp:build"
   }
 }

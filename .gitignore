@@ -12,6 +12,7 @@ node_modules/
 build/
 dist/
 coverage/
+test-results/
 *.sqlite3
 *.log
 .DS_Store
