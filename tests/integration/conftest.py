@@ -20,7 +20,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture
 async def database_engine() -> AsyncIterator[AsyncEngine]:
     if not TEST_DATABASE_URL.startswith("postgresql+asyncpg://"):
         pytest.skip("integration tests require PostgreSQL via asyncpg")
