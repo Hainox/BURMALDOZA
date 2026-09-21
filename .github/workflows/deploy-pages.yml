@@ -4,7 +4,9 @@ on:
   push:
     branches: [main]
     paths:
-      - "docs/pages-demo/**"
+      - "apps/miniapp/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
       - ".github/workflows/deploy-pages.yml"
   workflow_dispatch:
 
@@ -25,9 +27,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+      - name: Enable pnpm
+        run: corepack enable && corepack prepare pnpm@11.19.0 --activate
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: pnpm
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build Mini App for project Pages path
+        env:
+          BASE_PATH: /BURMALDOZA
+        run: pnpm --dir apps/miniapp build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
-          path: docs/pages-demo
+          path: apps/miniapp/build
       - id: deployment
         uses: actions/deploy-pages@v4
