@@ -3,6 +3,7 @@ import {
   SLOT_LAUNCH_STAGGER,
   SLOT_REVEAL_DURATION,
   SLOT_SPIN_DURATION,
+  SLOT_STOP_DURATION,
   SLOT_STOP_STAGGER,
   buildReelTrack,
   getSlotLaunchDelay,
@@ -37,6 +38,7 @@ describe('slot v2 motion contract', () => {
     expect(getSlotStopStart(1)).toBeLessThan(getSlotStopStart(2));
     expect(SLOT_SPIN_DURATION).toBeGreaterThanOrEqual(2_000);
     expect(SLOT_SPIN_DURATION).toBeLessThanOrEqual(3_000);
+    expect(SLOT_STOP_DURATION).toBeGreaterThanOrEqual(900);
     expect(SLOT_REVEAL_DURATION).toBeGreaterThan(getSlotStopDelay(2));
   });
 

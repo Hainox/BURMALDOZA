@@ -3,6 +3,7 @@
   import {
     SLOT_LAUNCH_DURATION,
     SLOT_SPIN_CYCLE_DURATION,
+    SLOT_STOP_DURATION,
     buildReelTrack,
     getSlotLaunchDelay,
     getSlotStopDelay,
@@ -76,7 +77,7 @@
           data-launch-delay={getSlotLaunchDelay(reelIndex)}
           data-stop-delay={getSlotStopDelay(reelIndex)}
           aria-label={`Барабан ${reelIndex + 1}`}
-          style={`--reel-launch-delay: ${getSlotLaunchDelay(reelIndex)}ms; --reel-stop-delay: ${getSlotStopDelay(reelIndex)}ms; --reel-stop-start: ${getSlotStopStart(reelIndex)}; --reel-launch-duration: ${SLOT_LAUNCH_DURATION}ms; --reel-stop-duration: 680ms; --reel-spin-cycle: ${SLOT_SPIN_CYCLE_DURATION}ms;`}
+          style={`--reel-launch-delay: ${getSlotLaunchDelay(reelIndex)}ms; --reel-stop-delay: ${getSlotStopDelay(reelIndex)}ms; --reel-stop-start: ${getSlotStopStart(reelIndex)}; --reel-launch-duration: ${SLOT_LAUNCH_DURATION}ms; --reel-stop-duration: ${SLOT_STOP_DURATION}ms; --reel-spin-cycle: ${SLOT_SPIN_CYCLE_DURATION}ms;`}
         >
           <div class="reel-window">
             <div
@@ -148,7 +149,7 @@
   .reel-window { --symbol-size: clamp(34px, 8vw, 52px); --reel-gap: 6px; position: relative; height: calc(7 * (var(--symbol-size) + var(--reel-gap)) - var(--reel-gap)); overflow: hidden; mask-image: linear-gradient(to bottom, transparent 0, #000 8%, #000 92%, transparent 100%); contain: paint; }
   .reel-track { display: grid; gap: var(--reel-gap); transform: translate3d(0, 0, 0); will-change: transform; backface-visibility: hidden; contain: layout paint; }
   .reel-track.spinning { animation: reelFullSpin var(--reel-spin-cycle) linear var(--reel-launch-delay) infinite; }
-  .reel-track.stopping { animation: reelStagedStop var(--reel-stop-duration) cubic-bezier(.15, .86, .25, 1) var(--reel-stop-delay) both; }
+  .reel-track.stopping { animation: reelStagedStop var(--reel-stop-duration) cubic-bezier(.18, .88, .24, 1) var(--reel-stop-delay) both; }
   .reel-track.outcome { transform: translate3d(0, calc(-21 * (var(--symbol-size) + var(--reel-gap))), 0); }
   .symbol { display: grid; place-items: center; width: 100%; height: var(--symbol-size); border-radius: 10px; background: rgb(11 11 17 / 66%); color: var(--ivory); font-size: clamp(20px, 7vw, 32px); font-weight: 800; line-height: 1; text-shadow: 0 2px 12px rgb(231 187 112 / 22%); }
   .symbol:nth-child(2n) { color: var(--brass-300); }
@@ -174,7 +175,7 @@
   @keyframes reelLaunchWave { 0% { transform: translate3d(0, 5px, 0) scale(.98); opacity: .72; } 55% { transform: translate3d(0, -2px, 0) scale(1.01); opacity: 1; } 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 1; } }
   @keyframes reelStopWave { 0% { transform: translate3d(0, 0, 0) scale(1); } 62% { transform: translate3d(0, -1px, 0) scale(1.012); } 100% { transform: translate3d(0, 0, 0) scale(1); } }
   @keyframes reelFullSpin { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(0, calc(-21 * (var(--symbol-size) + var(--reel-gap))), 0); } }
-  @keyframes reelStagedStop { 0% { transform: translate3d(0, calc(var(--reel-stop-start) * (var(--symbol-size) + var(--reel-gap))), 0); } 45% { transform: translate3d(0, calc(-19 * (var(--symbol-size) + var(--reel-gap))), 0); } 78% { transform: translate3d(0, calc(-20.7 * (var(--symbol-size) + var(--reel-gap))), 0); } 100% { transform: translate3d(0, calc(-21 * (var(--symbol-size) + var(--reel-gap))), 0); } }
+  @keyframes reelStagedStop { from { transform: translate3d(0, calc(var(--reel-stop-start) * (var(--symbol-size) + var(--reel-gap))), 0); } to { transform: translate3d(0, calc(-21 * (var(--symbol-size) + var(--reel-gap))), 0); } }
   @keyframes winningPulse { from { transform: scale(1); } to { transform: scale(1.04); } } @keyframes lightBlink { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
   @media (max-width: 390px) { .free-spins-panel { align-items: stretch; flex-direction: column; } .free-spin-action { width: 100%; } }
 </style>

@@ -5,9 +5,9 @@ export const SLOT_SPIN_DURATION = 2_400;
 export const SLOT_SPIN_CYCLE_DURATION = 840;
 export const SLOT_LAUNCH_DURATION = 280;
 export const SLOT_LAUNCH_STAGGER = 110;
-export const SLOT_STOP_DURATION = 680;
+export const SLOT_STOP_DURATION = 960;
 export const SLOT_STOP_STAGGER = 170;
-export const SLOT_REVEAL_DURATION = SLOT_STOP_DURATION + SLOT_STOP_STAGGER * 2 + 60;
+export const SLOT_REVEAL_DURATION = SLOT_STOP_DURATION + SLOT_STOP_STAGGER * 2 + 80;
 
 export interface SlotOutcome {
   reels: string[][];
