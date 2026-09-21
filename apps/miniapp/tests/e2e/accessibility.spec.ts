@@ -17,6 +17,7 @@ test.describe('Mini App shell', () => {
 
     await expect(page.getByTestId('room-shell')).toBeVisible();
     await expect(page.getByTestId('slot-reel-track-0')).toHaveAttribute('data-track-length', '28');
+    await expect(page.getByTestId('slot-machine')).toHaveAttribute('data-spin-duration', '2400');
     await page.getByTestId('slot-spin').click();
     await expect(page.getByTestId('result-band')).toContainText('SERVER CONFIRMED · DEMO');
     await expect(page.getByTestId('result-band')).toContainText('Линия подтверждена');
@@ -28,7 +29,11 @@ test.describe('Mini App shell', () => {
     await page.getByTestId('room-card-slot').click();
     await page.getByTestId('slot-spin').click();
 
-    await expect(page.getByTestId('slot-machine')).toHaveAttribute('data-reel-phase', 'outcome', { timeout: 3000 });
+    await expect(page.getByTestId('slot-machine')).toHaveAttribute('data-reel-phase', 'spinning');
+    await expect(page.getByTestId('slot-reel-0')).toHaveAttribute('data-launch-delay', '0');
+    await expect(page.getByTestId('slot-reel-1')).toHaveAttribute('data-launch-delay', '110');
+    await expect(page.getByTestId('slot-reel-2')).toHaveAttribute('data-launch-delay', '220');
+    await expect(page.getByTestId('slot-machine')).toHaveAttribute('data-reel-phase', 'outcome', { timeout: 5000 });
     await expect(page.getByTestId('slot-confirmed-grid')).toBeVisible();
     await expect(page.getByTestId('slot-payline')).toBeVisible();
   });

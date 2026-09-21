@@ -8,7 +8,7 @@
   import BlackjackRoom from '$lib/rooms/BlackjackRoom.svelte';
   import PokerRoom from '$lib/rooms/PokerRoom.svelte';
   import SlotRoom from '$lib/rooms/SlotRoom.svelte';
-  import { SLOT_REVEAL_DURATION, type SlotOutcome } from '$lib/game/slot';
+  import { SLOT_REVEAL_DURATION, SLOT_SPIN_DURATION, type SlotOutcome } from '$lib/game/slot';
   import { SessionState } from '$lib/state/session.svelte';
   import { RoomState, type GameType, type RoomResult } from '$lib/state/room.svelte';
 
@@ -120,7 +120,6 @@
 
   function runAction(action: string) {
     if (!selectedGame || isRunning || !roomState.snapshot) return;
-    void action;
     clearTimers();
     isRunning = true;
     roomState.setResult(null);
@@ -128,17 +127,22 @@
     after(140, () => {
       roomState.transition({ type: 'ACTION_ACCEPTED' }, session.reducedMotion);
       after(520, () => {
-        roomState.setResult(
-          selectedGame === 'slot'
-            ? buildDemoSlotResult(action)
-            : demoResults[selectedGame as GameType]
-        );
-        const revealDelay = selectedGame === 'slot' ? SLOT_REVEAL_DURATION : 360;
-        after(revealDelay, () => {
-          roomState.transition({ type: 'RESULT_CONFIRMED' }, session.reducedMotion);
-          after(360, () => {
-            roomState.transition({ type: 'SETTLE_COMPLETE' }, session.reducedMotion);
-            isRunning = false;
+        const confirmedResult = selectedGame === 'slot'
+          ? buildDemoSlotResult(action)
+          : demoResults[selectedGame as GameType];
+        const resultDelay = selectedGame === 'slot'
+          ? Math.max(0, SLOT_SPIN_DURATION - 520)
+          : 0;
+
+        after(resultDelay, () => {
+          roomState.setResult(confirmedResult);
+          const revealDelay = selectedGame === 'slot' ? SLOT_REVEAL_DURATION : 360;
+          after(revealDelay, () => {
+            roomState.transition({ type: 'RESULT_CONFIRMED' }, session.reducedMotion);
+            after(360, () => {
+              roomState.transition({ type: 'SETTLE_COMPLETE' }, session.reducedMotion);
+              isRunning = false;
+            });
           });
         });
       });
