@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="./assets/readme/hero-v2.png" width="100%" alt="Бурмалдоза — виртуальная игровая комната для Telegram-сообщества. Дизайн-прототип и технический каркас, без платежей.">
+  <img src="./assets/readme/hero-v3.png" width="100%" alt="Бурмалдоза — виртуальная игровая комната для Telegram-сообщества с full-body casino-композицией. Server-authoritative foundation без платежей.">
 </p>
 
 # Бурмалдоза
 
 Игровой слой для Telegram-сообщества Memendoza: бот — точка входа, Mini App — игровой лаунж, FastAPI — источник подтверждённого состояния.
 
-[Открыть Pages-пилот](https://hainox.github.io/BURMALDOZA/) · [Локальный запуск](./docs/Local-Setup.md) · [BuildSpec](./dev/BuildSpec.md) · [Архитектура](./docs/Technical-Architecture.md)
+[Открыть Pages-пилот](https://hainox.github.io/BURMALDOZA/) · [Локальный запуск](./docs/Local-Setup.md) · [BuildSpec](./dev/BuildSpec.md) · [Slot v2](./docs/Slot-V2-Status.md) · [CCode workflow](./docs/Command-Code-Workflow.md) · [Архитектура](./docs/Technical-Architecture.md)
 
 > В репозитории есть два контура: автономный Pages-demo для визуальной идеи и server-authoritative foundation для будущего Telegram Mini App. Pages-demo не подключён к API, базе, платежам или реальному балансу.
 
@@ -28,6 +28,8 @@
 - **Hold’em / RGG Poker** — два места, один pot, Fold / Check / Call / Raise.
 
 У всех комнат одна state-driven последовательность: `intent → accepted → resolving → confirmed outcome → settle`. Анимация не генерирует исход; она объясняет уже подтверждённое событие. При reduced motion промежуточные эффекты схлопываются, но legal actions и result explanation остаются.
+
+Slot v2 дополнительно требует полной вертикальной прокрутки барабанов, разгона, инерционного торможения, последовательной остановки слева направо, payout highlight и пяти Free Spins. Бонусная мини-игра пока остаётся временной заглушкой и помечена на отдельную переделку.
 
 ## Jokergem v0.1
 
@@ -89,6 +91,8 @@ CI повторяет Python lint/tests, Mini App check/test/build, PostgreSQL/R
 - [Роадмап](./docs/Development-Roadmap.md) — foundation → tests → QA → thematic content.
 - [Техническая архитектура](./docs/Technical-Architecture.md) — границы модулей и финальный стек.
 - [Design concept](./docs/Design-Concept.md) — native UI и motion system.
+- [Slot v2 status](./docs/Slot-V2-Status.md) — полный цикл барабанов, Free Spins и тестовая матрица.
+- [Codex ↔ Command Code workflow](./docs/Command-Code-Workflow.md) — модели, effort и handoff-шаблон.
 - [Project log](./dev/ProjectLog.md) — решения и evidence.
 
 Лицензия пока не выбрана; файл `LICENSE` отсутствует.

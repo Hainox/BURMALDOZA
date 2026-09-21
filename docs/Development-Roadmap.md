@@ -46,6 +46,8 @@ Python 3.12 + uv, Node 24 + pnpm, Docker Compose с PostgreSQL 16/Redis 7, Alemb
 
 Довести API/WebSocket client, pending action lifecycle, реальные legal actions, wallet/history/leaderboard и серверный result payload. Оставить motion state-driven: `intent → accepted → resolving → confirmed outcome → settle`.
 
+Для Slot v2 обязательны полная вертикальная прокрутка, разгон, инерционное торможение, последовательная остановка барабанов, payout highlight и пять Free Spins. Бонусная мини-игра до отдельной переделки остаётся временной заглушкой; визуальный слой передаётся в CCode по [workflow](./Command-Code-Workflow.md).
+
 ### Этап 5 — Manual QA и закрытая приёмка
 
 **5–7 рабочих дней.**

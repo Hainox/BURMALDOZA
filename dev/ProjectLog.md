@@ -115,3 +115,11 @@
 - E2E-сценарии добавлены для dashboard, reduced motion, result confirmation и reconnect. Запуск остановлен до тестов: в окружении нет Chromium, а CDN Playwright вернул timeout/502 при установке browser runtime. Это открытый инфраструктурный блокер, не зелёный результат.
 - Добавлены Dockerfile для API, bot и Mini App, Compose services `postgres`, `redis`, `api`, `bot`, `miniapp` и обязательный CI job с PostgreSQL/Redis services и Monte Carlo artifacts. YAML/JSON/offline Alembic проверены; `POSTGRES_PASSWORD=local-test BOT_TOKEN=placeholder docker compose config -q` проведён и заблокирован отсутствующим бинарником `docker`.
 - Зафиксированы отчёты `reports/monte-carlo/*.json`: 100 000 trials, seed `42`, ruleset version и source commit для трёх skeleton-симуляций. Эти числа не являются approval монетизации или юридической оценкой.
+
+## 2026-09-21 — product lock и full-body README hero
+
+- Временное название виртуальной валюты подтверждено как **Jokergem**; baseline welcome/daily/relief уже отражён в foundation.
+- Slot v2 зафиксирован как motion-критичная задача: полная прокрутка барабанов, staged stop, подтверждённый `SlotOutcome`, payout highlight и пять Free Spins. Бонусная мини-игра вынесена на отдельную переделку.
+- Для совместной работы с Command Code добавлен handoff workflow: каждая передаваемая задача получает точный model id, effort, ветку, границы файлов и acceptance criteria.
+- README hero заменён на присланную full-body композицию трёх персонажей; точный текст и статусы остаются в SVG-слое, а новый raster hero пересобран из этой основы.
+- Исправлен дрейф времени в auth route test: тестовая подпись теперь создаётся за пять минут до фактического запроса, а production TTL проверки Telegram не ослаблен.

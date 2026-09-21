@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
@@ -14,7 +15,7 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from tests.unit.test_telegram_auth import BOT_TOKEN, NOW, make_init_data
+from tests.unit.test_telegram_auth import BOT_TOKEN, make_init_data
 
 
 def test_room_http_contract_replays_action_and_returns_snapshot_on_stale_request() -> None:
@@ -90,7 +91,8 @@ async def test_telegram_auth_route_verifies_and_persists_minimal_user() -> None:
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             response = await client.post(
-                "/api/v1/auth/telegram", json={"init_data": make_init_data(auth_date=NOW)}
+                "/api/v1/auth/telegram",
+                json={"init_data": make_init_data(auth_date=datetime.now(UTC) - timedelta(minutes=5))},
             )
 
         assert response.status_code == 200

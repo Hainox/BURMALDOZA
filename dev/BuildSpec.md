@@ -16,6 +16,14 @@
 
 Итог раунда рассчитывает сервер. Клиент отправляет intent, получает подтверждённый snapshot/event и лишь затем проигрывает соответствующую фазу движения.
 
+### Slot v2 — обязательный motion-контур
+
+- `SlotOutcome`/room event содержит финальную сетку, paylines, payout, новый баланс и состояние Free Spins.
+- Клиент проигрывает полную вертикальную прокрутку барабанов с разгоном, инерционным торможением и staged stop: левый → центральный → правый.
+- Payline, payout и изменение баланса показываются только после подтверждённой остановки; клиент не генерирует RNG и не исправляет серверный результат.
+- Первый каркас поддерживает пять Free Spins с отдельным серверным исходом каждого вращения.
+- Бонусная мини-игра временно остаётся заглушкой и вынесена в отдельную переделку после приёмки Slot v2.
+
 ## Economy v0.1
 
 - Рабочее название валюты: **Jokergem**, код `JOKERGEM`; название остаётся сменным без миграции балансов.
@@ -53,6 +61,7 @@
 - Старый `state_version` отклоняется; reconnect читает durable snapshot и не дублирует action.
 - Slot, Blackjack и Hold’em проходят доменные переходы, integer payout/tie-split проверки и воспроизводимые симуляции.
 - UI сохраняет legal actions, объяснение результата, focus states, safe-area padding и readable state при reduced motion.
+- Slot UI показывает полную прокрутку барабанов, подтверждённую сетку, payout highlight и Free Spins без подмены outcome на клиенте.
 - Бот не пишет в чат без действия пользователя или явно включённого admin announcement.
 - Секреты не попадают в source, fixtures, logs, Docker image layers или тестовые ответы.
 - CI выполняет Python lint/tests, PostgreSQL integration tests, Mini App check/test/build и три Monte Carlo reports.
@@ -64,3 +73,5 @@
 3. Зафиксировать владельцев, модераторов, целевой чат, FAQ и поддержку.
 4. Провести ручную приёмку iOS, Android и Telegram Desktop на staging.
 5. Провести юридический/security review перед любым платным контуром.
+
+Визуальный motion-слой передаётся в Command Code только по [зафиксированному workflow](../docs/Command-Code-Workflow.md), с моделью, effort, ограничением файлов и тестами.

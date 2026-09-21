@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Replaced the README hero subject with the owner-provided full-body casino composition of the three female characters; the exact project information remains in the SVG/Markdown layer.
+- Documented Slot v2 as a full-reel motion requirement with staged stops, server-confirmed payout, five Free Spins, and a deferred bonus mini-game redesign.
+- Added the Codex ↔ Command Code workflow with explicit model IDs, effort levels, file boundaries, and handoff acceptance criteria.
 - Replaced the Pages demo's initial-letter mark with the Memendoza channel avatar.
 - Animated roulette spins, blackjack card dealing/reveal, and staggered slot stops in the local-only Pages demo.
 - Expanded the Pages pilot with local-only blackjack and a three-reel slot, a shared virtual balance, scripted outcomes, and keyboard-accessible game controls.
