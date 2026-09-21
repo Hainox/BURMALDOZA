@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="./assets/readme/hero-v3.png" width="100%" alt="Бурмалдоза — виртуальная игровая комната для Telegram-сообщества с full-body casino-композицией. Server-authoritative foundation без платежей.">
+  <picture>
+    <source media="(max-width: 700px)" srcset="./assets/readme/hero-mobile.png">
+    <img src="./assets/readme/hero-desktop.png" width="100%" alt="Бурмалдоза — виртуальная игровая комната для Telegram-сообщества с full-body casino-композицией. Server-authoritative foundation без платежей.">
+  </picture>
 </p>
 
 # Бурмалдоза

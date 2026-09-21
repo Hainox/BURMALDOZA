@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="900" height="1200" viewBox="0 0 900 1200" role="img" aria-labelledby="title desc">
+  <title id="title">Бурмалдоза — mobile hero для Telegram Mini App</title>
+  <desc id="desc">Вертикальная mobile-композиция: читаемый информационный блок сверху и full-body casino-композиция снизу без искажения.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#111216"/>
+      <stop offset="1" stop-color="#241316"/>
+    </linearGradient>
+    <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#db6a38"/>
+      <stop offset="1" stop-color="#f0b189"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#d96538" stop-opacity=".2"/>
+      <stop offset="1" stop-color="#d96538" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="900" height="1200" rx="36" fill="url(#bg)"/>
+  <ellipse cx="450" cy="786" rx="410" ry="430" fill="url(#glow)"/>
+  <path d="M60 74H840" stroke="url(#line)" stroke-width="4"/>
+  <text x="60" y="128" fill="#f0b189" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,sans-serif" font-size="24" font-weight="700" letter-spacing="3">TELEGRAM MINI APP · FOUNDATION</text>
+  <text x="60" y="224" fill="#fff7f1" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,sans-serif" font-size="76" font-weight="800" letter-spacing="-3">БУРМАЛДОЗА</text>
+  <text x="60" y="274" fill="#d9cfca" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,sans-serif" font-size="29">Виртуальная игровая комната</text>
+  <text x="60" y="312" fill="#d9cfca" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,sans-serif" font-size="29">для Telegram-сообщества.</text>
+  <text x="60" y="352" fill="#a9a1a0" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,sans-serif" font-size="21">Mini App · server-first экономика</text>
+  <g transform="translate(60 378)">
+    <rect width="206" height="44" rx="22" fill="#2c211e" stroke="#80513b"/>
+    <text x="103" y="29" fill="#f0b189" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="18" font-weight="700">VIRTUAL ONLY</text>
+    <rect x="224" width="246" height="44" rx="22" fill="#1f2227" stroke="#474951"/>
+    <text x="347" y="29" fill="#d2d5db" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="18" font-weight="700">NO PAYMENTS IN V1</text>
+  </g>
+  <rect x="136" y="430" width="628" height="750" rx="28" fill="#35141b" opacity=".58"/>
+  <image href="../hero-subject-fullbody.jpg" xlink:href="../hero-subject-fullbody.jpg" x="169" y="430" width="562" height="750" preserveAspectRatio="xMidYMid meet"/>
+</svg>
