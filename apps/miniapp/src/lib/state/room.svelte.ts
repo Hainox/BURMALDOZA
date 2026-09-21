@@ -1,4 +1,5 @@
 import { reduceMotionState, type MotionEvent, type MotionState } from '$lib/game/motion';
+import type { SlotOutcome } from '$lib/game/slot';
 
 export type GameType = 'slot' | 'blackjack' | 'holdem';
 
@@ -15,6 +16,7 @@ export interface RoomResult {
   headline: string;
   detail: string;
   amount?: number;
+  slotOutcome?: SlotOutcome;
 }
 
 export class RoomState {

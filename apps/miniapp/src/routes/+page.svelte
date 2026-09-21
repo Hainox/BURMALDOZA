@@ -8,6 +8,7 @@
   import BlackjackRoom from '$lib/rooms/BlackjackRoom.svelte';
   import PokerRoom from '$lib/rooms/PokerRoom.svelte';
   import SlotRoom from '$lib/rooms/SlotRoom.svelte';
+  import { SLOT_REVEAL_DURATION, type SlotOutcome } from '$lib/game/slot';
   import { SessionState } from '$lib/state/session.svelte';
   import { RoomState, type GameType, type RoomResult } from '$lib/state/room.svelte';
 
@@ -50,10 +51,17 @@
     holdem: { headline: 'Рука подтверждена', detail: 'Pot рассчитан после подтверждённого действия.', amount: 75 }
   };
 
+  const demoSlotReels = [
+    ['♣', '◆', '7', '✦', '♠', 'A', '♦'],
+    ['7', '♠', '✦', '✦', '◆', 'Q', '♣'],
+    ['◆', '7', '♣', '✦', 'A', '♠', '♦']
+  ];
+
   let selectedGame: GameType | null = null;
   let isRunning = false;
   let timers: number[] = [];
   let motionQuery: MediaQueryList | undefined;
+  let demoFreeSpinsRemaining = 0;
 
   function clearTimers() {
     for (const timer of timers) window.clearTimeout(timer);
@@ -72,6 +80,7 @@
     clearTimers();
     isRunning = false;
     selectedGame = gameType;
+    demoFreeSpinsRemaining = 0;
     session.setConnection('demo');
     const definition = roomDefinitions.find((room) => room.gameType === gameType);
     if (!definition) return;
@@ -86,6 +95,29 @@
     roomState.reset();
   }
 
+  function buildDemoSlotResult(action: string): RoomResult {
+    const isFreeSpin = action === 'free-spin';
+    demoFreeSpinsRemaining = isFreeSpin
+      ? Math.max(0, demoFreeSpinsRemaining - 1)
+      : 5;
+
+    const slotOutcome: SlotOutcome = {
+      reels: demoSlotReels,
+      winningRows: [3],
+      payout: isFreeSpin ? 60 : 40,
+      balance: session.balance + (isFreeSpin ? 60 : 40),
+      freeSpinsAwarded: isFreeSpin ? 0 : 5,
+      freeSpinsRemaining: demoFreeSpinsRemaining
+    };
+
+    return {
+      headline: isFreeSpin ? 'Free Spin подтверждён' : 'Линия подтверждена',
+      detail: 'Исход пришёл с сервера; анимация только показала его.',
+      amount: slotOutcome.payout,
+      slotOutcome
+    };
+  }
+
   function runAction(action: string) {
     if (!selectedGame || isRunning || !roomState.snapshot) return;
     void action;
@@ -96,11 +128,18 @@
     after(140, () => {
       roomState.transition({ type: 'ACTION_ACCEPTED' }, session.reducedMotion);
       after(520, () => {
-        roomState.setResult(demoResults[selectedGame as GameType]);
-        roomState.transition({ type: 'RESULT_CONFIRMED' }, session.reducedMotion);
-        after(360, () => {
-          roomState.transition({ type: 'SETTLE_COMPLETE' }, session.reducedMotion);
-          isRunning = false;
+        roomState.setResult(
+          selectedGame === 'slot'
+            ? buildDemoSlotResult(action)
+            : demoResults[selectedGame as GameType]
+        );
+        const revealDelay = selectedGame === 'slot' ? SLOT_REVEAL_DURATION : 360;
+        after(revealDelay, () => {
+          roomState.transition({ type: 'RESULT_CONFIRMED' }, session.reducedMotion);
+          after(360, () => {
+            roomState.transition({ type: 'SETTLE_COMPLETE' }, session.reducedMotion);
+            isRunning = false;
+          });
         });
       });
     });

@@ -4,19 +4,21 @@
 
   export let result: RoomResult | null = null;
   export let motion: MotionState = 'idle';
+
+  $: isConfirmed = result !== null && (motion === 'outcome' || motion === 'settle');
 </script>
 
-<section class="result-band" class:confirmed={result !== null} data-testid="result-band" aria-live="polite">
-  <span class="result-kicker">{result ? 'SERVER CONFIRMED · DEMO' : 'RESULT BAND'}</span>
+<section class="result-band" class:confirmed={isConfirmed} data-testid="result-band" aria-live="polite">
+  <span class="result-kicker">{isConfirmed ? 'SERVER CONFIRMED · DEMO' : result ? 'RESOLVING · SERVER RESULT' : 'RESULT BAND'}</span>
   <div class="result-row">
     <div>
-      <strong>{result?.headline ?? 'Готово к следующему раунду'}</strong>
-      <p>{result?.detail ?? 'Каждый исход будет подтверждён сервером перед анимацией.'}</p>
+      <strong>{isConfirmed ? result?.headline : result ? 'Ожидаем подтверждённую остановку' : 'Готово к следующему раунду'}</strong>
+      <p>{isConfirmed ? result?.detail : 'Исход получен, но выплата появится после завершения движения.'}</p>
     </div>
-    {#if result?.amount !== undefined}
+    {#if isConfirmed && result?.amount !== undefined}
       <span class="result-amount">{result.amount > 0 ? '+' : ''}{result.amount} <small>JG</small></span>
     {:else}
-      <span class="result-state">{motion.toUpperCase()}</span>
+      <span class="result-state">{isConfirmed ? motion.toUpperCase() : 'RESOLVING'}</span>
     {/if}
   </div>
 </section>

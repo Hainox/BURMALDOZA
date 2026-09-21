@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Implemented the first Slot v2 motion slice: full reel tracks, staged left-to-right stops, server-confirmed grid/payout reveal, five Free Spins, and reduced-motion handling.
 - Replaced the README hero subject with the owner-provided full-body casino composition of the three female characters; the exact project information remains in the SVG/Markdown layer.
 - Documented Slot v2 as a full-reel motion requirement with staged stops, server-confirmed payout, five Free Spins, and a deferred bonus mini-game redesign.
 - Added the Codex ↔ Command Code workflow with explicit model IDs, effort levels, file boundaries, and handoff acceptance criteria.
