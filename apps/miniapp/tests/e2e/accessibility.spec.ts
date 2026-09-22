@@ -37,4 +37,19 @@ test.describe('Mini App shell', () => {
     await expect(page.getByTestId('slot-confirmed-grid')).toBeVisible();
     await expect(page.getByTestId('slot-payline')).toBeVisible();
   });
+
+  test('keeps the reel transform moving during the travel phase', async ({ page }) => {
+    await page.goto('/');
+    await page.getByTestId('room-card-slot').click();
+    await page.getByTestId('slot-spin').click();
+
+    const track = page.getByTestId('slot-reel-track-0');
+    await expect(page.getByTestId('slot-machine')).toHaveAttribute('data-reel-phase', 'spinning');
+
+    const transformBefore = await track.evaluate((element) => getComputedStyle(element).transform);
+    await page.waitForTimeout(160);
+    const transformDuring = await track.evaluate((element) => getComputedStyle(element).transform);
+
+    expect(transformDuring).not.toBe(transformBefore);
+  });
 });

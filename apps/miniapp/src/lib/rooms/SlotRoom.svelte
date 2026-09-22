@@ -85,9 +85,12 @@
           data-stop-delay={getSlotStopDelay(reelIndex)}
           data-stop-start={getSlotStopStart(reelIndex)}
           aria-label={`Барабан ${reelIndex + 1}`}
-          style={`--reel-launch-delay: ${getSlotLaunchDelay(reelIndex)}ms; --reel-stop-delay: ${getSlotStopDelay(reelIndex)}ms; --reel-launch-duration: ${SLOT_LAUNCH_DURATION}ms; --reel-stop-duration: ${SLOT_STOP_DURATION}ms; --reel-spin-cycle: ${SLOT_SPIN_CYCLE_DURATION}ms; --reel-cycle-distance: calc(-${SLOT_SPIN_CYCLE_ROWS} * (var(--symbol-size) + var(--reel-gap))); --reel-final-distance: calc(-${SLOT_FINAL_OFFSET_ROWS} * (var(--symbol-size) + var(--reel-gap)));`}
+          style={`--reel-launch-delay: ${getSlotLaunchDelay(reelIndex)}ms; --reel-stop-delay: ${getSlotStopDelay(reelIndex)}ms; --reel-launch-duration: ${SLOT_LAUNCH_DURATION}ms; --reel-stop-duration: ${SLOT_STOP_DURATION}ms; --reel-spin-cycle: ${SLOT_SPIN_CYCLE_DURATION}ms;`}
         >
-          <div class="reel-window">
+          <div
+            class="reel-window"
+            style={`--reel-cycle-distance: calc(-${SLOT_SPIN_CYCLE_ROWS} * (var(--symbol-size) + var(--reel-gap))); --reel-final-distance: calc(-${SLOT_FINAL_OFFSET_ROWS} * (var(--symbol-size) + var(--reel-gap)));`}
+          >
             <div
               class="reel-track"
               class:spinning={reelPhase === 'spinning'}
