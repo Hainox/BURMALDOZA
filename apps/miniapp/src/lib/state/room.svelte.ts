@@ -17,10 +17,22 @@ export interface RoomResult {
   detail: string;
   amount?: number;
   slotOutcome?: SlotOutcome;
+  blackjackOutcome?: BlackjackOutcome;
+}
+
+export interface BlackjackOutcome {
+  outcome: 'blackjack' | 'win' | 'push' | 'loss';
+  playerTotal: number;
+  dealerTotal: number;
+  grossPayout: number;
+  netDelta: number;
+  balanceAfter: number;
+  rulesetVersion: string;
+  finalBet: number;
 }
 
 export function getResultBalance(result: RoomResult | null) {
-  return result?.slotOutcome?.balance ?? null;
+  return result?.slotOutcome?.balance ?? result?.blackjackOutcome?.balanceAfter ?? null;
 }
 
 export class RoomState {

@@ -18,8 +18,9 @@ describe('room reconnect state', () => {
     expect(state.motion).toBe('settle');
   });
 
-  it('exposes the canonical balance only for a slot result', () => {
+  it('exposes balances only from canonical game results', () => {
     expect(getResultBalance({ slotOutcome: { balance: 1_010 } } as RoomResult)).toBe(1_010);
+    expect(getResultBalance({ blackjackOutcome: { balanceAfter: 1_025 } } as RoomResult)).toBe(1_025);
     expect(getResultBalance({ headline: 'Подтверждено', detail: 'Без баланса' })).toBeNull();
   });
 });

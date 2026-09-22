@@ -16,7 +16,12 @@
     type SlotOutcome
   } from '$lib/game/slot';
   import { ApiClient, type ApiEventEnvelope } from '$lib/api/client';
-  import { isLiveApiEnabled, mapApiEventResult, mapApiPublicStateResult } from '$lib/api/runtime';
+  import {
+    buildRoomActionPayload,
+    isLiveApiEnabled,
+    mapApiEventResult,
+    mapApiPublicStateResult
+  } from '$lib/api/runtime';
   import { SessionState } from '$lib/state/session.svelte';
   import { getResultBalance, RoomState, type GameType, type RoomResult } from '$lib/state/room.svelte';
 
@@ -96,6 +101,13 @@
     if (balance !== null) session.setBalance(balance);
   }
 
+  function updateBalanceFromPublicState(publicState: Record<string, unknown>) {
+    const balance = publicState.wallet_balance;
+    if (typeof balance === 'number' && Number.isInteger(balance) && balance >= 0) {
+      session.setBalance(balance);
+    }
+  }
+
   function connectRoomStream(roomId: string) {
     if (!apiClient) return;
     closeRoomStream?.();
@@ -104,6 +116,7 @@
       (snapshot) => {
         if (roomState.snapshot?.roomId !== roomId) return;
         roomState.setSnapshot(snapshot);
+        updateBalanceFromPublicState(snapshot.publicState);
         const snapshotResult = mapApiPublicStateResult(snapshot.publicState, snapshot.gameType);
         if (snapshotResult) {
           roomState.restoreConfirmedResult(snapshotResult);
@@ -113,12 +126,14 @@
       (event) => {
         if (roomState.snapshot?.roomId !== roomId) return;
         if (event.state_version < roomState.snapshot.stateVersion) return;
+        const publicState = publicStateFromEvent(event);
         const nextSnapshot = {
           ...roomState.snapshot,
           stateVersion: event.state_version,
-          publicState: publicStateFromEvent(event)
+          publicState
         };
         roomState.setSnapshot(nextSnapshot);
+        updateBalanceFromPublicState(publicState);
         roomState.setResult(mapApiEventResult(event, nextSnapshot.gameType));
       }
     );
@@ -233,7 +248,7 @@
       : {};
   }
 
-  async function runLiveAction(action: string) {
+  async function runLiveAction(action: string, fields: Record<string, unknown> = {}) {
     if (!apiClient || !selectedGame || isRunning || !roomState.snapshot) return;
     clearTimers();
     isRunning = true;
@@ -243,6 +258,7 @@
     const roomAtStart = roomState.snapshot;
     const startedAt = performance.now();
     const actionId = crypto.randomUUID();
+    const actionPayload = buildRoomActionPayload(action, fields);
 
     after(SLOT_ACTION_ACCEPT_DELAY, () => {
       roomState.transition({ type: 'ACTION_ACCEPTED' }, session.reducedMotion);
@@ -253,21 +269,29 @@
         roomAtStart.roomId,
         roomAtStart.stateVersion,
         actionId,
-        action === 'spin' ? { action, bet: 10 } : { action }
+        actionPayload
       );
 
       if (!selectedGame || roomState.snapshot?.roomId !== roomAtStart.roomId) return;
       const event = response.event;
+      const publicState = publicStateFromEvent(event);
       roomState.setSnapshot({
         ...roomState.snapshot,
         stateVersion: event.state_version,
-        publicState: publicStateFromEvent(event)
+        publicState
       });
+      updateBalanceFromPublicState(publicState);
       roomState.transition({ type: 'ACTION_ACCEPTED' }, session.reducedMotion);
 
       if (!selectedGame || roomState.snapshot?.roomId !== roomAtStart.roomId) return;
       const confirmedResult = mapApiEventResult(event, selectedGame);
       roomState.setResult(confirmedResult);
+      if (!confirmedResult) {
+        clearTimers();
+        roomState.reset();
+        isRunning = false;
+        return;
+      }
       const resultDelay = selectedGame === 'slot'
         ? Math.max(0, SLOT_TOTAL_DURATION - (performance.now() - startedAt))
         : 360;
@@ -289,9 +313,9 @@
     }
   }
 
-  function runAction(action: string) {
+  function runAction(action: string, fields: Record<string, unknown> = {}) {
     if (liveApiEnabled && apiClient) {
-      void runLiveAction(action);
+      void runLiveAction(action, fields);
       return;
     }
     runDemoAction(action);
@@ -309,6 +333,7 @@
       void apiClient.getRoom(roomId).then((snapshot) => {
         if (roomState.snapshot?.roomId !== roomId) return;
         roomState.setSnapshot(snapshot, true);
+        updateBalanceFromPublicState(snapshot.publicState);
         const snapshotResult = mapApiPublicStateResult(snapshot.publicState, snapshot.gameType);
         if (snapshotResult) {
           roomState.restoreConfirmedResult(snapshotResult);

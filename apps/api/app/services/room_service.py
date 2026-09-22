@@ -4,7 +4,7 @@ import asyncio
 import copy
 import json
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from typing import Any
 from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
@@ -12,7 +12,23 @@ from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 from burmaldoza_contracts.common import GameType, RoomStatus
 from burmaldoza_contracts.events import EventEnvelope
 from burmaldoza_contracts.rooms import ActionRequest, RoomSnapshot, WebSocketAuthMessage
-from burmaldoza_domain.core import InsufficientBalanceError, StateVersionConflictError
+from burmaldoza_domain.core import (
+    InsufficientBalanceError,
+    InvalidActionError,
+    StateVersionConflictError,
+)
+from burmaldoza_domain.economy import LedgerReason
+from burmaldoza_domain.games.blackjack import (
+    BlackjackPhase,
+    BlackjackRules,
+    BlackjackState,
+    Card,
+    deal_initial,
+    settle_blackjack,
+)
+from burmaldoza_domain.games.blackjack import (
+    apply_action as apply_blackjack_action,
+)
 from burmaldoza_domain.games.slot import SlotConfig, SlotOutcome, spin
 from burmaldoza_domain.games.slot_ruleset import load_skeleton_config
 from burmaldoza_domain.rng import RandomSource, SystemRandomSource
@@ -48,8 +64,17 @@ class _MemoryRoom:
     ruleset_version: str
     state_version: int = 0
     public_state: dict[str, Any] = field(default_factory=dict)
+    private_state: dict[str, Any] = field(default_factory=dict)
     members: set[int] = field(default_factory=set)
     actions: dict[UUID, EventEnvelope] = field(default_factory=dict)
+
+
+@dataclass(frozen=True, slots=True)
+class _ActionExecution:
+    result: dict[str, Any] | None = None
+    public_state: dict[str, Any] = field(default_factory=dict)
+    private_state: dict[str, Any] = field(default_factory=dict)
+    clear_result: bool = False
 
 
 class MemoryRoomStore:
@@ -66,7 +91,7 @@ _RULESET_VERSIONS = {
 }
 _LEGAL_ACTIONS = {
     GameType.SLOT: ("spin",),
-    GameType.BLACKJACK: ("hit", "stand", "double"),
+    GameType.BLACKJACK: ("deal", "hit", "stand", "double"),
     GameType.HOLDEM: ("fold", "check", "call", "raise"),
 }
 _ANIMATION_HINTS = {
@@ -111,9 +136,88 @@ def _serialize_slot_result(outcome: SlotOutcome, settlement: SettlementResult) -
 def _initial_public_state(game_type: GameType) -> dict[str, Any]:
     return {
         "phase": "waiting",
-        "legal_actions": list(_LEGAL_ACTIONS[game_type]),
+        "legal_actions": ["deal"] if game_type is GameType.BLACKJACK else list(_LEGAL_ACTIONS[game_type]),
         "action_count": 0,
     }
+
+
+def _serialize_card(card: Card) -> dict[str, str]:
+    return {"rank": card.rank, "suit": card.suit}
+
+
+def _serialize_blackjack_state(state: BlackjackState) -> dict[str, Any]:
+    return {
+        "phase": state.phase.value,
+        "bet": state.bet,
+        "player_cards": [_serialize_card(card) for card in state.player_cards],
+        "dealer_cards": [_serialize_card(card) for card in state.dealer_cards],
+        "dealer_hole_hidden": state.dealer_hole_hidden,
+        "player_total": state.player_total,
+        "dealer_total": state.dealer_total,
+        "state_version": state.state_version,
+        "ruleset_version": state.ruleset_version,
+        "deck": [_serialize_card(card) for card in state.deck],
+        "player_natural_blackjack": state.player_natural_blackjack,
+        "doubled": state.doubled,
+    }
+
+
+def _deserialize_blackjack_state(raw: dict[str, Any]) -> BlackjackState:
+    try:
+        def cards(items: list[dict[str, str]]) -> tuple[Card, ...]:
+            return tuple(Card(rank=item["rank"], suit=item["suit"]) for item in items)
+
+        return BlackjackState(
+            phase=BlackjackPhase(raw["phase"]),
+            bet=raw["bet"],
+            player_cards=cards(raw["player_cards"]),
+            dealer_cards=cards(raw["dealer_cards"]),
+            dealer_hole_hidden=raw["dealer_hole_hidden"],
+            player_total=raw["player_total"],
+            dealer_total=raw["dealer_total"],
+            state_version=raw["state_version"],
+            ruleset_version=raw["ruleset_version"],
+            deck=cards(raw["deck"]),
+            player_natural_blackjack=raw["player_natural_blackjack"],
+            doubled=raw["doubled"],
+        )
+    except (KeyError, TypeError, ValueError) as error:
+        raise RoomServiceError("stored blackjack state is invalid") from error
+
+
+def _blackjack_public_state(state: BlackjackState, wallet_balance: int) -> dict[str, Any]:
+    hidden = state.dealer_hole_hidden and state.phase is BlackjackPhase.PLAYER_TURN
+    if hidden:
+        dealer_cards: list[dict[str, Any]] = [
+            _serialize_card(state.dealer_cards[0]),
+            {"hidden": True},
+        ]
+    else:
+        dealer_cards = [_serialize_card(card) for card in state.dealer_cards]
+    if state.phase is BlackjackPhase.PLAYER_TURN:
+        legal_actions = ["hit", "stand"]
+        if len(state.player_cards) == 2:
+            legal_actions.append("double")
+    else:
+        legal_actions = ["deal"]
+    public: dict[str, Any] = {
+        "game_phase": state.phase.value,
+        "bet": state.bet,
+        "player_cards": [_serialize_card(card) for card in state.player_cards],
+        "dealer_cards": dealer_cards,
+        "dealer_hole_hidden": hidden,
+        "player_total": state.player_total,
+        "legal_actions": legal_actions,
+        "ruleset_version": state.ruleset_version,
+        "wallet_balance": wallet_balance,
+    }
+    if not hidden:
+        public["dealer_total"] = state.dealer_total
+    return public
+
+
+def _action_ledger_key(action_id: UUID, purpose: str) -> UUID:
+    return uuid5(NAMESPACE_URL, f"burmaldoza:room-action:{action_id}:{purpose}")
 
 
 def _action_name(request: ActionRequest, game_type: GameType) -> str:
@@ -123,6 +227,13 @@ def _action_name(request: ActionRequest, game_type: GameType) -> str:
     action = raw_action.lower().strip()
     if action not in _LEGAL_ACTIONS[game_type]:
         raise RoomServiceError(f"action {action!r} is not legal for {game_type.value}")
+    if game_type is GameType.BLACKJACK:
+        if action == "deal":
+            bet = request.payload.get("bet")
+            if isinstance(bet, bool) or not isinstance(bet, int) or not 25 <= bet <= 100:
+                raise RoomServiceError("blackjack bet must be an integer between 25 and 100")
+        elif "bet" in request.payload:
+            raise RoomServiceError("blackjack bet is only accepted with deal")
     if game_type is GameType.SLOT and "bet" in request.payload:
         bet = request.payload["bet"]
         if isinstance(bet, bool) or not isinstance(bet, int) or not 10 <= bet <= 100:
@@ -152,6 +263,7 @@ class RoomService:
         wallet_service: WalletService | None = None,
         slot_config: SlotConfig | None = None,
         slot_rng: RandomSource | None = None,
+        blackjack_rng: RandomSource | None = None,
         bot_token: str = "",
         max_auth_age_seconds: int = 86400,
         now: Callable[[], datetime] | None = None,
@@ -168,6 +280,8 @@ class RoomService:
         )
         self.slot_config = slot_config or load_skeleton_config()
         self.slot_rng = slot_rng or SystemRandomSource()
+        self.blackjack_rng = blackjack_rng or SystemRandomSource()
+        self.blackjack_rules = BlackjackRules()
         self.bot_token = bot_token
         self.max_auth_age_seconds = max_auth_age_seconds
         self.now = now or (lambda: datetime.now(UTC))
@@ -339,17 +453,32 @@ class RoomService:
     async def _advance_memory(
         self, room: _MemoryRoom, user_id: int, request: ActionRequest, action: str
     ) -> EventEnvelope:
-        result = await self._execute_game_action(room.room_id, user_id, request, room.game_type, action)
+        execution = await self._execute_game_action(
+            room.room_id,
+            user_id,
+            request,
+            room.game_type,
+            action,
+            room.private_state,
+        )
         room.state_version += 1
         room.status = RoomStatus.ACTIVE
-        room.public_state = self._next_public_state(room.public_state, request, action, result)
+        room.public_state = self._next_public_state(
+            room.public_state,
+            request,
+            action,
+            execution.result,
+            execution.public_state,
+            execution.clear_result,
+        )
+        room.private_state = execution.private_state
         event = self._build_event(
             room.room_id,
             room.state_version,
             room.game_type,
             request.action_id,
             room.public_state,
-            result,
+            execution.result,
         )
         room.actions[request.action_id] = event
         return event
@@ -360,6 +489,8 @@ class RoomService:
         request: ActionRequest,
         action: str,
         result: dict[str, Any] | None = None,
+        game_state: dict[str, Any] | None = None,
+        clear_result: bool = False,
     ) -> dict[str, Any]:
         next_state = copy.deepcopy(current)
         next_state.update(
@@ -370,6 +501,10 @@ class RoomService:
                 "action_count": int(current.get("action_count", 0)) + 1,
             }
         )
+        if clear_result:
+            next_state.pop("last_result", None)
+        if game_state:
+            next_state.update(copy.deepcopy(game_state))
         if result is not None:
             next_state["last_result"] = copy.deepcopy(result)
         return _safe_json(next_state)
@@ -407,41 +542,182 @@ class RoomService:
         request: ActionRequest,
         game_type: GameType,
         action: str,
-    ) -> dict[str, Any] | None:
-        if game_type is not GameType.SLOT:
-            return None
-        if action != "spin":
-            raise RoomServiceError(f"action {action!r} is not supported by the slot room")
+        private_state: dict[str, Any],
+    ) -> _ActionExecution:
+        if game_type is GameType.SLOT:
+            if action != "spin":
+                raise RoomServiceError(f"action {action!r} is not supported by the slot room")
 
-        bet = request.payload.get("bet", 10)
-        if isinstance(bet, bool) or not isinstance(bet, int) or not 10 <= bet <= 100:
-            raise RoomServiceError("slot bet must be an integer between 10 and 100")
+            bet = request.payload.get("bet", 10)
+            if isinstance(bet, bool) or not isinstance(bet, int) or not 10 <= bet <= 100:
+                raise RoomServiceError("slot bet must be an integer between 10 and 100")
 
-        raw_paylines = request.payload.get("paylines", tuple(range(len(self.slot_config.paylines))))
-        if not isinstance(raw_paylines, (list, tuple)) or any(
-            isinstance(index, bool) or not isinstance(index, int) for index in raw_paylines
-        ):
-            raise RoomServiceError("slot paylines must be a list of integer indexes")
-        active_paylines = tuple(raw_paylines)
+            raw_paylines = request.payload.get("paylines", tuple(range(len(self.slot_config.paylines))))
+            if not isinstance(raw_paylines, (list, tuple)) or any(
+                isinstance(index, bool) or not isinstance(index, int) for index in raw_paylines
+            ):
+                raise RoomServiceError("slot paylines must be a list of integer indexes")
+            active_paylines = tuple(raw_paylines)
 
+            try:
+                outcome = spin(self.slot_config, bet, active_paylines, self.slot_rng)
+            except ValueError as error:
+                raise RoomServiceError(str(error)) from error
+
+            round_id = uuid5(NAMESPACE_URL, f"slot:{room_id}:{request.action_id}")
+            try:
+                settlement = await self.wallet_service.settle_game_round_in_transaction(
+                    user_id=user_id,
+                    round_id=round_id,
+                    stake=bet,
+                    payout=outcome.gross_payout,
+                    idempotency_key=request.action_id,
+                )
+            except InsufficientBalanceError as error:
+                raise RoomServiceError("insufficient balance for slot bet") from error
+
+            return _ActionExecution(
+                result=_serialize_slot_result(outcome, settlement),
+                private_state=private_state,
+            )
+
+        if game_type is GameType.BLACKJACK:
+            return await self._execute_blackjack_action(
+                room_id, user_id, request, action, private_state
+            )
+
+        return _ActionExecution(private_state=private_state)
+
+    async def _execute_blackjack_action(
+        self,
+        room_id: UUID,
+        user_id: int,
+        request: ActionRequest,
+        action: str,
+        private_state: dict[str, Any],
+    ) -> _ActionExecution:
+        stored_round = private_state.get("blackjack_round")
+        if action == "deal":
+            if stored_round is not None:
+                previous_state = _deserialize_blackjack_state(stored_round["state"])
+                if previous_state.phase is BlackjackPhase.PLAYER_TURN:
+                    raise RoomServiceError("blackjack hand is still in progress")
+            bet = request.payload["bet"]
+            round_id = uuid5(NAMESPACE_URL, f"blackjack:{room_id}:{request.action_id}")
+            try:
+                state = deal_initial(bet, self.blackjack_rng, self.blackjack_rules)
+            except ValueError as error:
+                raise RoomServiceError(str(error)) from error
+            state = replace(state, state_version=request.expected_state_version + 1)
+            try:
+                stake = await self.wallet_service.apply_delta_in_transaction(
+                    user_id=user_id,
+                    delta=-bet,
+                    reason=LedgerReason.GAME_STAKE,
+                    reference_id=round_id,
+                    idempotency_key=_action_ledger_key(request.action_id, "stake"),
+                )
+            except InsufficientBalanceError as error:
+                raise RoomServiceError("insufficient balance for blackjack bet") from error
+            payout = (
+                await self._settle_blackjack_action(
+                    user_id, request.action_id, round_id, state
+                )
+                if state.phase is not BlackjackPhase.PLAYER_TURN
+                else None
+            )
+            wallet_balance = payout["balance_after"] if payout is not None else stake.balance_after
+            next_private_state = {
+                "blackjack_round": {
+                    "round_id": str(round_id),
+                    "state": _serialize_blackjack_state(state),
+                }
+            }
+            return _ActionExecution(
+                result=payout,
+                public_state=_blackjack_public_state(state, wallet_balance),
+                private_state=next_private_state,
+                clear_result=True,
+            )
+
+        if stored_round is None:
+            raise RoomServiceError("blackjack must be dealt before a player action")
+        round_id = UUID(stored_round["round_id"])
+        state = _deserialize_blackjack_state(stored_round["state"])
         try:
-            outcome = spin(self.slot_config, bet, active_paylines, self.slot_rng)
-        except ValueError as error:
+            transition = apply_blackjack_action(
+                state,
+                action,  # type: ignore[arg-type]
+                self.blackjack_rng,
+                self.blackjack_rules,
+            )
+        except InvalidActionError as error:
             raise RoomServiceError(str(error)) from error
 
-        round_id = uuid5(NAMESPACE_URL, f"slot:{room_id}:{request.action_id}")
-        try:
-            settlement = await self.wallet_service.settle_game_round_in_transaction(
-                user_id=user_id,
-                round_id=round_id,
-                stake=bet,
-                payout=outcome.gross_payout,
-                idempotency_key=request.action_id,
-            )
-        except InsufficientBalanceError as error:
-            raise RoomServiceError("insufficient balance for slot bet") from error
+        added_stake = transition.state.bet - state.bet
+        if added_stake > 0:
+            try:
+                await self.wallet_service.apply_delta_in_transaction(
+                    user_id=user_id,
+                    delta=-added_stake,
+                    reason=LedgerReason.GAME_STAKE,
+                    reference_id=round_id,
+                    idempotency_key=_action_ledger_key(request.action_id, "stake"),
+                )
+            except InsufficientBalanceError as error:
+                raise RoomServiceError("insufficient balance for blackjack double") from error
 
-        return _serialize_slot_result(outcome, settlement)
+        result = None
+        if transition.settlement is not None:
+            result = await self._settle_blackjack_action(
+                user_id,
+                request.action_id,
+                round_id,
+                transition.state,
+                outcome=transition.settlement.result,
+            )
+        wallet = await self.wallet_service.get_or_create_in_transaction(user_id)
+        next_private_state = {
+            "blackjack_round": {
+                "round_id": str(round_id),
+                "state": _serialize_blackjack_state(transition.state),
+            }
+        }
+        return _ActionExecution(
+            result=result,
+            public_state=_blackjack_public_state(transition.state, wallet.balance),
+            private_state=next_private_state,
+        )
+
+    async def _settle_blackjack_action(
+        self,
+        user_id: int,
+        action_id: UUID,
+        round_id: UUID,
+        state: BlackjackState,
+        *,
+        outcome: str | None = None,
+    ) -> dict[str, Any]:
+        settlement = settle_blackjack(state, self.blackjack_rules)
+        if settlement.payout > 0:
+            await self.wallet_service.apply_delta_in_transaction(
+                user_id=user_id,
+                delta=settlement.payout,
+                reason=LedgerReason.GAME_PAYOUT,
+                reference_id=round_id,
+                idempotency_key=_action_ledger_key(action_id, "payout"),
+            )
+        wallet = await self.wallet_service.get_or_create_in_transaction(user_id)
+        return {
+            "outcome": outcome or settlement.result,
+            "player_total": settlement.player_total,
+            "dealer_total": settlement.dealer_total,
+            "gross_payout": settlement.payout,
+            "net_delta": settlement.payout - state.bet,
+            "balance_after": wallet.balance,
+            "ruleset_version": settlement.ruleset_version,
+            "final_bet": state.bet,
+        }
 
     async def _load_db_room(self, room_id: UUID, *, lock: bool) -> GameRoom:
         assert self.session is not None
@@ -480,12 +756,29 @@ class RoomService:
     ) -> EventEnvelope:
         game_type = GameType(room.game_type)
         next_version = room.state_version + 1
-        result = await self._execute_game_action(room.id, user_id, request, game_type, action)
-        next_state = self._next_public_state(room.state_json or {}, request, action, result)
+        execution = await self._execute_game_action(
+            room.id,
+            user_id,
+            request,
+            game_type,
+            action,
+            room.private_state_json or {},
+        )
+        next_state = self._next_public_state(
+            room.state_json or {},
+            request,
+            action,
+            execution.result,
+            execution.public_state,
+            execution.clear_result,
+        )
         room.state_version = next_version
         room.status = RoomStatus.ACTIVE.value
         room.state_json = next_state
-        event = self._build_event(room.id, next_version, game_type, request.action_id, next_state, result)
+        room.private_state_json = execution.private_state
+        event = self._build_event(
+            room.id, next_version, game_type, request.action_id, next_state, execution.result
+        )
         self.session.add(
             GameAction(
                 id=request.action_id,

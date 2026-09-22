@@ -108,6 +108,10 @@ def test_settlement_covers_blackjack_push_and_bust() -> None:
         state((card("A"), card("K")), (card("10"), card("9")), phase=BlackjackPhase.DEALER_RESOLUTION),
         dealer_hole_hidden=False,
     )
+    mutual_blackjack = replace(
+        state((card("A"), card("K")), (card("A"), card("Q")), phase=BlackjackPhase.DEALER_RESOLUTION),
+        dealer_hole_hidden=False,
+    )
     push = replace(
         state((card("10"), card("7")), (card("10"), card("7")), phase=BlackjackPhase.DEALER_RESOLUTION),
         dealer_hole_hidden=False,
@@ -119,6 +123,8 @@ def test_settlement_covers_blackjack_push_and_bust() -> None:
 
     assert settle_blackjack(blackjack, RULES).result == "blackjack"
     assert settle_blackjack(blackjack, RULES).payout == 62
+    assert settle_blackjack(mutual_blackjack, RULES).result == "push"
+    assert settle_blackjack(mutual_blackjack, RULES).payout == 25
     assert settle_blackjack(push, RULES).result == "push"
     assert settle_blackjack(push, RULES).payout == 25
     assert settle_blackjack(bust, RULES).result == "loss"

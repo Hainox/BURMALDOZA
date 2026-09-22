@@ -153,6 +153,43 @@ class WalletService:
                 return existing
             return await self._db_apply_delta(wallet, delta, reason, reference_id, idempotency_key)
 
+    async def apply_delta_in_transaction(
+        self,
+        user_id: int,
+        delta: int,
+        reason: LedgerReason,
+        reference_id: UUID | None,
+        idempotency_key: UUID,
+    ) -> LedgerResult:
+        """Apply a wallet delta inside the transaction owned by the caller."""
+
+        if self.store is not None:
+            async with self.store.lock:
+                existing = self.store.operations.get(idempotency_key)
+                if existing is not None:
+                    return self._as_ledger_result(existing)
+                wallet = self.store.get_wallet(user_id)
+                return self._memory_apply_delta_locked(wallet, delta, reason, reference_id, idempotency_key)
+        assert self.session is not None
+        if not self.session.in_transaction():
+            raise RuntimeError("caller-owned wallet delta requires an active transaction")
+        wallet = await self._db_get_or_create_wallet(user_id, lock=True)
+        existing = await self._db_replay(idempotency_key)
+        if existing is not None:
+            return self._as_ledger_result(existing)
+        return await self._db_apply_delta(wallet, delta, reason, reference_id, idempotency_key)
+
+    async def get_or_create_in_transaction(self, user_id: int) -> WalletSnapshot:
+        """Read the authoritative wallet from the caller's active transaction."""
+
+        if self.store is not None:
+            return await self.get_or_create(user_id)
+        assert self.session is not None
+        if not self.session.in_transaction():
+            raise RuntimeError("caller-owned wallet read requires an active transaction")
+        wallet = await self._db_get_or_create_wallet(user_id, lock=True)
+        return self._db_snapshot(wallet)
+
     async def claim_welcome_grant(self, user_id: int, idempotency_key: UUID) -> LedgerResult:
         if self.store is not None:
             async with self.store.lock:

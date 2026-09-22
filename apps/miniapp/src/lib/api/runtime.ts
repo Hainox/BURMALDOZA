@@ -1,6 +1,6 @@
 import type { ApiEventEnvelope } from '$lib/api/client';
 import type { SlotOutcome, SlotWinningLine } from '$lib/game/slot';
-import type { GameType, RoomResult } from '$lib/state/room.svelte';
+import type { BlackjackOutcome, GameType, RoomResult } from '$lib/state/room.svelte';
 
 export class ApiResultError extends Error {
   constructor(message: string) {
@@ -13,6 +13,17 @@ export function isLiveApiEnabled(baseUrl: string, initData: string) {
   return baseUrl.trim().length > 0 && initData.trim().length > 0;
 }
 
+export function buildRoomActionPayload(
+  action: string,
+  fields: Record<string, unknown> = {}
+): Record<string, unknown> {
+  const payload: Record<string, unknown> = { ...fields, action };
+  if ((action === 'spin' || action === 'deal') && typeof payload.bet !== 'number') {
+    payload.bet = action === 'spin' ? 10 : 25;
+  }
+  return payload;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -23,6 +34,35 @@ function numberField(result: Record<string, unknown>, key: string) {
     throw new ApiResultError(`canonical slot result is missing numeric ${key}`);
   }
   return value;
+}
+
+function integerField(result: Record<string, unknown>, key: string) {
+  const value = numberField(result, key);
+  if (!Number.isInteger(value)) {
+    throw new ApiResultError(`canonical blackjack result has invalid ${key}`);
+  }
+  return value;
+}
+
+function parseBlackjackOutcome(value: unknown): BlackjackOutcome {
+  if (!isRecord(value)) throw new ApiResultError('canonical blackjack result is missing');
+  const outcome = value.outcome;
+  if (outcome !== 'blackjack' && outcome !== 'win' && outcome !== 'push' && outcome !== 'loss') {
+    throw new ApiResultError('canonical blackjack result has an invalid outcome');
+  }
+  if (typeof value.ruleset_version !== 'string') {
+    throw new ApiResultError('canonical blackjack result is missing ruleset_version');
+  }
+  return {
+    outcome,
+    playerTotal: integerField(value, 'player_total'),
+    dealerTotal: integerField(value, 'dealer_total'),
+    grossPayout: integerField(value, 'gross_payout'),
+    netDelta: integerField(value, 'net_delta'),
+    balanceAfter: integerField(value, 'balance_after'),
+    rulesetVersion: value.ruleset_version,
+    finalBet: integerField(value, 'final_bet')
+  };
 }
 
 function parseSlotOutcome(value: unknown): SlotOutcome {
@@ -101,6 +141,22 @@ function mapResultValue(serverResult: unknown, gameType: GameType): RoomResult {
     };
   }
 
+  if (gameType === 'blackjack' && serverResult !== undefined && serverResult !== null) {
+    const blackjackOutcome = parseBlackjackOutcome(serverResult);
+    const headlines = {
+      blackjack: 'Натуральный блэкджек',
+      win: 'Раунд выигран',
+      push: 'Возврат ставки',
+      loss: 'Раунд завершён'
+    } as const;
+    return {
+      headline: headlines[blackjackOutcome.outcome],
+      detail: `${blackjackOutcome.playerTotal} против ${blackjackOutcome.dealerTotal}; сервер подтвердил выплату ${blackjackOutcome.grossPayout} JOKERGEM.`,
+      amount: blackjackOutcome.grossPayout,
+      blackjackOutcome
+    };
+  }
+
   return {
     headline: typeof result?.headline === 'string' ? result.headline : 'Действие подтверждено',
     detail:
@@ -111,7 +167,10 @@ function mapResultValue(serverResult: unknown, gameType: GameType): RoomResult {
   };
 }
 
-export function mapApiEventResult(event: ApiEventEnvelope, gameType: GameType): RoomResult {
+export function mapApiEventResult(event: ApiEventEnvelope, gameType: GameType): RoomResult | null {
+  if (gameType === 'blackjack' && (event.payload.result === undefined || event.payload.result === null)) {
+    return null;
+  }
   return mapResultValue(event.payload.result, gameType);
 }
 

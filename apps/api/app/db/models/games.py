@@ -37,6 +37,7 @@ class GameRoom(Base):
     ruleset_version: Mapped[str] = mapped_column(String(64), nullable=False)
     state_version: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     state_json: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    private_state_json: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
