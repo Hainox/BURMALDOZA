@@ -2,7 +2,10 @@
   import ResultBand from '$lib/components/ResultBand.svelte';
   import {
     SLOT_LAUNCH_DURATION,
+    SLOT_FINAL_OFFSET_ROWS,
     SLOT_SPIN_CYCLE_DURATION,
+    SLOT_SPIN_CYCLE_ROWS,
+    SLOT_SPIN_DURATION,
     SLOT_STOP_DURATION,
     buildReelTrack,
     getSlotLaunchDelay,
@@ -46,6 +49,10 @@
     const finalStart = reelTracks[reelIndex].length - 7;
     return showConfirmedGrid && winningRows.includes(symbolIndex - finalStart);
   }
+
+  function getSymbolToneIndex(reelIndex: number, symbolIndex: number) {
+    return symbolIndex % reelBases[reelIndex].length;
+  }
 </script>
 
 <div class="game-room slot-room">
@@ -62,7 +69,7 @@
     class="slot-machine"
     class:resolving={motion === 'resolving'}
     data-reel-phase={reelPhase}
-    data-spin-duration="2400"
+    data-spin-duration={SLOT_SPIN_DURATION}
     data-testid="slot-machine"
     aria-label="Слот 3 на 7"
   >
@@ -76,8 +83,9 @@
           data-testid={`slot-reel-${reelIndex}`}
           data-launch-delay={getSlotLaunchDelay(reelIndex)}
           data-stop-delay={getSlotStopDelay(reelIndex)}
+          data-stop-start={getSlotStopStart(reelIndex)}
           aria-label={`Барабан ${reelIndex + 1}`}
-          style={`--reel-launch-delay: ${getSlotLaunchDelay(reelIndex)}ms; --reel-stop-delay: ${getSlotStopDelay(reelIndex)}ms; --reel-stop-start: ${getSlotStopStart(reelIndex)}; --reel-launch-duration: ${SLOT_LAUNCH_DURATION}ms; --reel-stop-duration: ${SLOT_STOP_DURATION}ms; --reel-spin-cycle: ${SLOT_SPIN_CYCLE_DURATION}ms;`}
+          style={`--reel-launch-delay: ${getSlotLaunchDelay(reelIndex)}ms; --reel-stop-delay: ${getSlotStopDelay(reelIndex)}ms; --reel-launch-duration: ${SLOT_LAUNCH_DURATION}ms; --reel-stop-duration: ${SLOT_STOP_DURATION}ms; --reel-spin-cycle: ${SLOT_SPIN_CYCLE_DURATION}ms; --reel-cycle-distance: calc(-${SLOT_SPIN_CYCLE_ROWS} * (var(--symbol-size) + var(--reel-gap))); --reel-final-distance: calc(-${SLOT_FINAL_OFFSET_ROWS} * (var(--symbol-size) + var(--reel-gap)));`}
         >
           <div class="reel-window">
             <div
@@ -90,7 +98,12 @@
               aria-hidden="true"
             >
               {#each track as symbol, symbolIndex}
-                <div class="symbol" class:winning={isWinningSymbol(reelIndex, symbolIndex)}>{symbol}</div>
+                <div
+                  class="symbol"
+                  class:tone-brass={getSymbolToneIndex(reelIndex, symbolIndex) % 2 === 1}
+                  class:tone-pink={getSymbolToneIndex(reelIndex, symbolIndex) % 3 === 2}
+                  class:winning={isWinningSymbol(reelIndex, symbolIndex)}
+                >{symbol}</div>
               {/each}
             </div>
           </div>
@@ -144,20 +157,19 @@
   .machine-rim { position: absolute; inset: 11px; border: 1px solid rgb(231 187 112 / 18%); border-radius: 18px; pointer-events: none; }
   .reel-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; width: min(100%, 390px); }
   .reel { min-width: 0; padding: 8px 5px; border: 1px solid rgb(255 247 237 / 11%); border-radius: 14px; background: rgb(255 247 237 / 5%); transform: translate3d(0, 0, 0); backface-visibility: hidden; }
-  .reel.spinning { animation: reelLaunchWave var(--reel-launch-duration) cubic-bezier(.2, .85, .25, 1) var(--reel-launch-delay) both; }
-  .reel.stopping { animation: reelStopWave var(--reel-stop-duration) cubic-bezier(.2, .85, .25, 1) var(--reel-stop-delay) both; }
+  .reel.spinning { animation: reelLaunchWave var(--reel-launch-duration) var(--ease-spring) var(--reel-launch-delay) both; }
+  .reel.stopping { animation: reelStopWave var(--reel-stop-duration) var(--ease-spring) var(--reel-stop-delay) both; }
   .reel-window { --symbol-size: clamp(34px, 8vw, 52px); --reel-gap: 6px; position: relative; height: calc(7 * (var(--symbol-size) + var(--reel-gap)) - var(--reel-gap)); overflow: hidden; mask-image: linear-gradient(to bottom, transparent 0, #000 8%, #000 92%, transparent 100%); contain: paint; }
-  .reel-track { display: grid; gap: var(--reel-gap); transform: translate3d(0, 0, 0); will-change: transform; backface-visibility: hidden; contain: layout paint; }
+  .reel-track { display: grid; gap: var(--reel-gap); transform: translate3d(0, 0, 0); transition: transform var(--reel-stop-duration) var(--ease-smooth) var(--reel-stop-delay); will-change: transform; backface-visibility: hidden; contain: layout paint; }
   .reel-track.spinning { animation: reelFullSpin var(--reel-spin-cycle) linear var(--reel-launch-delay) infinite; }
-  .reel-track.stopping { animation: reelStagedStop var(--reel-stop-duration) cubic-bezier(.18, .88, .24, 1) var(--reel-stop-delay) both; }
-  .reel-track.outcome { transform: translate3d(0, calc(-21 * (var(--symbol-size) + var(--reel-gap))), 0); }
+  .reel-track.stopping, .reel-track.outcome { transform: translate3d(0, var(--reel-final-distance), 0); }
   .symbol { display: grid; place-items: center; width: 100%; height: var(--symbol-size); border-radius: 10px; background: rgb(11 11 17 / 66%); color: var(--ivory); font-size: clamp(20px, 7vw, 32px); font-weight: 800; line-height: 1; text-shadow: 0 2px 12px rgb(231 187 112 / 22%); }
-  .symbol:nth-child(2n) { color: var(--brass-300); }
-  .symbol:nth-child(3n) { color: #ed9aaf; }
-  .symbol.winning { border: 1px solid var(--brass-300); background: rgb(231 187 112 / 18%); box-shadow: 0 0 22px rgb(231 187 112 / 38%); animation: winningPulse 620ms ease-in-out infinite alternate; }
+  .symbol.tone-brass { color: var(--brass-300); }
+  .symbol.tone-pink { color: #ed9aaf; }
+  .symbol.winning { border: 1px solid var(--brass-300); background: rgb(231 187 112 / 18%); box-shadow: 0 0 22px rgb(231 187 112 / 38%); animation: winningPulse 620ms ease-in-out 180ms infinite alternate; }
   .payline { position: absolute; right: 12%; left: 12%; top: 50%; height: 2px; border-radius: 999px; background: var(--brass-300); box-shadow: 0 0 12px var(--brass-300); opacity: 0; transform: scaleX(0); transition: opacity 180ms ease, transform 420ms cubic-bezier(.16, 1, .3, 1); }
   .payline.visible { opacity: 0.86; transform: scaleX(1); }
-  .confirmed-grid { position: absolute; top: 17px; display: flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid rgb(142 228 182 / 38%); border-radius: 999px; background: rgb(17 40 33 / 82%); color: var(--success); font-size: 8px; font-weight: 800; letter-spacing: 0.1em; }
+  .confirmed-grid { position: absolute; top: 17px; display: flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid rgb(142 228 182 / 38%); border-radius: 999px; background: rgb(17 40 33 / 82%); color: var(--success); font-size: 8px; font-weight: 800; letter-spacing: 0.1em; animation: confirmedGridIn 420ms var(--ease-enter) 80ms both; will-change: opacity, transform; }
   .confirmed-grid strong { color: var(--ivory); font-size: 8px; }
   .machine-lights { position: absolute; right: 28px; bottom: 22px; left: 28px; display: flex; justify-content: space-between; }
   .machine-lights i { width: 5px; height: 5px; border-radius: 50%; background: var(--brass-400); box-shadow: 0 0 10px var(--brass-400); animation: lightBlink 1.3s ease-in-out infinite; }
@@ -174,8 +186,8 @@
   .primary-action:hover { filter: brightness(1.06); transform: translateY(-2px); } .primary-action:active { transform: translateY(1px); } .primary-action:disabled { cursor: wait; filter: saturate(0.7); } .action-icon { font-size: 21px; }
   @keyframes reelLaunchWave { 0% { transform: translate3d(0, 5px, 0) scale(.98); opacity: .72; } 55% { transform: translate3d(0, -2px, 0) scale(1.01); opacity: 1; } 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 1; } }
   @keyframes reelStopWave { 0% { transform: translate3d(0, 0, 0) scale(1); } 62% { transform: translate3d(0, -1px, 0) scale(1.012); } 100% { transform: translate3d(0, 0, 0) scale(1); } }
-  @keyframes reelFullSpin { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(0, calc(-21 * (var(--symbol-size) + var(--reel-gap))), 0); } }
-  @keyframes reelStagedStop { from { transform: translate3d(0, calc(var(--reel-stop-start) * (var(--symbol-size) + var(--reel-gap))), 0); } to { transform: translate3d(0, calc(-21 * (var(--symbol-size) + var(--reel-gap))), 0); } }
+  @keyframes reelFullSpin { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(0, var(--reel-cycle-distance), 0); } }
+  @keyframes confirmedGridIn { from { opacity: 0; transform: translate3d(0, -7px, 0) scale(.97); } to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); } }
   @keyframes winningPulse { from { transform: scale(1); } to { transform: scale(1.04); } } @keyframes lightBlink { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
   @media (max-width: 390px) { .free-spins-panel { align-items: stretch; flex-direction: column; } .free-spin-action { width: 100%; } }
 </style>

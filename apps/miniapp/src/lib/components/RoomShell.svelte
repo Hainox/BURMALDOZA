@@ -32,7 +32,9 @@
 <style>
   .room-shell { display: grid; gap: 14px; min-height: 100dvh; }
   .room-topbar { display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 10px; }
-  .icon-button, .connection-button { border: 1px solid var(--line); border-radius: 12px; background: rgb(255 247 237 / 6%); color: var(--ivory); cursor: pointer; }
+  .icon-button, .connection-button { border: 1px solid var(--line); border-radius: 12px; background: rgb(255 247 237 / 6%); color: var(--ivory); cursor: pointer; transition: transform 220ms var(--ease-smooth), border-color 220ms var(--ease-smooth), background 220ms var(--ease-smooth); will-change: transform; }
+  .icon-button:hover, .connection-button:hover { transform: translateY(-1px); border-color: rgb(231 187 112 / 42%); background: rgb(255 247 237 / 9%); }
+  .icon-button:active, .connection-button:active { transform: translateY(1px) scale(.99); }
   .icon-button { width: 40px; height: 40px; font-size: 20px; }
   .room-heading { min-width: 0; }
   .room-heading span { color: var(--muted); font-size: 9px; letter-spacing: 0.13em; }
@@ -41,7 +43,9 @@
   .connection-button span { width: 6px; height: 6px; border-radius: 50%; background: var(--brass-400); }
   .connection-button span.active { background: var(--success); }
   .room-stage { position: relative; display: grid; align-content: start; min-height: 580px; overflow: hidden; padding: 20px 15px 15px; border: 1px solid var(--line); border-radius: var(--radius-xl); background: linear-gradient(145deg, rgb(255 255 255 / 5%), rgb(255 255 255 / 1%)); box-shadow: var(--shadow-deep); }
-  .stage-glow { position: absolute; top: -100px; right: -70px; width: 240px; height: 240px; border-radius: 50%; background: rgb(143 53 89 / 23%); filter: blur(45px); pointer-events: none; animation: breathe 5s ease-in-out infinite; }
+  .stage-glow { position: absolute; top: -100px; right: -70px; width: 240px; height: 240px; border-radius: 50%; background: rgb(143 53 89 / 23%); filter: blur(45px); pointer-events: none; animation: breathe 5s ease-in-out infinite; will-change: transform, opacity; }
+  .room-stage :global(.game-room) { animation: roomContentIn 420ms var(--ease-enter) both; }
   @keyframes breathe { 0%, 100% { transform: scale(0.88); opacity: 0.6; } 50% { transform: scale(1.12); opacity: 1; } }
+  @keyframes roomContentIn { from { opacity: 0; transform: translate3d(0, 9px, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
   @media (min-width: 720px) { .room-stage { padding: 30px; } }
 </style>

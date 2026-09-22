@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Rebuilt Slot v2 motion handoff for seamless playback: the reel loop now advances by one repeated seven-row block, the stop phase is derived from the real action timeline, and deceleration uses a compositor-friendly transform transition without a delayed jump. Added soft confirmation/grid/result reveals and deterministic symbol tones so repeated blocks cannot change color at the loop seam.
 - Refined Slot v2 motion: wave launch from reel 1 to 3, 2.4-second full travel, a softer 960 ms inertial stop tail, compositor-friendly `translate3d` transforms, and 60-fps target timing contracts.
 - Implemented the first Slot v2 motion slice: full reel tracks, staged left-to-right stops, server-confirmed grid/payout reveal, five Free Spins, and reduced-motion handling.
 - Replaced the README hero subject with the owner-provided full-body casino composition of the three female characters; the exact project information remains in the SVG/Markdown layer.

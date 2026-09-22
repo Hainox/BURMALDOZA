@@ -24,8 +24,9 @@
 </section>
 
 <style>
-  .result-band { display: grid; gap: 8px; padding: 13px 15px; border: 1px solid var(--line); border-radius: var(--radius-md); background: rgb(255 247 237 / 4%); transition: border-color 240ms ease, background 240ms ease, transform 240ms ease; }
+  .result-band { display: grid; gap: 8px; padding: 13px 15px; border: 1px solid var(--line); border-radius: var(--radius-md); background: rgb(255 247 237 / 4%); transition: border-color 240ms var(--ease-smooth), background 240ms var(--ease-smooth), transform 240ms var(--ease-smooth); will-change: transform; }
   .result-band.confirmed { border-color: rgb(231 187 112 / 48%); background: linear-gradient(105deg, rgb(231 187 112 / 13%), rgb(143 53 89 / 10%)); transform: translateY(-1px); }
+  .result-band.confirmed { animation: resultConfirmIn 420ms var(--ease-enter) both; }
   .result-kicker { color: var(--brass-300); font-size: 9px; font-weight: 800; letter-spacing: 0.15em; }
   .result-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   strong { font-size: 14px; }
@@ -33,4 +34,5 @@
   .result-amount { color: var(--brass-300); font-size: 19px; font-weight: 800; white-space: nowrap; }
   .result-amount small { font-size: 10px; letter-spacing: 0.12em; }
   .result-state { color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: 0.1em; }
+  @keyframes resultConfirmIn { from { opacity: .68; transform: translate3d(0, 7px, 0); } to { opacity: 1; transform: translate3d(0, -1px, 0); } }
 </style>

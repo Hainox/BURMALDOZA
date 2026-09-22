@@ -8,7 +8,13 @@
   import BlackjackRoom from '$lib/rooms/BlackjackRoom.svelte';
   import PokerRoom from '$lib/rooms/PokerRoom.svelte';
   import SlotRoom from '$lib/rooms/SlotRoom.svelte';
-  import { SLOT_REVEAL_DURATION, SLOT_SPIN_DURATION, type SlotOutcome } from '$lib/game/slot';
+  import {
+    SLOT_ACTION_ACCEPT_DELAY,
+    SLOT_RESULT_DELAY,
+    SLOT_REVEAL_DURATION,
+    SLOT_SERVER_RESULT_PRELUDE,
+    type SlotOutcome
+  } from '$lib/game/slot';
   import { SessionState } from '$lib/state/session.svelte';
   import { RoomState, type GameType, type RoomResult } from '$lib/state/room.svelte';
 
@@ -124,14 +130,14 @@
     isRunning = true;
     roomState.setResult(null);
     roomState.transition({ type: 'USER_INTENT' }, session.reducedMotion);
-    after(140, () => {
+    after(SLOT_ACTION_ACCEPT_DELAY, () => {
       roomState.transition({ type: 'ACTION_ACCEPTED' }, session.reducedMotion);
-      after(520, () => {
+      after(SLOT_SERVER_RESULT_PRELUDE, () => {
         const confirmedResult = selectedGame === 'slot'
           ? buildDemoSlotResult(action)
           : demoResults[selectedGame as GameType];
         const resultDelay = selectedGame === 'slot'
-          ? Math.max(0, SLOT_SPIN_DURATION - 520)
+          ? SLOT_RESULT_DELAY
           : 0;
 
         after(resultDelay, () => {

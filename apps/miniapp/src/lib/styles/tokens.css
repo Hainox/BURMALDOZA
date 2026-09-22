@@ -17,6 +17,9 @@
   --success: #8ee4b6;
   --warning: #f3b672;
   --danger: #f28d9d;
+  --ease-smooth: cubic-bezier(.22, .8, .2, 1);
+  --ease-enter: cubic-bezier(.16, 1, .3, 1);
+  --ease-spring: cubic-bezier(.2, .85, .25, 1);
   --shadow-deep: 0 24px 60px rgb(0 0 0 / 32%);
   --radius-xl: 28px;
   --radius-lg: 20px;

@@ -78,6 +78,7 @@
     color: var(--brass-300);
     font-size: 18px;
     animation: gemPulse 2.8s ease-in-out infinite;
+    will-change: transform, opacity;
   }
 
   @keyframes gemPulse {

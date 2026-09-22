@@ -39,7 +39,8 @@
     text-align: left;
     cursor: pointer;
     isolation: isolate;
-    transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+    transition: transform 220ms var(--ease-smooth), border-color 220ms var(--ease-smooth), background 220ms var(--ease-smooth);
+    will-change: transform;
   }
 
   .room-card:hover {
@@ -49,13 +50,13 @@
   }
 
   .room-card:active { transform: translateY(1px) scale(0.995); }
-  .room-card-glow { position: absolute; z-index: -1; width: 150px; height: 150px; right: -38px; bottom: -72px; border-radius: 50%; background: var(--accent); filter: blur(28px); opacity: 0.28; transition: transform 420ms ease, opacity 420ms ease; }
+  .room-card-glow { position: absolute; z-index: -1; width: 150px; height: 150px; right: -38px; bottom: -72px; border-radius: 50%; background: var(--accent); filter: blur(28px); opacity: 0.28; transition: transform 420ms var(--ease-smooth), opacity 420ms var(--ease-smooth); will-change: transform, opacity; }
   .room-card:hover .room-card-glow { transform: scale(1.35); opacity: 0.48; }
   .room-icon { display: grid; place-items: center; width: 54px; height: 54px; border: 1px solid color-mix(in srgb, var(--accent) 55%, white 8%); border-radius: 17px; background: color-mix(in srgb, var(--accent) 22%, var(--ink-850)); box-shadow: inset 0 1px 0 rgb(255 255 255 / 12%); color: var(--accent); font-size: 26px; }
   .room-card-copy { display: grid; gap: 4px; min-width: 0; }
   .room-eyebrow { color: var(--accent); font-size: 9px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; }
   .room-card-copy strong { font-size: 18px; letter-spacing: -0.03em; }
   .room-card-copy > span:last-child { overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
-  .room-arrow { color: var(--muted-strong); font-size: 21px; transition: transform 180ms ease, color 180ms ease; }
+  .room-arrow { color: var(--muted-strong); font-size: 21px; transition: transform 220ms var(--ease-smooth), color 220ms var(--ease-smooth); will-change: transform; }
   .room-card:hover .room-arrow { color: var(--accent); transform: translate(2px, -2px); }
 </style>

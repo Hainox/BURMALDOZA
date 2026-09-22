@@ -84,7 +84,7 @@ CI повторяет Python lint/tests, Mini App check/test/build, PostgreSQL/R
 - `uv run --locked pytest -q`: 68 passed; PostgreSQL integration требуют доступный Docker service.
 - `uv run --locked ruff check .`: clean.
 - `pnpm miniapp:check`: 0 errors/0 warnings.
-- `pnpm miniapp:test`: 4 passed.
+- `pnpm miniapp:test`: 9 passed.
 - `pnpm miniapp:build`: passed.
 - Playwright specs добавлены, но локальный запуск требует Chromium; в текущей среде CDN Playwright вернул timeout/502, поэтому этот пункт не маскируется как пройденный.
 

@@ -1,12 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import {
+  SLOT_ACTION_ACCEPT_DELAY,
   SLOT_LAUNCH_STAGGER,
   SLOT_REVEAL_DURATION,
+  SLOT_RESULT_DELAY,
+  SLOT_SERVER_RESULT_PRELUDE,
+  SLOT_SPIN_CYCLE_DURATION,
+  SLOT_SPIN_CYCLE_ROWS,
   SLOT_SPIN_DURATION,
   SLOT_STOP_DURATION,
   SLOT_STOP_STAGGER,
   buildReelTrack,
   getSlotLaunchDelay,
+  getSlotSpinOffset,
   getSlotStopDelay,
   getSlotStopStart,
   hasFreeSpins,
@@ -40,6 +46,30 @@ describe('slot v2 motion contract', () => {
     expect(SLOT_SPIN_DURATION).toBeLessThanOrEqual(3_000);
     expect(SLOT_STOP_DURATION).toBeGreaterThanOrEqual(900);
     expect(SLOT_REVEAL_DURATION).toBeGreaterThan(getSlotStopDelay(2));
+  });
+
+  it('loops a single symbol block without a phase discontinuity', () => {
+    const sampleAt = 137;
+
+    expect(SLOT_SPIN_CYCLE_ROWS).toBe(7);
+    expect(getSlotSpinOffset(0, sampleAt)).toBeCloseTo(
+      getSlotSpinOffset(0, sampleAt + SLOT_SPIN_CYCLE_DURATION)
+    );
+    expect(getSlotSpinOffset(1, sampleAt)).toBeCloseTo(
+      getSlotSpinOffset(1, sampleAt + SLOT_SPIN_CYCLE_DURATION)
+    );
+  });
+
+  it('uses the same action timeline to calculate the landing phase', () => {
+    expect(SLOT_ACTION_ACCEPT_DELAY + SLOT_SERVER_RESULT_PRELUDE + SLOT_RESULT_DELAY).toBe(
+      SLOT_SPIN_DURATION
+    );
+    expect(getSlotStopStart(0, SLOT_SPIN_DURATION)).toBeCloseTo(
+      getSlotSpinOffset(0, SLOT_SPIN_DURATION)
+    );
+    expect(getSlotStopStart(2, SLOT_SPIN_DURATION)).toBeCloseTo(
+      getSlotSpinOffset(2, SLOT_SPIN_DURATION)
+    );
   });
 
   it('exposes free spins only when the server outcome confirms them', () => {
