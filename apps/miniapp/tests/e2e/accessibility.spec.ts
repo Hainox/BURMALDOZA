@@ -17,7 +17,7 @@ test.describe('Mini App shell', () => {
 
     await expect(page.getByTestId('room-shell')).toBeVisible();
     await expect(page.getByTestId('slot-reel-track-0')).toHaveAttribute('data-track-length', '28');
-    await expect(page.getByTestId('slot-machine')).toHaveAttribute('data-spin-duration', '2400');
+    await expect(page.getByTestId('slot-machine')).toHaveAttribute('data-spin-duration', '2940');
     await page.getByTestId('slot-spin').click();
     await expect(page.getByTestId('result-band')).toContainText('SERVER CONFIRMED · DEMO');
     await expect(page.getByTestId('result-band')).toContainText('Линия подтверждена');
