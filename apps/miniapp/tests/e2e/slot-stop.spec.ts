@@ -142,11 +142,13 @@ test.describe('Slot v2 stop continuity', () => {
     await expect(page.getByTestId('result-band')).toContainText('SERVER CONFIRMED · LIVE');
     await expect(page.getByTestId('result-band')).toContainText('+20 JG');
     await expect(page.getByTestId('slot-confirmed-grid')).toBeVisible();
+    await expect(page.getByTestId('balance-pill')).toHaveAttribute('aria-label', 'Баланс 1010 JOKERGEM');
 
     await page.getByTestId('resync-button').click();
     await expect(page.getByTestId('room-shell')).toHaveAttribute('data-motion', 'settle');
     await expect(page.getByTestId('resync-button')).toHaveText('LIVE');
     await expect(page.getByTestId('result-band')).toContainText('SERVER CONFIRMED · LIVE');
     await expect(page.getByTestId('slot-confirmed-grid')).toBeVisible();
+    await expect(page.getByTestId('balance-pill')).toHaveAttribute('aria-label', 'Баланс 1010 JOKERGEM');
   });
 });
