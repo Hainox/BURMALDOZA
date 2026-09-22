@@ -10,16 +10,15 @@
   import SlotRoom from '$lib/rooms/SlotRoom.svelte';
   import {
     SLOT_ACTION_ACCEPT_DELAY,
-    SLOT_RESULT_DELAY,
-    SLOT_REVEAL_DURATION,
     SLOT_SERVER_RESULT_PRELUDE,
-    SLOT_SPIN_DURATION,
+    SLOT_SETTLE_DURATION,
+    SLOT_TOTAL_DURATION,
     type SlotOutcome
   } from '$lib/game/slot';
   import { ApiClient, type ApiEventEnvelope } from '$lib/api/client';
-  import { isLiveApiEnabled, mapApiEventResult } from '$lib/api/runtime';
+  import { isLiveApiEnabled, mapApiEventResult, mapApiPublicStateResult } from '$lib/api/runtime';
   import { SessionState } from '$lib/state/session.svelte';
-  import { RoomState, type GameType, type RoomResult } from '$lib/state/room.svelte';
+  import { getResultBalance, RoomState, type GameType, type RoomResult } from '$lib/state/room.svelte';
 
   const PUBLIC_API_BASE_URL = import.meta.env.PUBLIC_API_BASE_URL ?? '';
 
@@ -92,6 +91,11 @@
     timers = [...timers, window.setTimeout(callback, delay)];
   }
 
+  function updateBalanceFromResult(result: RoomResult | null) {
+    const balance = getResultBalance(result);
+    if (balance !== null) session.setBalance(balance);
+  }
+
   function connectRoomStream(roomId: string) {
     if (!apiClient) return;
     closeRoomStream?.();
@@ -100,15 +104,22 @@
       (snapshot) => {
         if (roomState.snapshot?.roomId !== roomId) return;
         roomState.setSnapshot(snapshot);
+        const snapshotResult = mapApiPublicStateResult(snapshot.publicState, snapshot.gameType);
+        if (snapshotResult) {
+          roomState.restoreConfirmedResult(snapshotResult);
+          updateBalanceFromResult(snapshotResult);
+        }
       },
       (event) => {
         if (roomState.snapshot?.roomId !== roomId) return;
         if (event.state_version < roomState.snapshot.stateVersion) return;
-        roomState.setSnapshot({
+        const nextSnapshot = {
           ...roomState.snapshot,
           stateVersion: event.state_version,
           publicState: publicStateFromEvent(event)
-        });
+        };
+        roomState.setSnapshot(nextSnapshot);
+        roomState.setResult(mapApiEventResult(event, nextSnapshot.gameType));
       }
     );
   }
@@ -183,25 +194,32 @@
     isRunning = true;
     roomState.setResult(null);
     roomState.transition({ type: 'USER_INTENT' }, session.reducedMotion);
+    const confirmedResult = selectedGame === 'slot'
+      ? buildDemoSlotResult(action)
+      : demoResults[selectedGame as GameType];
+
     after(SLOT_ACTION_ACCEPT_DELAY, () => {
       roomState.transition({ type: 'ACTION_ACCEPTED' }, session.reducedMotion);
-      after(SLOT_SERVER_RESULT_PRELUDE, () => {
-        const confirmedResult = selectedGame === 'slot'
-          ? buildDemoSlotResult(action)
-          : demoResults[selectedGame as GameType];
-        const resultDelay = selectedGame === 'slot'
-          ? SLOT_RESULT_DELAY
-          : 0;
+      if (selectedGame === 'slot') {
+        after(SLOT_SERVER_RESULT_PRELUDE, () => roomState.setResult(confirmedResult));
+        after(SLOT_TOTAL_DURATION, () => {
+          roomState.transition({ type: 'RESULT_CONFIRMED' }, session.reducedMotion);
+          updateBalanceFromResult(confirmedResult);
+          after(SLOT_SETTLE_DURATION, () => {
+            roomState.transition({ type: 'SETTLE_COMPLETE' }, session.reducedMotion);
+            isRunning = false;
+          });
+        });
+        return;
+      }
 
-        after(resultDelay, () => {
-          roomState.setResult(confirmedResult);
-          const revealDelay = selectedGame === 'slot' ? SLOT_REVEAL_DURATION : 360;
-          after(revealDelay, () => {
-            roomState.transition({ type: 'RESULT_CONFIRMED' }, session.reducedMotion);
-            after(360, () => {
-              roomState.transition({ type: 'SETTLE_COMPLETE' }, session.reducedMotion);
-              isRunning = false;
-            });
+      after(360, () => {
+        roomState.setResult(confirmedResult);
+        after(360, () => {
+          roomState.transition({ type: 'RESULT_CONFIRMED' }, session.reducedMotion);
+          after(360, () => {
+            roomState.transition({ type: 'SETTLE_COMPLETE' }, session.reducedMotion);
+            isRunning = false;
           });
         });
       });
@@ -247,19 +265,19 @@
       });
       roomState.transition({ type: 'ACTION_ACCEPTED' }, session.reducedMotion);
 
+      if (!selectedGame || roomState.snapshot?.roomId !== roomAtStart.roomId) return;
+      const confirmedResult = mapApiEventResult(event, selectedGame);
+      roomState.setResult(confirmedResult);
       const resultDelay = selectedGame === 'slot'
-        ? Math.max(0, SLOT_SPIN_DURATION - (performance.now() - startedAt))
-        : 0;
+        ? Math.max(0, SLOT_TOTAL_DURATION - (performance.now() - startedAt))
+        : 360;
       after(resultDelay, () => {
         if (!selectedGame || roomState.snapshot?.roomId !== roomAtStart.roomId) return;
-        roomState.setResult(mapApiEventResult(event, selectedGame));
-        const revealDelay = selectedGame === 'slot' ? SLOT_REVEAL_DURATION : 360;
-        after(revealDelay, () => {
-          roomState.transition({ type: 'RESULT_CONFIRMED' }, session.reducedMotion);
-          after(360, () => {
-            roomState.transition({ type: 'SETTLE_COMPLETE' }, session.reducedMotion);
-            isRunning = false;
-          });
+        roomState.transition({ type: 'RESULT_CONFIRMED' }, session.reducedMotion);
+        updateBalanceFromResult(confirmedResult);
+        after(selectedGame === 'slot' ? SLOT_SETTLE_DURATION : 360, () => {
+          roomState.transition({ type: 'SETTLE_COMPLETE' }, session.reducedMotion);
+          isRunning = false;
         });
       });
     } catch (error) {
@@ -291,6 +309,11 @@
       void apiClient.getRoom(roomId).then((snapshot) => {
         if (roomState.snapshot?.roomId !== roomId) return;
         roomState.setSnapshot(snapshot, true);
+        const snapshotResult = mapApiPublicStateResult(snapshot.publicState, snapshot.gameType);
+        if (snapshotResult) {
+          roomState.restoreConfirmedResult(snapshotResult);
+          updateBalanceFromResult(snapshotResult);
+        }
         session.setConnection('connected');
       }).catch((error) => {
         session.setConnection('offline');

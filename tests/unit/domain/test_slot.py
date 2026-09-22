@@ -13,7 +13,26 @@ def test_spin_returns_three_reels_with_seven_visible_rows() -> None:
 
     assert len(outcome.grid) == 3
     assert all(len(reel) == 7 for reel in outcome.grid)
+    assert len(outcome.reel_stops) == 3
+    assert all(0 <= stop < 10 for stop in outcome.reel_stops)
     assert outcome.ruleset_version == "slot-skeleton-1"
+
+
+def test_spin_returns_the_exact_server_stop_for_each_reel() -> None:
+    config = load_skeleton_config(FIXTURE_PATH)
+
+    class FixedStops:
+        def __init__(self) -> None:
+            self.values = iter((1, 4, 7))
+
+        def randbelow(self, upper: int) -> int:
+            assert upper == 10
+            return next(self.values)
+
+    outcome = spin(config, 10, (0,), FixedStops())
+
+    assert outcome.reel_stops == (1, 4, 7)
+    assert tuple(reel[0] for reel in outcome.grid) == ("A", "B", "W")
 
 
 def test_spin_rejects_invalid_bets_and_payline_indexes() -> None:
@@ -40,6 +59,7 @@ def test_calculate_payout_matches_only_left_to_right_consecutive_symbols() -> No
     assert [(line.payline_index, line.match_symbol, line.payout) for line in winning_lines] == [
         (0, "A", 10)
     ]
+    assert winning_lines[0].rows == (3, 3, 3)
 
 
 def test_wild_substitutes_for_the_first_non_wild_symbol() -> None:
@@ -54,6 +74,7 @@ def test_wild_substitutes_for_the_first_non_wild_symbol() -> None:
 
     assert len(winning_lines) == 1
     assert winning_lines[0].match_symbol == "A"
+    assert winning_lines[0].rows == (3, 3, 3)
     assert winning_lines[0].payout == 10
 
 
@@ -67,5 +88,6 @@ def test_exact_gross_and_net_delta_are_returned_for_three_lines() -> None:
 
     outcome = spin(config, 10, (0, 1, 2), FixedStop())
 
+    assert outcome.reel_stops == (0, 0, 0)
     assert outcome.gross_payout == 20
     assert outcome.net_delta == 10

@@ -13,6 +13,7 @@ from app.core.telegram_auth import TelegramAuthContext, TelegramAuthError, verif
 from app.db.models import User
 from app.db.session import get_session
 from app.services.event_bus import EventBus
+from app.services.wallet_service import WalletService
 
 if TYPE_CHECKING:
     from app.services.room_service import RoomService
@@ -97,6 +98,7 @@ async def get_room_service(
     return RoomService(
         session=session,
         event_bus=get_event_bus(request),
+        wallet_service=WalletService(session=session),
         bot_token=app_settings.bot_token,
         max_auth_age_seconds=app_settings.telegram_init_data_max_age_seconds,
     )

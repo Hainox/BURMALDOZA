@@ -19,6 +19,10 @@ export interface RoomResult {
   slotOutcome?: SlotOutcome;
 }
 
+export function getResultBalance(result: RoomResult | null) {
+  return result?.slotOutcome?.balance ?? null;
+}
+
 export class RoomState {
   snapshot = $state<RoomSnapshot | null>(null);
   motion = $state<MotionState>('idle');
@@ -35,6 +39,11 @@ export class RoomState {
 
   setResult(result: RoomResult | null) {
     this.result = result;
+  }
+
+  restoreConfirmedResult(result: RoomResult) {
+    this.result = result;
+    this.motion = 'settle';
   }
 
   reset() {

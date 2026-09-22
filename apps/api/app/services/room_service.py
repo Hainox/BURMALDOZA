@@ -7,12 +7,15 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
 from burmaldoza_contracts.common import GameType, RoomStatus
 from burmaldoza_contracts.events import EventEnvelope
 from burmaldoza_contracts.rooms import ActionRequest, RoomSnapshot, WebSocketAuthMessage
-from burmaldoza_domain.core import StateVersionConflictError
+from burmaldoza_domain.core import InsufficientBalanceError, StateVersionConflictError
+from burmaldoza_domain.games.slot import SlotConfig, SlotOutcome, spin
+from burmaldoza_domain.games.slot_ruleset import load_skeleton_config
+from burmaldoza_domain.rng import RandomSource, SystemRandomSource
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,6 +23,7 @@ from app.core.telegram_auth import TelegramAuthError, verify_telegram_init_data
 from app.db.models import GameAction, GamePlayer, GameRoom, User
 from app.dependencies import CurrentUser
 from app.services.event_bus import EventBus
+from app.services.wallet_service import MemoryWalletStore, SettlementResult, WalletService
 
 
 class RoomServiceError(ValueError):
@@ -82,6 +86,28 @@ def _safe_json(value: Any) -> Any:
     return json.loads(json.dumps(value, default=str))
 
 
+def _serialize_slot_result(outcome: SlotOutcome, settlement: SettlementResult) -> dict[str, Any]:
+    return {
+        "grid": [list(column) for column in outcome.grid],
+        "reel_stops": list(outcome.reel_stops),
+        "winning_lines": [
+            {
+                "payline_index": line.payline_index,
+                "rows": list(line.rows),
+                "symbols": list(line.symbols),
+                "match_symbol": line.match_symbol,
+                "matched_columns": line.matched_columns,
+                "payout": line.payout,
+            }
+            for line in outcome.winning_lines
+        ],
+        "gross_payout": outcome.gross_payout,
+        "net_delta": settlement.net_delta,
+        "balance_after": settlement.balance_after,
+        "ruleset_version": outcome.ruleset_version,
+    }
+
+
 def _initial_public_state(game_type: GameType) -> dict[str, Any]:
     return {
         "phase": "waiting",
@@ -123,6 +149,9 @@ class RoomService:
         *,
         store: MemoryRoomStore | None = None,
         event_bus: EventBus | None = None,
+        wallet_service: WalletService | None = None,
+        slot_config: SlotConfig | None = None,
+        slot_rng: RandomSource | None = None,
         bot_token: str = "",
         max_auth_age_seconds: int = 86400,
         now: Callable[[], datetime] | None = None,
@@ -132,6 +161,13 @@ class RoomService:
         self.session = session
         self.store = store if store is not None else (None if session is not None else MemoryRoomStore())
         self.event_bus = event_bus or EventBus()
+        self.wallet_service = wallet_service or (
+            WalletService(session=session)
+            if session is not None
+            else WalletService(store=MemoryWalletStore())
+        )
+        self.slot_config = slot_config or load_skeleton_config()
+        self.slot_rng = slot_rng or SystemRandomSource()
         self.bot_token = bot_token
         self.max_auth_age_seconds = max_auth_age_seconds
         self.now = now or (lambda: datetime.now(UTC))
@@ -196,7 +232,7 @@ class RoomService:
             async with self._lock:
                 room = self._get_memory_room(room_id)
                 self._require_member(room, user_id)
-                replay = room.actions.get(request.action_id)
+                replay = self._find_memory_action(room_id, request.action_id)
                 if replay is not None:
                     return replay
                 if request.expected_state_version != room.state_version:
@@ -204,7 +240,7 @@ class RoomService:
                         f"expected state_version {request.expected_state_version}, current is {room.state_version}"
                     )
                 action = _action_name(request, room.game_type)
-                event = self._advance_memory(room, request, action)
+                event = await self._advance_memory(room, user_id, request, action)
             await self.event_bus.publish(event)
             return event
 
@@ -226,7 +262,7 @@ class RoomService:
                         f"expected state_version {request.expected_state_version}, current is {room.state_version}"
                     )
                 action = _action_name(request, GameType(room.game_type))
-                event = self._advance_db(room, user_id, request, action)
+                event = await self._advance_db(room, user_id, request, action)
         await self.event_bus.publish(event)
         return event
 
@@ -284,27 +320,46 @@ class RoomService:
             raise RoomNotFoundError("room not found")
         return room
 
+    def _find_memory_action(self, room_id: UUID, action_id: UUID) -> EventEnvelope | None:
+        assert self.store is not None
+        for stored_room in self.store.rooms.values():
+            replay = stored_room.actions.get(action_id)
+            if replay is None:
+                continue
+            if stored_room.room_id != room_id:
+                raise RoomServiceError("action_id already belongs to another room")
+            return replay
+        return None
+
     @staticmethod
     def _require_member(room: _MemoryRoom, user_id: int) -> None:
         if user_id not in room.members:
             raise RoomAccessError("user is not a room member")
 
-    def _advance_memory(self, room: _MemoryRoom, request: ActionRequest, action: str) -> EventEnvelope:
+    async def _advance_memory(
+        self, room: _MemoryRoom, user_id: int, request: ActionRequest, action: str
+    ) -> EventEnvelope:
+        result = await self._execute_game_action(room.room_id, user_id, request, room.game_type, action)
         room.state_version += 1
         room.status = RoomStatus.ACTIVE
-        room.public_state = self._next_public_state(room.public_state, request, action)
+        room.public_state = self._next_public_state(room.public_state, request, action, result)
         event = self._build_event(
             room.room_id,
             room.state_version,
             room.game_type,
             request.action_id,
             room.public_state,
+            result,
         )
         room.actions[request.action_id] = event
         return event
 
     def _next_public_state(
-        self, current: dict[str, Any], request: ActionRequest, action: str
+        self,
+        current: dict[str, Any],
+        request: ActionRequest,
+        action: str,
+        result: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         next_state = copy.deepcopy(current)
         next_state.update(
@@ -315,6 +370,8 @@ class RoomService:
                 "action_count": int(current.get("action_count", 0)) + 1,
             }
         )
+        if result is not None:
+            next_state["last_result"] = copy.deepcopy(result)
         return _safe_json(next_state)
 
     def _build_event(
@@ -324,7 +381,14 @@ class RoomService:
         game_type: GameType,
         action_id: UUID,
         public_state: dict[str, Any],
+        result: dict[str, Any] | None = None,
     ) -> EventEnvelope:
+        payload: dict[str, Any] = {
+            "action_id": str(action_id),
+            "public_state": copy.deepcopy(public_state),
+        }
+        if result is not None:
+            payload["result"] = copy.deepcopy(result)
         return EventEnvelope(
             event_id=action_id,
             room_id=room_id,
@@ -332,9 +396,52 @@ class RoomService:
             type=f"{game_type.value}.action.accepted",
             ruleset_version=_RULESET_VERSIONS[game_type],
             server_time=_utc(self.now()),
-            payload={"action_id": str(action_id), "public_state": copy.deepcopy(public_state)},
+            payload=payload,
             animation_hint=_ANIMATION_HINTS[game_type],
         )
+
+    async def _execute_game_action(
+        self,
+        room_id: UUID,
+        user_id: int,
+        request: ActionRequest,
+        game_type: GameType,
+        action: str,
+    ) -> dict[str, Any] | None:
+        if game_type is not GameType.SLOT:
+            return None
+        if action != "spin":
+            raise RoomServiceError(f"action {action!r} is not supported by the slot room")
+
+        bet = request.payload.get("bet", 10)
+        if isinstance(bet, bool) or not isinstance(bet, int) or not 10 <= bet <= 100:
+            raise RoomServiceError("slot bet must be an integer between 10 and 100")
+
+        raw_paylines = request.payload.get("paylines", tuple(range(len(self.slot_config.paylines))))
+        if not isinstance(raw_paylines, (list, tuple)) or any(
+            isinstance(index, bool) or not isinstance(index, int) for index in raw_paylines
+        ):
+            raise RoomServiceError("slot paylines must be a list of integer indexes")
+        active_paylines = tuple(raw_paylines)
+
+        try:
+            outcome = spin(self.slot_config, bet, active_paylines, self.slot_rng)
+        except ValueError as error:
+            raise RoomServiceError(str(error)) from error
+
+        round_id = uuid5(NAMESPACE_URL, f"slot:{room_id}:{request.action_id}")
+        try:
+            settlement = await self.wallet_service.settle_game_round_in_transaction(
+                user_id=user_id,
+                round_id=round_id,
+                stake=bet,
+                payout=outcome.gross_payout,
+                idempotency_key=request.action_id,
+            )
+        except InsufficientBalanceError as error:
+            raise RoomServiceError("insufficient balance for slot bet") from error
+
+        return _serialize_slot_result(outcome, settlement)
 
     async def _load_db_room(self, room_id: UUID, *, lock: bool) -> GameRoom:
         assert self.session is not None
@@ -368,16 +475,17 @@ class RoomService:
             public_state=copy.deepcopy(room.state_json or {}),
         )
 
-    def _advance_db(
+    async def _advance_db(
         self, room: GameRoom, user_id: int, request: ActionRequest, action: str
     ) -> EventEnvelope:
         game_type = GameType(room.game_type)
         next_version = room.state_version + 1
-        next_state = self._next_public_state(room.state_json or {}, request, action)
+        result = await self._execute_game_action(room.id, user_id, request, game_type, action)
+        next_state = self._next_public_state(room.state_json or {}, request, action, result)
         room.state_version = next_version
         room.status = RoomStatus.ACTIVE.value
         room.state_json = next_state
-        event = self._build_event(room.id, next_version, game_type, request.action_id, next_state)
+        event = self._build_event(room.id, next_version, game_type, request.action_id, next_state, result)
         self.session.add(
             GameAction(
                 id=request.action_id,

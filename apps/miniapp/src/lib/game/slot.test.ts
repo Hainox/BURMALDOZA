@@ -2,17 +2,17 @@ import { describe, expect, it } from 'vitest';
 import {
   SLOT_ACTION_ACCEPT_DELAY,
   SLOT_LAUNCH_STAGGER,
-  SLOT_REVEAL_DURATION,
-  SLOT_RESULT_DELAY,
+  SLOT_LANDING_TAILS,
   SLOT_SERVER_RESULT_PRELUDE,
-  SLOT_SPIN_CYCLE_DURATION,
-  SLOT_SPIN_CYCLE_ROWS,
   SLOT_SPIN_DURATION,
-  SLOT_STOP_DURATION,
-  SLOT_STOP_STAGGER,
+  SLOT_SETTLE_DURATION,
+  SLOT_TOTAL_DURATION,
+  SLOT_TRAVEL_DURATION,
   buildReelTrack,
+  getSlotPhase,
+  getSlotReelOffsetRows,
+  getSlotReelPhase,
   getSlotLaunchDelay,
-  getSlotSpinOffset,
   getSlotStopDelay,
   getSlotStopStart,
   hasFreeSpins,
@@ -33,43 +33,47 @@ describe('slot v2 motion contract', () => {
     ]);
   });
 
-  it('stops reels from left to right with a deterministic stagger', () => {
+  it('keeps the server-confirmed timeline deterministic', () => {
     expect(getSlotStopDelay(0)).toBe(0);
-    expect(getSlotStopDelay(1)).toBe(SLOT_STOP_STAGGER);
-    expect(getSlotStopDelay(2)).toBe(SLOT_STOP_STAGGER * 2);
+    expect(getSlotStopDelay(1)).toBe(SLOT_LANDING_TAILS[1] - SLOT_LANDING_TAILS[0]);
+    expect(getSlotStopDelay(2)).toBe(SLOT_LANDING_TAILS[2] - SLOT_LANDING_TAILS[0]);
     expect(getSlotLaunchDelay(0)).toBe(0);
     expect(getSlotLaunchDelay(1)).toBe(SLOT_LAUNCH_STAGGER);
     expect(getSlotLaunchDelay(2)).toBe(SLOT_LAUNCH_STAGGER * 2);
-    expect(getSlotStopStart(0)).toBeLessThan(getSlotStopStart(1));
-    expect(getSlotStopStart(1)).toBeLessThan(getSlotStopStart(2));
-    expect(SLOT_SPIN_DURATION).toBeGreaterThanOrEqual(2_000);
-    expect(SLOT_SPIN_DURATION).toBeLessThanOrEqual(3_000);
-    expect(SLOT_STOP_DURATION).toBeGreaterThanOrEqual(900);
-    expect(SLOT_REVEAL_DURATION).toBeGreaterThan(getSlotStopDelay(2));
+    expect(getSlotStopStart(0)).toBe(SLOT_TRAVEL_DURATION);
+    expect(getSlotStopStart(1)).toBeGreaterThan(getSlotStopStart(0));
+    expect(getSlotStopStart(2)).toBeGreaterThan(getSlotStopStart(1));
+    expect(SLOT_SPIN_DURATION).toBe(SLOT_TOTAL_DURATION);
+    expect(SLOT_TOTAL_DURATION).toBe(SLOT_TRAVEL_DURATION + SLOT_LANDING_TAILS[2] + SLOT_SETTLE_DURATION);
   });
 
-  it('loops a single symbol block without a phase discontinuity', () => {
-    const sampleAt = 137;
-
-    expect(SLOT_SPIN_CYCLE_ROWS).toBe(7);
-    expect(getSlotSpinOffset(0, sampleAt)).toBeCloseTo(
-      getSlotSpinOffset(0, sampleAt + SLOT_SPIN_CYCLE_DURATION)
-    );
-    expect(getSlotSpinOffset(1, sampleAt)).toBeCloseTo(
-      getSlotSpinOffset(1, sampleAt + SLOT_SPIN_CYCLE_DURATION)
-    );
+  it('walks through left, center, right and settled phases', () => {
+    expect(getSlotPhase(0)).toBe('spinning');
+    expect(getSlotPhase(SLOT_TRAVEL_DURATION)).toBe('stopping-left');
+    expect(getSlotPhase(getSlotStopStart(1))).toBe('stopping-center');
+    expect(getSlotPhase(getSlotStopStart(2))).toBe('stopping-right');
+    expect(getSlotPhase(SLOT_TOTAL_DURATION)).toBe('settled');
+    expect(SLOT_ACTION_ACCEPT_DELAY + SLOT_TOTAL_DURATION).toBe(3_080);
+    expect(SLOT_SERVER_RESULT_PRELUDE).toBe(520);
   });
 
-  it('uses the same action timeline to calculate the landing phase', () => {
-    expect(SLOT_ACTION_ACCEPT_DELAY + SLOT_SERVER_RESULT_PRELUDE + SLOT_RESULT_DELAY).toBe(
-      SLOT_SPIN_DURATION
-    );
-    expect(getSlotStopStart(0, SLOT_SPIN_DURATION)).toBeCloseTo(
-      getSlotSpinOffset(0, SLOT_SPIN_DURATION)
-    );
-    expect(getSlotStopStart(2, SLOT_SPIN_DURATION)).toBeCloseTo(
-      getSlotSpinOffset(2, SLOT_SPIN_DURATION)
-    );
+  it('moves continuously into each landing and then holds the final offset', () => {
+    const beforeLanding = getSlotReelOffsetRows(0, SLOT_TRAVEL_DURATION - 1);
+    const landing = getSlotReelOffsetRows(0, SLOT_TRAVEL_DURATION + 160);
+    const settled = getSlotReelOffsetRows(0, SLOT_TOTAL_DURATION);
+
+    expect(beforeLanding).toBeLessThan(0);
+    expect(landing).toBeLessThan(beforeLanding);
+    expect(settled).toBeLessThan(landing);
+    expect(getSlotReelPhase(0, SLOT_TOTAL_DURATION)).toBe('landed');
+    expect(getSlotReelPhase(1, SLOT_TRAVEL_DURATION)).toBe('travel');
+    expect(getSlotReelPhase(2, SLOT_TRAVEL_DURATION)).toBe('travel');
+  });
+
+  it('collapses every reel to landed under reduced motion', () => {
+    expect(getSlotPhase(0, true)).toBe('settled');
+    expect(getSlotReelPhase(0, 0, true)).toBe('landed');
+    expect(getSlotReelOffsetRows(0, 0, true)).toBeLessThan(0);
   });
 
   it('exposes free spins only when the server outcome confirms them', () => {

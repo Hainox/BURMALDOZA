@@ -265,11 +265,45 @@ class WalletService:
                 return result
         assert self.session is not None
         async with self.session.begin():
-            wallet = await self._db_get_or_create_wallet(user_id, lock=True)
-            existing = await self._db_replay(idempotency_key)
-            if existing is not None:
-                return self._as_settlement_result(existing)
-            return await self._db_settle(wallet, round_id, stake, payout, idempotency_key)
+            return await self._settle_game_round_in_transaction(
+                user_id, round_id, stake, payout, idempotency_key
+            )
+
+    async def settle_game_round_in_transaction(
+        self,
+        user_id: int,
+        round_id: UUID,
+        stake: int,
+        payout: int,
+        idempotency_key: UUID,
+    ) -> SettlementResult:
+        """Settle a game round inside a transaction owned by the caller."""
+
+        if stake < 0 or payout < 0:
+            raise ValueError("stake and payout must be non-negative")
+        if self.store is not None:
+            return await self.settle_game_round(user_id, round_id, stake, payout, idempotency_key)
+        assert self.session is not None
+        if not self.session.in_transaction():
+            raise RuntimeError("caller-owned game settlement requires an active transaction")
+        return await self._settle_game_round_in_transaction(
+            user_id, round_id, stake, payout, idempotency_key
+        )
+
+    async def _settle_game_round_in_transaction(
+        self,
+        user_id: int,
+        round_id: UUID,
+        stake: int,
+        payout: int,
+        idempotency_key: UUID,
+    ) -> SettlementResult:
+        assert self.session is not None
+        wallet = await self._db_get_or_create_wallet(user_id, lock=True)
+        existing = await self._db_replay(idempotency_key)
+        if existing is not None:
+            return self._as_settlement_result(existing)
+        return await self._db_settle(wallet, round_id, stake, payout, idempotency_key)
 
     @staticmethod
     def _check_cooldown(

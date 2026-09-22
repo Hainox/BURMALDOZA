@@ -22,6 +22,9 @@
       <span class="result-state">{isConfirmed ? motion.toUpperCase() : 'RESOLVING'}</span>
     {/if}
   </div>
+  {#if isConfirmed && result?.slotOutcome}
+    <span class="confirmed-balance" data-testid="confirmed-balance">BALANCE {result.slotOutcome.balance} JG</span>
+  {/if}
 </section>
 
 <style>
@@ -34,6 +37,7 @@
   p { margin: 3px 0 0; color: var(--muted); font-size: 11px; }
   .result-amount { color: var(--brass-300); font-size: 19px; font-weight: 800; white-space: nowrap; }
   .result-amount small { font-size: 10px; letter-spacing: 0.12em; }
+  .confirmed-balance { color: var(--success); font-size: 9px; font-weight: 800; letter-spacing: 0.1em; }
   .result-state { color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: 0.1em; }
   @keyframes resultConfirmIn { from { opacity: .68; transform: translate3d(0, 7px, 0); } to { opacity: 1; transform: translate3d(0, -1px, 0); } }
 </style>
