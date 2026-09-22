@@ -1,18 +1,22 @@
 <script lang="ts">
+  import { onDestroy } from 'svelte';
+
   import ResultBand from '$lib/components/ResultBand.svelte';
   import {
     SLOT_LAUNCH_DURATION,
-    SLOT_FINAL_OFFSET_ROWS,
-    SLOT_SPIN_CYCLE_DURATION,
-    SLOT_SPIN_CYCLE_ROWS,
+    SLOT_ROW_COUNT,
     SLOT_SPIN_DURATION,
-    SLOT_STOP_DURATION,
     buildReelTrack,
     getSlotLaunchDelay,
+    getSlotPhase,
+    getSlotReelOffsetRows,
+    getSlotReelPhase,
     getSlotStopDelay,
     getSlotStopStart,
     hasFreeSpins,
-    type SlotOutcome
+    type SlotOutcome,
+    type SlotPhase,
+    type SlotReelPhase
   } from '$lib/game/slot';
   import type { MotionState } from '$lib/game/motion';
   import type { RoomResult } from '$lib/state/room.svelte';
@@ -28,32 +32,92 @@
     ['◆', '7', '♣', '✦', 'A', '♠', '♦']
   ];
 
-  type ReelPhase = 'idle' | 'spinning' | 'stopping' | 'outcome';
+  let slotPhase: SlotPhase = 'idle';
+  let elapsedMs = 0;
+  let startedAt = 0;
+  let reducedMotion = false;
+  let reelOffsets = [0, 0, 0];
+  let ticker: number | null = null;
 
   $: slotOutcome = result?.slotOutcome ?? null;
   $: confirmedReels = slotOutcome?.reels?.length === 3 ? slotOutcome.reels : reelBases;
   $: reelTracks = reelBases.map((base, reelIndex) =>
     buildReelTrack(base, confirmedReels[reelIndex] ?? base)
   );
-  $: reelPhase = getReelPhase(motion, slotOutcome);
+  $: reelPhases = reelBases.map((_, reelIndex): SlotReelPhase =>
+    slotPhase === 'idle' ? 'idle' : getSlotReelPhase(reelIndex, elapsedMs, reducedMotion)
+  );
+  $: stoppedReels = reelPhases.filter((phase) => phase === 'landed').length;
   $: winningRows = slotOutcome?.winningRows ?? [];
-  $: showConfirmedGrid = reelPhase === 'outcome';
+  $: showConfirmedGrid = Boolean(slotOutcome) && (slotPhase === 'settled' || motion === 'outcome' || motion === 'settle');
+  $: sectionReelPhase = slotPhase === 'settled' ? 'outcome' : slotPhase;
 
-  function getReelPhase(currentMotion: MotionState, outcome: SlotOutcome | null): ReelPhase {
-    if (currentMotion === 'resolving' && outcome) return 'stopping';
-    if (currentMotion === 'resolving') return 'spinning';
-    if (currentMotion === 'outcome' || currentMotion === 'settle') return 'outcome';
-    return 'idle';
+  function cancelTicker() {
+    if (ticker !== null) {
+      window.cancelAnimationFrame(ticker);
+      ticker = null;
+    }
+  }
+
+  function renderFrame(nextElapsedMs: number) {
+    elapsedMs = nextElapsedMs;
+    slotPhase = getSlotPhase(nextElapsedMs, reducedMotion);
+    reelOffsets = reelBases.map((_, reelIndex) =>
+      getSlotReelOffsetRows(reelIndex, nextElapsedMs, reducedMotion)
+    );
+  }
+
+  function tick(now: number) {
+    const nextElapsedMs = Math.max(0, now - startedAt);
+    renderFrame(nextElapsedMs);
+    if (slotPhase === 'settled') {
+      ticker = null;
+      return;
+    }
+    ticker = window.requestAnimationFrame(tick);
+  }
+
+  function startSpin() {
+    cancelTicker();
+    reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    startedAt = performance.now();
+    elapsedMs = 0;
+
+    if (reducedMotion) {
+      renderFrame(SLOT_SPIN_DURATION);
+      return;
+    }
+
+    slotPhase = 'spinning';
+    reelOffsets = [0, 0, 0];
+    ticker = window.requestAnimationFrame(tick);
+  }
+
+  function handleAction(action: string) {
+    if (motion === 'resolving') return;
+    startSpin();
+    onAction(action);
   }
 
   function isWinningSymbol(reelIndex: number, symbolIndex: number) {
-    const finalStart = reelTracks[reelIndex].length - 7;
+    const finalStart = reelTracks[reelIndex].length - SLOT_ROW_COUNT;
     return showConfirmedGrid && winningRows.includes(symbolIndex - finalStart);
   }
 
   function getSymbolToneIndex(reelIndex: number, symbolIndex: number) {
     return symbolIndex % reelBases[reelIndex].length;
   }
+
+  function phaseLabel() {
+    if (slotPhase === 'spinning') return 'TRAVEL · 60 FPS';
+    if (slotPhase === 'stopping-left') return 'LANDING · LEFT REEL';
+    if (slotPhase === 'stopping-center') return 'LANDING · CENTER REEL';
+    if (slotPhase === 'stopping-right') return 'LANDING · RIGHT REEL';
+    if (slotPhase === 'settled') return 'SETTLED · SERVER GRID';
+    return 'READY · SERVER-FIRST';
+  }
+
+  onDestroy(cancelTicker);
 </script>
 
 <div class="game-room slot-room">
@@ -69,7 +133,9 @@
   <section
     class="slot-machine"
     class:resolving={motion === 'resolving'}
-    data-reel-phase={reelPhase}
+    data-slot-phase={slotPhase}
+    data-reel-phase={sectionReelPhase}
+    data-stopped-reels={stoppedReels}
     data-spin-duration={SLOT_SPIN_DURATION}
     data-testid="slot-machine"
     aria-label="Слот 3 на 7"
@@ -79,26 +145,26 @@
       {#each reelTracks as track, reelIndex}
         <div
           class="reel"
-          class:spinning={reelPhase === 'spinning'}
-          class:stopping={reelPhase === 'stopping'}
+          class:travel={reelPhases[reelIndex] === 'travel'}
+          class:landing={reelPhases[reelIndex] === 'landing'}
+          class:landed={reelPhases[reelIndex] === 'landed'}
           data-testid={`slot-reel-${reelIndex}`}
           data-launch-delay={getSlotLaunchDelay(reelIndex)}
           data-stop-delay={getSlotStopDelay(reelIndex)}
           data-stop-start={getSlotStopStart(reelIndex)}
+          data-reel-phase={reelPhases[reelIndex]}
           aria-label={`Барабан ${reelIndex + 1}`}
-          style={`--reel-launch-delay: ${getSlotLaunchDelay(reelIndex)}ms; --reel-stop-delay: ${getSlotStopDelay(reelIndex)}ms; --reel-launch-duration: ${SLOT_LAUNCH_DURATION}ms; --reel-stop-duration: ${SLOT_STOP_DURATION}ms; --reel-spin-cycle: ${SLOT_SPIN_CYCLE_DURATION}ms;`}
+          style={`--reel-launch-delay: ${getSlotLaunchDelay(reelIndex)}ms; --reel-launch-duration: ${SLOT_LAUNCH_DURATION}ms;`}
         >
-          <div
-            class="reel-window"
-            style={`--reel-cycle-distance: calc(-${SLOT_SPIN_CYCLE_ROWS} * (var(--symbol-size) + var(--reel-gap))); --reel-final-distance: calc(-${SLOT_FINAL_OFFSET_ROWS} * (var(--symbol-size) + var(--reel-gap)));`}
-          >
+          <div class="reel-window">
             <div
               class="reel-track"
-              class:spinning={reelPhase === 'spinning'}
-              class:stopping={reelPhase === 'stopping'}
-              class:outcome={reelPhase === 'outcome'}
+              class:travel={reelPhases[reelIndex] === 'travel'}
+              class:landing={reelPhases[reelIndex] === 'landing'}
+              class:landed={reelPhases[reelIndex] === 'landed'}
               data-testid={`slot-reel-track-${reelIndex}`}
               data-track-length={track.length}
+              style={`--reel-offset-rows: ${reelOffsets[reelIndex] ?? 0};`}
               aria-hidden="true"
             >
               {#each track as symbol, symbolIndex}
@@ -125,6 +191,11 @@
     <div class="machine-lights" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
   </section>
 
+  <div class="slot-status" data-testid="slot-status" aria-live="polite">
+    <span>{phaseLabel()}</span>
+    <strong>{stoppedReels}/{reelBases.length} REELS LANDED</strong>
+  </div>
+
   <div class="slot-meta">
     <span><b>RTP</b> skeleton-1</span>
     <span><b>LINES</b> 3 active</span>
@@ -137,13 +208,13 @@
         <span class="free-spins-kicker">BONUS STATE · SERVER CONFIRMED</span>
         <strong>{slotOutcome.freeSpinsRemaining} FREE SPINS</strong>
       </div>
-      <button class="free-spin-action" on:click={() => onAction('free-spin')}>
+      <button class="free-spin-action" on:click={() => handleAction('free-spin')}>
         Запустить Free Spin <span aria-hidden="true">↻</span>
       </button>
     </section>
   {/if}
 
-  <button class="primary-action" on:click={() => onAction('spin')} disabled={motion === 'resolving'} data-testid="slot-spin">
+  <button class="primary-action" on:click={() => handleAction('spin')} disabled={motion === 'resolving'} data-testid="slot-spin">
     <span class="action-icon" aria-hidden="true">↻</span>
     {motion === 'resolving' ? 'Барабаны останавливаются…' : 'Крутить за 10 JG'}
   </button>
@@ -160,13 +231,12 @@
   .slot-machine { position: relative; display: grid; place-items: center; min-height: 430px; padding: 54px 10px 30px; overflow: hidden; border: 1px solid rgb(231 187 112 / 36%); border-radius: 24px; background: radial-gradient(circle at 50% 25%, rgb(143 53 89 / 32%), transparent 56%), #12121b; box-shadow: inset 0 0 0 8px rgb(0 0 0 / 14%), inset 0 0 35px rgb(0 0 0 / 52%), 0 18px 40px rgb(0 0 0 / 28%); }
   .machine-rim { position: absolute; inset: 11px; border: 1px solid rgb(231 187 112 / 18%); border-radius: 18px; pointer-events: none; }
   .reel-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; width: min(100%, 390px); }
-  .reel { min-width: 0; padding: 8px 5px; border: 1px solid rgb(255 247 237 / 11%); border-radius: 14px; background: rgb(255 247 237 / 5%); transform: translate3d(0, 0, 0); backface-visibility: hidden; }
-  .reel.spinning { animation: reelLaunchWave var(--reel-launch-duration) var(--ease-spring) var(--reel-launch-delay) both; }
-  .reel.stopping { animation: reelStopWave var(--reel-stop-duration) var(--ease-spring) var(--reel-stop-delay) both; }
+  .reel { min-width: 0; padding: 8px 5px; border: 1px solid rgb(255 247 237 / 11%); border-radius: 14px; background: rgb(255 247 237 / 5%); transform: translate3d(0, 0, 0); backface-visibility: hidden; will-change: transform, opacity; }
+  .reel.travel { animation: reelLaunchWave var(--reel-launch-duration) var(--ease-spring) var(--reel-launch-delay) both; }
+  .reel.landing { animation: reelLandingWave 320ms var(--ease-smooth) both; }
+  .reel.landed { animation: reelLanded 300ms var(--ease-smooth) both; }
   .reel-window { --symbol-size: clamp(34px, 8vw, 52px); --reel-gap: 6px; position: relative; height: calc(7 * (var(--symbol-size) + var(--reel-gap)) - var(--reel-gap)); overflow: hidden; mask-image: linear-gradient(to bottom, transparent 0, #000 8%, #000 92%, transparent 100%); contain: paint; }
-  .reel-track { display: grid; gap: var(--reel-gap); transform: translate3d(0, 0, 0); transition: transform var(--reel-stop-duration) var(--ease-smooth) var(--reel-stop-delay); will-change: transform; backface-visibility: hidden; contain: layout paint; }
-  .reel-track.spinning { animation: reelFullSpin var(--reel-spin-cycle) linear var(--reel-launch-delay) infinite; }
-  .reel-track.stopping, .reel-track.outcome { transform: translate3d(0, var(--reel-final-distance), 0); }
+  .reel-track { display: grid; gap: var(--reel-gap); transform: translate3d(0, calc(var(--reel-offset-rows) * (var(--symbol-size) + var(--reel-gap))), 0); will-change: transform; backface-visibility: hidden; contain: layout paint; }
   .symbol { display: grid; place-items: center; width: 100%; height: var(--symbol-size); border-radius: 10px; background: rgb(11 11 17 / 66%); color: var(--ivory); font-size: clamp(20px, 7vw, 32px); font-weight: 800; line-height: 1; text-shadow: 0 2px 12px rgb(231 187 112 / 22%); }
   .symbol.tone-brass { color: var(--brass-300); }
   .symbol.tone-pink { color: #ed9aaf; }
@@ -178,6 +248,8 @@
   .machine-lights { position: absolute; right: 28px; bottom: 22px; left: 28px; display: flex; justify-content: space-between; }
   .machine-lights i { width: 5px; height: 5px; border-radius: 50%; background: var(--brass-400); box-shadow: 0 0 10px var(--brass-400); animation: lightBlink 1.3s ease-in-out infinite; }
   .machine-lights i:nth-child(2) { animation-delay: 150ms; } .machine-lights i:nth-child(3) { animation-delay: 300ms; } .machine-lights i:nth-child(4) { animation-delay: 450ms; } .machine-lights i:nth-child(5) { animation-delay: 600ms; }
+  .slot-status { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 18px; color: var(--muted); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .slot-status strong { color: var(--brass-300); font-size: 8px; }
   .slot-meta { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 9px; letter-spacing: 0.05em; text-transform: uppercase; }
   .slot-meta b { display: block; margin-bottom: 3px; color: var(--muted-strong); font-size: 8px; }
   .free-spins-panel { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border: 1px solid rgb(142 228 182 / 35%); border-radius: var(--radius-md); background: linear-gradient(105deg, rgb(142 228 182 / 12%), rgb(231 187 112 / 8%)); }
@@ -189,9 +261,10 @@
   .primary-action { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; border: 0; border-radius: 15px; background: linear-gradient(120deg, var(--brass-300), #c98f4e); color: #2a1820; font: inherit; font-size: 14px; font-weight: 850; cursor: pointer; box-shadow: 0 10px 24px rgb(231 187 112 / 18%); transition: transform 160ms ease, filter 160ms ease; }
   .primary-action:hover { filter: brightness(1.06); transform: translateY(-2px); } .primary-action:active { transform: translateY(1px); } .primary-action:disabled { cursor: wait; filter: saturate(0.7); } .action-icon { font-size: 21px; }
   @keyframes reelLaunchWave { 0% { transform: translate3d(0, 5px, 0) scale(.98); opacity: .72; } 55% { transform: translate3d(0, -2px, 0) scale(1.01); opacity: 1; } 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 1; } }
-  @keyframes reelStopWave { 0% { transform: translate3d(0, 0, 0) scale(1); } 62% { transform: translate3d(0, -1px, 0) scale(1.012); } 100% { transform: translate3d(0, 0, 0) scale(1); } }
-  @keyframes reelFullSpin { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(0, var(--reel-cycle-distance), 0); } }
+  @keyframes reelLandingWave { 0% { transform: translate3d(0, 0, 0) scale(1); } 55% { transform: translate3d(0, -1px, 0) scale(1.012); } 100% { transform: translate3d(0, 0, 0) scale(1); } }
+  @keyframes reelLanded { from { filter: brightness(1.1); } to { filter: brightness(1); } }
   @keyframes confirmedGridIn { from { opacity: 0; transform: translate3d(0, -7px, 0) scale(.97); } to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); } }
   @keyframes winningPulse { from { transform: scale(1); } to { transform: scale(1.04); } } @keyframes lightBlink { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
   @media (max-width: 390px) { .free-spins-panel { align-items: stretch; flex-direction: column; } .free-spin-action { width: 100%; } }
+  @media (prefers-reduced-motion: reduce) { .reel.travel, .reel.landing, .reel.landed, .symbol.winning, .machine-lights i { animation: none; } .reel-track { transition: none; } }
 </style>
