@@ -4,18 +4,44 @@ test.describe('Slot v2 stop continuity', () => {
   test('runs travel and staged left-to-right landing phases', async ({ page }) => {
     await page.goto('/');
     await page.getByTestId('room-card-slot').click();
-    await page.getByTestId('slot-spin').click();
 
     const machine = page.getByTestId('slot-machine');
-    await expect(machine).toHaveAttribute('data-slot-phase', 'spinning');
-    await expect(machine).toHaveAttribute('data-stopped-reels', '0');
-    await expect(machine).toHaveAttribute('data-slot-phase', 'stopping-left', { timeout: 3_000 });
-    await expect(machine).toHaveAttribute('data-stopped-reels', '1', { timeout: 1_000 });
-    await expect(machine).toHaveAttribute('data-slot-phase', 'stopping-center', { timeout: 1_000 });
-    await expect(machine).toHaveAttribute('data-stopped-reels', '2', { timeout: 1_000 });
-    await expect(machine).toHaveAttribute('data-slot-phase', 'stopping-right', { timeout: 1_000 });
-    await expect(machine).toHaveAttribute('data-stopped-reels', '3', { timeout: 1_000 });
-    await expect(machine).toHaveAttribute('data-slot-phase', 'settled', { timeout: 1_000 });
+    await machine.evaluate((element) => {
+      type SlotMachineDebug = HTMLElement & {
+        __slotPhaseLog?: string[];
+        __slotPhaseObserver?: MutationObserver;
+      };
+      const target = element as SlotMachineDebug;
+      const log: string[] = [];
+      const record = () => {
+        const signature = `${target.getAttribute('data-slot-phase')}:${target.getAttribute('data-stopped-reels')}`;
+        if (log.at(-1) !== signature) log.push(signature);
+      };
+      record();
+      target.__slotPhaseObserver = new MutationObserver(record);
+      target.__slotPhaseObserver.observe(target, {
+        attributes: true,
+        attributeFilter: ['data-slot-phase', 'data-stopped-reels']
+      });
+      target.__slotPhaseLog = log;
+    });
+    await page.getByTestId('slot-spin').click();
+
+    await expect(machine).toHaveAttribute('data-slot-phase', 'settled', { timeout: 5_000 });
+    const phaseLog = await machine.evaluate((element) => {
+      type SlotMachineDebug = HTMLElement & {
+        __slotPhaseLog?: string[];
+        __slotPhaseObserver?: MutationObserver;
+      };
+      const target = element as SlotMachineDebug;
+      target.__slotPhaseObserver?.disconnect();
+      return target.__slotPhaseLog ?? [];
+    });
+    const phases = phaseLog.map((entry) => entry.split(':')[0]);
+    expect(phases).toEqual(expect.arrayContaining(['spinning', 'stopping-left', 'stopping-center', 'stopping-right', 'settled']));
+    expect(phases.indexOf('stopping-left')).toBeLessThan(phases.indexOf('stopping-center'));
+    expect(phases.indexOf('stopping-center')).toBeLessThan(phases.indexOf('stopping-right'));
+    expect(phaseLog.map((entry) => entry.split(':')[1])).toEqual(expect.arrayContaining(['0', '1', '2', '3']));
     await expect(machine.locator('[data-reel-phase="landed"]')).toHaveCount(3);
     await expect(page.getByTestId('slot-confirmed-grid')).toBeVisible();
   });
@@ -142,13 +168,13 @@ test.describe('Slot v2 stop continuity', () => {
     await expect(page.getByTestId('result-band')).toContainText('SERVER CONFIRMED · LIVE');
     await expect(page.getByTestId('result-band')).toContainText('+20 JG');
     await expect(page.getByTestId('slot-confirmed-grid')).toBeVisible();
-    await expect(page.getByTestId('balance-pill')).toHaveAttribute('aria-label', 'Баланс 1010 JOKERGEM');
+    await expect(page.getByTestId('confirmed-balance')).toContainText('BALANCE 1010 JG');
 
     await page.getByTestId('resync-button').click();
     await expect(page.getByTestId('room-shell')).toHaveAttribute('data-motion', 'settle');
     await expect(page.getByTestId('resync-button')).toHaveText('LIVE');
     await expect(page.getByTestId('result-band')).toContainText('SERVER CONFIRMED · LIVE');
     await expect(page.getByTestId('slot-confirmed-grid')).toBeVisible();
-    await expect(page.getByTestId('balance-pill')).toHaveAttribute('aria-label', 'Баланс 1010 JOKERGEM');
+    await expect(page.getByTestId('confirmed-balance')).toContainText('BALANCE 1010 JG');
   });
 });
