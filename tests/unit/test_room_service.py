@@ -77,6 +77,55 @@ async def test_slot_spin_persists_canonical_result_and_replays_without_respinnin
 
 
 @pytest.mark.asyncio
+async def test_slot_zero_payout_is_persisted_without_a_payout_ledger_entry() -> None:
+    wallet_store = MemoryWalletStore()
+    wallet = WalletService(store=wallet_store)
+    await wallet.claim_welcome_grant(12345, uuid4())
+
+    class FixedStops:
+        def __init__(self) -> None:
+            self.values = iter((0, 0, 3))
+
+        def randbelow(self, upper: int) -> int:
+            assert upper == 10
+            return next(self.values)
+
+    service = RoomService(store=MemoryRoomStore(), wallet_service=wallet, slot_rng=FixedStops())
+    created = await service.create_room(12345, GameType.SLOT, "solo")
+    request = ActionRequest(
+        action_id=uuid4(), expected_state_version=created.state_version, payload={"action": "spin", "bet": 10}
+    )
+
+    event = await service.apply_action(created.room_id, 12345, request)
+    result = event.payload["result"]
+
+    assert result["winning_lines"] == []
+    assert result["gross_payout"] == 0
+    assert result["net_delta"] == -10
+    assert result["balance_after"] == 990
+    assert wallet_store.operation_count == 2
+    assert wallet_store.ledger_entry_count == 2
+
+
+@pytest.mark.asyncio
+async def test_memory_rejects_replaying_an_action_id_in_another_room() -> None:
+    wallet_store = MemoryWalletStore()
+    wallet = WalletService(store=wallet_store)
+    await wallet.claim_welcome_grant(12345, uuid4())
+    service = RoomService(store=MemoryRoomStore(), wallet_service=wallet)
+    first_room = await service.create_room(12345, GameType.SLOT, "solo")
+    second_room = await service.create_room(12345, GameType.SLOT, "solo")
+    request = ActionRequest(
+        action_id=uuid4(), expected_state_version=first_room.state_version, payload={"action": "spin", "bet": 10}
+    )
+
+    await service.apply_action(first_room.room_id, 12345, request)
+
+    with pytest.raises(RoomServiceError, match="another room"):
+        await service.apply_action(second_room.room_id, 12345, request)
+
+
+@pytest.mark.asyncio
 async def test_slot_spin_with_insufficient_balance_leaves_room_and_ledger_unchanged() -> None:
     wallet_store = MemoryWalletStore()
     wallet = WalletService(store=wallet_store)
