@@ -35,25 +35,30 @@ The domain slot outcome becomes the source of truth:
 ```json
 {
   "kind": "slot",
-  "grid": [["...", "..."], ["...", "..."], ["...", "..."]],
+  "grid": [
+    ["A", "A", "A", "B", "B", "C", "C"],
+    ["A", "A", "A", "B", "B", "C", "C"],
+    ["A", "A", "A", "B", "B", "C", "C"]
+  ],
   "reel_stops": [0, 0, 0],
   "winning_lines": [
     {
       "payline_index": 0,
-      "symbols": ["...", "...", "..."],
-      "match_symbol": "...",
+      "rows": [3, 3, 3],
+      "symbols": ["B", "B", "B"],
+      "match_symbol": "B",
       "matched_columns": 3,
-      "payout": 40
+      "payout": 20
     }
   ],
-  "gross_payout": 40,
-  "net_delta": 30,
-  "balance_after": 1030,
+  "gross_payout": 20,
+  "net_delta": 10,
+  "balance_after": 1010,
   "ruleset_version": "slot-skeleton-1"
 }
 ```
 
-The actual grid remains three columns by seven visible rows. `reel_stops` contains one server-selected strip index per reel. The domain `SlotOutcome` must retain the selected stops in addition to the existing grid and payout fields so the client can land the visual reels deterministically.
+The actual grid is three columns by seven visible rows. `reel_stops` contains one server-selected strip index per reel. Each winning line includes its concrete row path, so the client can highlight straight and diagonal paylines without independently loading or interpreting payout rules. The domain `SlotOutcome` must retain the selected stops and line paths in addition to the existing grid and payout fields.
 
 The event payload uses:
 
@@ -72,7 +77,7 @@ The same `result` object is stored under `public_state.last_result` so a later s
 1. Validate the action, bet limits, room membership, and expected state version.
 2. Load the versioned slot fixture and use the production CSPRNG adapter.
 3. Spin the configured reels and calculate winning lines on the server.
-4. Settle stake and payout through the existing wallet ledger using the action ID as the idempotency key and the room/action as the game-round reference.
+4. Settle stake and payout through the existing wallet ledger using the action ID as both the wallet idempotency key and the V1 game-round reference ID.
 5. Update room state, increment state version, and persist the full result.
 6. Persist the event record with the same result.
 7. Publish the event only after the transaction has succeeded.
@@ -87,10 +92,10 @@ The API adapter will parse `event.payload.result` and `public_state.last_result`
 The server contract uses the unambiguous name `grid`; the existing Slot v2 view model may continue to expose `reels` internally if that avoids touching the motion implementation. The adapter maps:
 
 - `grid` -> visual reel data;
-- `winning_lines` -> highlighted payline rows;
+- each winning line's `rows` -> highlighted payline path;
 - `gross_payout` -> displayed payout amount;
 - `balance_after` -> session balance;
-- `reel_stops` -> landing metadata/test assertions.
+- `reel_stops` -> landing metadata and test assertions.
 
 The Mini App must never replace confirmed server symbols with a demo array in live mode. The demo path may keep its current fallback outcome when live API mode is disabled.
 
@@ -110,6 +115,7 @@ The Slot v2 timeline remains the only animation owner. Its duration constants mu
 
 - `spin()` returns three seven-row reels and three stop indices.
 - Stop indices reproduce the returned grid for the configured strips.
+- Winning lines retain their concrete payline row paths.
 - Payout and net delta remain deterministic with a seeded RNG.
 - Existing payline, wild, invalid-bet, and invalid-payline tests remain green.
 
@@ -126,6 +132,7 @@ The Slot v2 timeline remains the only animation owner. Its duration constants mu
 - Event mapping produces a SlotOutcome from the canonical server result.
 - Snapshot mapping restores the result after reconnect.
 - Live mode never falls back to the static demo grid.
+- Straight and diagonal winning lines map to the correct highlighted rows.
 - Reduced-motion and existing Slot v2 phase tests remain green.
 
 ### Verification
