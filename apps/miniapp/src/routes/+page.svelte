@@ -100,7 +100,7 @@
         if (roomState.snapshot?.roomId !== roomId) return;
         roomState.setSnapshot(snapshot);
         const snapshotResult = mapApiPublicStateResult(snapshot.publicState, snapshot.gameType);
-        if (snapshotResult) roomState.setResult(snapshotResult);
+        if (snapshotResult) roomState.restoreConfirmedResult(snapshotResult);
       },
       (event) => {
         if (roomState.snapshot?.roomId !== roomId) return;
@@ -299,7 +299,7 @@
         if (roomState.snapshot?.roomId !== roomId) return;
         roomState.setSnapshot(snapshot, true);
         const snapshotResult = mapApiPublicStateResult(snapshot.publicState, snapshot.gameType);
-        if (snapshotResult) roomState.setResult(snapshotResult);
+        if (snapshotResult) roomState.restoreConfirmedResult(snapshotResult);
         session.setConnection('connected');
       }).catch((error) => {
         session.setConnection('offline');
