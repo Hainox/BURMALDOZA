@@ -16,7 +16,7 @@
     type SlotOutcome
   } from '$lib/game/slot';
   import { ApiClient, type ApiEventEnvelope } from '$lib/api/client';
-  import { isLiveApiEnabled, mapApiEventResult } from '$lib/api/runtime';
+  import { isLiveApiEnabled, mapApiEventResult, mapApiPublicStateResult } from '$lib/api/runtime';
   import { SessionState } from '$lib/state/session.svelte';
   import { RoomState, type GameType, type RoomResult } from '$lib/state/room.svelte';
 
@@ -99,15 +99,19 @@
       (snapshot) => {
         if (roomState.snapshot?.roomId !== roomId) return;
         roomState.setSnapshot(snapshot);
+        const snapshotResult = mapApiPublicStateResult(snapshot.publicState, snapshot.gameType);
+        if (snapshotResult) roomState.setResult(snapshotResult);
       },
       (event) => {
         if (roomState.snapshot?.roomId !== roomId) return;
         if (event.state_version < roomState.snapshot.stateVersion) return;
-        roomState.setSnapshot({
+        const nextSnapshot = {
           ...roomState.snapshot,
           stateVersion: event.state_version,
           publicState: publicStateFromEvent(event)
-        });
+        };
+        roomState.setSnapshot(nextSnapshot);
+        roomState.setResult(mapApiEventResult(event, nextSnapshot.gameType));
       }
     );
   }
@@ -294,6 +298,8 @@
       void apiClient.getRoom(roomId).then((snapshot) => {
         if (roomState.snapshot?.roomId !== roomId) return;
         roomState.setSnapshot(snapshot, true);
+        const snapshotResult = mapApiPublicStateResult(snapshot.publicState, snapshot.gameType);
+        if (snapshotResult) roomState.setResult(snapshotResult);
         session.setConnection('connected');
       }).catch((error) => {
         session.setConnection('offline');
