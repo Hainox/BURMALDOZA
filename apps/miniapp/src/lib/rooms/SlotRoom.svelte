@@ -35,6 +35,7 @@
   let slotPhase: SlotPhase = 'idle';
   let elapsedMs = 0;
   let startedAt = 0;
+  let spinSeq = 0;
   let reducedMotion = false;
   let reelOffsets = [0, 0, 0];
   let ticker: number | null = null;
@@ -51,6 +52,7 @@
   $: winningRows = slotOutcome?.winningRows ?? [];
   $: showConfirmedGrid = Boolean(slotOutcome) && (slotPhase === 'settled' || motion === 'outcome' || motion === 'settle');
   $: sectionReelPhase = slotPhase === 'settled' ? 'outcome' : slotPhase;
+  $: isSpinning = slotPhase !== 'idle' && slotPhase !== 'settled';
 
   function cancelTicker() {
     if (ticker !== null) {
@@ -79,6 +81,7 @@
 
   function startSpin() {
     cancelTicker();
+    spinSeq += 1;
     reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     startedAt = performance.now();
     elapsedMs = 0;
@@ -94,7 +97,7 @@
   }
 
   function handleAction(action: string) {
-    if (motion === 'resolving') return;
+    if (motion === 'resolving' || ticker !== null) return;
     startSpin();
     onAction(action);
   }
@@ -110,12 +113,12 @@
     return symbolIndex % reelBases[reelIndex].length;
   }
 
-  function phaseLabel() {
-    if (slotPhase === 'spinning') return 'TRAVEL · 60 FPS';
-    if (slotPhase === 'stopping-left') return 'LANDING · LEFT REEL';
-    if (slotPhase === 'stopping-center') return 'LANDING · CENTER REEL';
-    if (slotPhase === 'stopping-right') return 'LANDING · RIGHT REEL';
-    if (slotPhase === 'settled') return 'SETTLED · SERVER GRID';
+  function phaseLabel(phase: SlotPhase) {
+    if (phase === 'spinning') return 'TRAVEL · 60 FPS';
+    if (phase === 'stopping-left') return 'LANDING · LEFT REEL';
+    if (phase === 'stopping-center') return 'LANDING · CENTER REEL';
+    if (phase === 'stopping-right') return 'LANDING · RIGHT REEL';
+    if (phase === 'settled') return 'SETTLED · SERVER GRID';
     return 'READY · SERVER-FIRST';
   }
 
@@ -139,6 +142,7 @@
     data-reel-phase={sectionReelPhase}
     data-stopped-reels={stoppedReels}
     data-spin-duration={SLOT_SPIN_DURATION}
+    data-spin-seq={spinSeq}
     data-testid="slot-machine"
     aria-label="Слот 3 на 7"
   >
@@ -194,7 +198,7 @@
   </section>
 
   <div class="slot-status" data-testid="slot-status" aria-live="polite">
-    <span>{phaseLabel()}</span>
+    <span>{phaseLabel(slotPhase)}</span>
     <strong>{stoppedReels}/{reelBases.length} REELS LANDED</strong>
   </div>
 
@@ -216,9 +220,9 @@
     </section>
   {/if}
 
-  <button class="primary-action" on:click={() => handleAction('spin')} disabled={motion === 'resolving'} data-testid="slot-spin">
+  <button class="primary-action" on:click={() => handleAction('spin')} disabled={motion === 'resolving' || isSpinning} data-testid="slot-spin">
     <span class="action-icon" aria-hidden="true">↻</span>
-    {motion === 'resolving' ? 'Барабаны останавливаются…' : 'Крутить за 10 JG'}
+    {isSpinning ? 'Барабаны останавливаются…' : motion === 'resolving' ? 'Ждём сервер…' : 'Крутить за 10 JG'}
   </button>
   <ResultBand {result} {motion} source={resultSource} />
 </div>
