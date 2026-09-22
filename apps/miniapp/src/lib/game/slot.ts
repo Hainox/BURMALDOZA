@@ -25,6 +25,15 @@ export type SlotPhase =
 
 export type SlotReelPhase = 'idle' | 'travel' | 'landing' | 'landed';
 
+export interface SlotWinningLine {
+  paylineIndex: number;
+  rows: number[];
+  symbols: string[];
+  matchSymbol: string;
+  matchedColumns: number;
+  payout: number;
+}
+
 export interface SlotOutcome {
   reels: string[][];
   winningRows: number[];
@@ -32,6 +41,8 @@ export interface SlotOutcome {
   balance: number;
   freeSpinsAwarded: number;
   freeSpinsRemaining: number;
+  reelStops?: number[];
+  winningLines?: SlotWinningLine[];
 }
 
 export function buildReelTrack(baseSymbols: string[], confirmedSymbols: string[], copies = SLOT_REEL_COPIES) {
