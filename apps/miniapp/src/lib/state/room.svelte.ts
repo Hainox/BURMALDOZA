@@ -37,6 +37,11 @@ export class RoomState {
     this.result = result;
   }
 
+  restoreConfirmedResult(result: RoomResult) {
+    this.result = result;
+    this.motion = 'settle';
+  }
+
   reset() {
     this.motion = reduceMotionState(this.motion, { type: 'NAVIGATED' }, false);
     this.result = null;
