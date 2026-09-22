@@ -10,6 +10,7 @@ from app.db.session import get_session
 from app.dependencies import CurrentUser, get_current_user, get_room_service
 from app.main import app
 from app.services.room_service import MemoryRoomStore, RoomService
+from app.services.wallet_service import MemoryWalletStore, WalletService
 from fastapi.testclient import TestClient
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
@@ -19,7 +20,11 @@ from tests.unit.test_telegram_auth import BOT_TOKEN, make_init_data
 
 
 def test_room_http_contract_replays_action_and_returns_snapshot_on_stale_request() -> None:
-    service = RoomService(store=MemoryRoomStore())
+    wallet = WalletService(store=MemoryWalletStore())
+    import asyncio
+
+    asyncio.run(wallet.claim_welcome_grant(12345, uuid4()))
+    service = RoomService(store=MemoryRoomStore(), wallet_service=wallet)
     user = CurrentUser(
         user_id=12345,
         telegram_user_id=12345,
@@ -60,6 +65,11 @@ def test_room_http_contract_replays_action_and_returns_snapshot_on_stale_request
             assert first.status_code == 200
             assert replay.status_code == 200
             assert replay.json() == first.json()
+            result = first.json()["event"]["payload"]["result"]
+            assert len(result["grid"]) == 3
+            assert len(result["reel_stops"]) == 3
+            assert result["balance_after"] == 1000 - 10 + result["gross_payout"]
+            assert result == first.json()["event"]["payload"]["public_state"]["last_result"]
             assert stale.status_code == 409
             assert stale.json()["detail"]["snapshot"]["state_version"] == 1
     finally:
