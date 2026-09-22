@@ -46,6 +46,31 @@ test.describe('Slot v2 stop continuity', () => {
     await expect(page.getByTestId('slot-confirmed-grid')).toBeVisible();
   });
 
+  test('announces landing progress and disables spin until settled', async ({ page }) => {
+    await page.goto('/');
+    await page.getByTestId('room-card-slot').click();
+
+    const machine = page.getByTestId('slot-machine');
+    const spin = page.getByTestId('slot-spin');
+    const status = page.getByTestId('slot-status');
+    const seqBefore = await machine.getAttribute('data-spin-seq');
+
+    await spin.click();
+    await expect(machine).toHaveAttribute('data-slot-phase', 'spinning', { timeout: 2_000 });
+    await expect(status).toContainText('TRAVEL');
+    await expect(spin).toBeDisabled();
+    await expect(spin).toContainText('Барабаны останавливаются');
+
+    // A repeated tap mid-spin must not restart the reel ticker.
+    await spin.click({ force: true });
+    const seqAfterSecondTap = await machine.getAttribute('data-spin-seq');
+    expect(seqAfterSecondTap).toBe(seqBefore === null ? '1' : String(Number(seqBefore) + 1));
+
+    await expect(machine).toHaveAttribute('data-slot-phase', 'settled', { timeout: 5_000 });
+    await expect(status).toContainText('SETTLED');
+    await expect(spin).toBeEnabled();
+  });
+
   test('settles every reel immediately under reduced motion', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
