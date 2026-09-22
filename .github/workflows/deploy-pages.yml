@@ -38,6 +38,7 @@ jobs:
       - name: Build Mini App for project Pages path
         env:
           BASE_PATH: /BURMALDOZA
+          PUBLIC_API_BASE_URL: ${{ vars.PUBLIC_API_BASE_URL }}
         run: pnpm --dir apps/miniapp build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4

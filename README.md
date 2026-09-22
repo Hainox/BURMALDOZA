@@ -11,7 +11,7 @@
 
 [Открыть Pages-пилот](https://hainox.github.io/BURMALDOZA/) · [Локальный запуск](./docs/Local-Setup.md) · [BuildSpec](./dev/BuildSpec.md) · [Slot v2](./docs/Slot-V2-Status.md) · [CCode workflow](./docs/Command-Code-Workflow.md) · [Архитектура](./docs/Technical-Architecture.md)
 
-> В репозитории есть два контура: автономный Pages-demo для визуальной идеи и server-authoritative foundation для будущего Telegram Mini App. Pages-demo не подключён к API, базе, платежам или реальному балансу.
+> В репозитории есть два режима: Pages-demo с безопасным demo-fallback и server-first режим для Telegram Mini App. Если `PUBLIC_API_BASE_URL` или Telegram `initData` отсутствуют, клиент остаётся в демо-контуре; платежи и реальные деньги не подключены.
 
 ## Что собрано
 
@@ -21,7 +21,7 @@
 | Economy | Jokergem (`JOKERGEM`), welcome/daily/relief baseline | целые единицы, append-only ledger, no cash value |
 | API | FastAPI auth, wallet, rooms, snapshots/events, reconnect | raw Telegram `initData`, idempotency, state version |
 | Bot | aiogram `/start`, `/casino`, `/balance`, `/top`, `/help` | ответы по явной команде, API-backed balance/top |
-| Mini App | SvelteKit shell, три room views, safe areas, reduced motion | UI получает подтверждённый результат; локальный skeleton помечен DEMO |
+| Mini App | SvelteKit shell, три room views, safe areas, reduced motion, live API client | UI получает подтверждённый server event; без API работает DEMO fallback |
 | Runtime | Dockerfile API/bot/Mini App, Compose, CI | PostgreSQL 16, Redis 7, health checks |
 
 ## Игровые комнаты
@@ -56,6 +56,14 @@ pnpm --dir apps/miniapp exec playwright install chromium
 
 Полная Compose-инструкция и правила секретов: [docs/Local-Setup.md](./docs/Local-Setup.md).
 
+Для live-режима нужен публичный HTTPS API endpoint. Локальный build с API:
+
+```bash
+PUBLIC_API_BASE_URL=http://localhost:8000 pnpm --dir apps/miniapp build
+```
+
+Для GitHub Pages задайте repository/environment variable `PUBLIC_API_BASE_URL`; Pages workflow передаст её в build. Если переменная пустая, опубликованный URL намеренно остаётся визуальным DEMO.
+
 Основные проверки:
 
 ```bash
@@ -77,16 +85,17 @@ python -m devtools.monte_carlo.holdem --trials 100000 --seed 42 --json
 
 CI повторяет Python lint/tests, Mini App check/test/build, PostgreSQL/Redis services и сохраняет три JSON-отчёта как artifact.
 
-## Проверенное состояние этой ветки
+## Проверенное состояние коммита `05d8aaa`
 
 - Python dependencies установлены через `uv sync --locked --all-groups`.
 - Node dependencies установлены через `pnpm install --frozen-lockfile`.
-- `uv run --locked pytest -q`: 68 passed; PostgreSQL integration требуют доступный Docker service.
+- `uv run --locked pytest -q`: 70 passed, 3 skipped.
 - `uv run --locked ruff check .`: clean.
 - `pnpm miniapp:check`: 0 errors/0 warnings.
-- `pnpm miniapp:test`: 9 passed.
-- `pnpm miniapp:build`: passed.
-- Playwright specs добавлены, но локальный запуск требует Chromium; в текущей среде CDN Playwright вернул timeout/502, поэтому этот пункт не маскируется как пройденный.
+- `pnpm miniapp:test`: 15 passed.
+- `pnpm miniapp:build`: passed with and without `PUBLIC_API_BASE_URL`.
+- Remote CI: Docker Compose build, Mini App E2E, Monte Carlo evidence and Pages deploy passed.
+- Локальный Playwright запуск требует установленного Chromium; CI устанавливает браузер автоматически.
 
 ## Документы
 
