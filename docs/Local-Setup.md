@@ -37,6 +37,16 @@ curl --fail http://localhost:8000/health/ready
 - `bot` — aiogram polling, требует свежий `BOT_TOKEN`;
 - `miniapp` — статический SvelteKit build через nginx на `MINIAPP_PORT`.
 
+Для live-режима Mini App передайте API endpoint на этапе сборки:
+
+```bash
+PUBLIC_API_BASE_URL=http://localhost:8000 docker compose build miniapp
+docker compose up -d miniapp
+```
+
+Если `PUBLIC_API_BASE_URL` не задан или Mini App открыт вне Telegram WebView без `initData`,
+приложение остаётся в безопасном demo-режиме и не делает неподтверждённых запросов.
+
 Остановить disposable stack без удаления данных:
 
 ```bash

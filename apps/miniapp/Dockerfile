@@ -9,6 +9,8 @@ COPY apps/miniapp/package.json ./apps/miniapp/package.json
 RUN pnpm install --frozen-lockfile
 
 COPY apps/miniapp ./apps/miniapp
+ARG PUBLIC_API_BASE_URL=
+ENV PUBLIC_API_BASE_URL=${PUBLIC_API_BASE_URL}
 RUN pnpm miniapp:build
 
 FROM nginxinc/nginx-unprivileged:1.27-alpine

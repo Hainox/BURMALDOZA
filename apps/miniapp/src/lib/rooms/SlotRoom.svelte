@@ -20,6 +20,7 @@
   export let motion: MotionState = 'idle';
   export let result: RoomResult | null = null;
   export let onAction: (action: string) => void = () => undefined;
+  export let resultSource: 'demo' | 'live' = 'demo';
 
   const reelBases = [
     ['♣', '◆', '7', '✦', '♠', 'A', '♦'],
@@ -146,7 +147,7 @@
     <span class="action-icon" aria-hidden="true">↻</span>
     {motion === 'resolving' ? 'Барабаны останавливаются…' : 'Крутить за 10 JG'}
   </button>
-  <ResultBand {result} {motion} />
+  <ResultBand {result} {motion} source={resultSource} />
 </div>
 
 <style>

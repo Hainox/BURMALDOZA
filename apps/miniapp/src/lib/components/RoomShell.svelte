@@ -8,6 +8,14 @@
   export let motion: MotionState = 'idle';
   export let onBack: () => void = () => undefined;
   export let onResync: () => void = () => undefined;
+
+  const connectionLabel = {
+    demo: 'DEMO',
+    connecting: 'CONNECT',
+    connected: 'LIVE',
+    syncing: 'SYNC',
+    offline: 'OFFLINE'
+  } as const;
 </script>
 
 <main class="room-shell" data-motion={motion} data-testid="room-shell">
@@ -19,7 +27,7 @@
     </div>
     <button class="connection-button" on:click={onResync} data-testid="resync-button">
       <span class:active={connection === 'connected'}></span>
-      {connection === 'syncing' ? 'SYNC' : 'DEMO'}
+      {connectionLabel[connection]}
     </button>
   </header>
 

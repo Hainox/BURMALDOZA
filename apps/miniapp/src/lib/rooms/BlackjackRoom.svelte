@@ -6,6 +6,7 @@
   export let motion: MotionState = 'idle';
   export let result: RoomResult | null = null;
   export let onAction: (action: string) => void = () => undefined;
+  export let resultSource: 'demo' | 'live' = 'demo';
 
   const playerCards = ['A♠', '10♥'];
   const dealerCards = ['K♦', '▣'];
@@ -20,7 +21,7 @@
     <div class="hand player-hand"><span class="hand-label">YOU <b>21</b></span><div class="cards">{#each playerCards as card, index}<div class="playing-card player-card" style={`--card-delay: ${index * 130}ms; --card-rotation: ${index === 1 ? '5deg' : '-4deg'}; --card-offset: ${index === 1 ? '3px' : '0px'}`}>{card}</div>{/each}</div><span class="total bright">21</span></div>
   </section>
   <div class="action-grid"><button on:click={() => onAction('hit')} disabled={motion === 'resolving'}>HIT <small>+ card</small></button><button class="action-primary" on:click={() => onAction('stand')} disabled={motion === 'resolving'}>STAND <small>lock hand</small></button><button on:click={() => onAction('double')} disabled={motion === 'resolving'}>DOUBLE <small>×2 stake</small></button></div>
-  <ResultBand {result} {motion} />
+  <ResultBand {result} {motion} source={resultSource} />
 </div>
 
 <style>

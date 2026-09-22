@@ -6,6 +6,7 @@
   export let motion: MotionState = 'idle';
   export let result: RoomResult | null = null;
   export let onAction: (action: string) => void = () => undefined;
+  export let resultSource: 'demo' | 'live' = 'demo';
   const community = ['A♣', '7♦', 'Q♠', '—', '—'];
 </script>
 
@@ -17,7 +18,7 @@
     <div class="player hero"><span class="avatar">✦</span><span><b>YOU</b><small>stack 150</small></span><i>BTN</i></div>
   </section>
   <div class="action-grid"><button on:click={() => onAction('fold')} disabled={motion === 'resolving'}>FOLD</button><button on:click={() => onAction('check')} disabled={motion === 'resolving'}>CHECK</button><button class="action-primary" on:click={() => onAction('call')} disabled={motion === 'resolving'}>CALL <small>25 JG</small></button><button on:click={() => onAction('raise')} disabled={motion === 'resolving'}>RAISE</button></div>
-  <ResultBand {result} {motion} />
+  <ResultBand {result} {motion} source={resultSource} />
 </div>
 
 <style>

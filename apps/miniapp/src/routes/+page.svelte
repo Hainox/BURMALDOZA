@@ -13,10 +13,15 @@
     SLOT_RESULT_DELAY,
     SLOT_REVEAL_DURATION,
     SLOT_SERVER_RESULT_PRELUDE,
+    SLOT_SPIN_DURATION,
     type SlotOutcome
   } from '$lib/game/slot';
+  import { ApiClient, type ApiEventEnvelope } from '$lib/api/client';
+  import { isLiveApiEnabled, mapApiEventResult } from '$lib/api/runtime';
   import { SessionState } from '$lib/state/session.svelte';
   import { RoomState, type GameType, type RoomResult } from '$lib/state/room.svelte';
+
+  const PUBLIC_API_BASE_URL = import.meta.env.PUBLIC_API_BASE_URL ?? '';
 
   const session = new SessionState();
   const roomState = new RoomState();
@@ -68,6 +73,11 @@
   let timers: number[] = [];
   let motionQuery: MediaQueryList | undefined;
   let demoFreeSpinsRemaining = 0;
+  let apiClient: ApiClient | null = null;
+  let liveApiEnabled = false;
+  let apiLoading = false;
+  let apiError: string | null = null;
+  let closeRoomStream: (() => void) | null = null;
 
   function clearTimers() {
     for (const timer of timers) window.clearTimeout(timer);
@@ -82,14 +92,57 @@
     timers = [...timers, window.setTimeout(callback, delay)];
   }
 
-  function openRoom(gameType: GameType) {
+  function connectRoomStream(roomId: string) {
+    if (!apiClient) return;
+    closeRoomStream?.();
+    closeRoomStream = apiClient.subscribeToRoom(
+      roomId,
+      (snapshot) => {
+        if (roomState.snapshot?.roomId !== roomId) return;
+        roomState.setSnapshot(snapshot);
+      },
+      (event) => {
+        if (roomState.snapshot?.roomId !== roomId) return;
+        if (event.state_version < roomState.snapshot.stateVersion) return;
+        roomState.setSnapshot({
+          ...roomState.snapshot,
+          stateVersion: event.state_version,
+          publicState: publicStateFromEvent(event)
+        });
+      }
+    );
+  }
+
+  async function openRoom(gameType: GameType) {
+    if (apiLoading) return;
     clearTimers();
     isRunning = false;
     selectedGame = gameType;
     demoFreeSpinsRemaining = 0;
-    session.setConnection('demo');
     const definition = roomDefinitions.find((room) => room.gameType === gameType);
     if (!definition) return;
+
+    apiError = null;
+    if (liveApiEnabled && apiClient) {
+      apiLoading = true;
+      session.setConnection('connecting');
+      try {
+        const snapshot = await apiClient.createRoom(gameType, 'solo');
+        roomState.setSnapshot(snapshot);
+        roomState.reset();
+        connectRoomStream(snapshot.roomId);
+        session.setConnection('connected');
+      } catch (error) {
+        selectedGame = null;
+        session.setConnection('offline');
+        apiError = error instanceof Error ? error.message : 'Не удалось открыть комнату';
+      } finally {
+        apiLoading = false;
+      }
+      return;
+    }
+
+    session.setConnection('demo');
     roomState.setSnapshot({
       roomId: `demo-${gameType}`,
       gameType,
@@ -124,7 +177,7 @@
     };
   }
 
-  function runAction(action: string) {
+  function runDemoAction(action: string) {
     if (!selectedGame || isRunning || !roomState.snapshot) return;
     clearTimers();
     isRunning = true;
@@ -155,12 +208,97 @@
     });
   }
 
+  function publicStateFromEvent(event: ApiEventEnvelope) {
+    const publicState = event.payload.public_state;
+    return typeof publicState === 'object' && publicState !== null
+      ? (publicState as Record<string, unknown>)
+      : {};
+  }
+
+  async function runLiveAction(action: string) {
+    if (!apiClient || !selectedGame || isRunning || !roomState.snapshot) return;
+    clearTimers();
+    isRunning = true;
+    apiError = null;
+    roomState.setResult(null);
+    roomState.transition({ type: 'USER_INTENT' }, session.reducedMotion);
+    const roomAtStart = roomState.snapshot;
+    const startedAt = performance.now();
+    const actionId = crypto.randomUUID();
+
+    after(SLOT_ACTION_ACCEPT_DELAY, () => {
+      roomState.transition({ type: 'ACTION_ACCEPTED' }, session.reducedMotion);
+    });
+
+    try {
+      const response = await apiClient.applyAction(
+        roomAtStart.roomId,
+        roomAtStart.stateVersion,
+        actionId,
+        action === 'spin' ? { action, bet: 10 } : { action }
+      );
+
+      if (!selectedGame || roomState.snapshot?.roomId !== roomAtStart.roomId) return;
+      const event = response.event;
+      roomState.setSnapshot({
+        ...roomState.snapshot,
+        stateVersion: event.state_version,
+        publicState: publicStateFromEvent(event)
+      });
+      roomState.transition({ type: 'ACTION_ACCEPTED' }, session.reducedMotion);
+
+      const resultDelay = selectedGame === 'slot'
+        ? Math.max(0, SLOT_SPIN_DURATION - (performance.now() - startedAt))
+        : 0;
+      after(resultDelay, () => {
+        if (!selectedGame || roomState.snapshot?.roomId !== roomAtStart.roomId) return;
+        roomState.setResult(mapApiEventResult(event, selectedGame));
+        const revealDelay = selectedGame === 'slot' ? SLOT_REVEAL_DURATION : 360;
+        after(revealDelay, () => {
+          roomState.transition({ type: 'RESULT_CONFIRMED' }, session.reducedMotion);
+          after(360, () => {
+            roomState.transition({ type: 'SETTLE_COMPLETE' }, session.reducedMotion);
+            isRunning = false;
+          });
+        });
+      });
+    } catch (error) {
+      clearTimers();
+      isRunning = false;
+      session.setConnection('offline');
+      apiError = error instanceof Error ? error.message : 'Сервер не подтвердил действие';
+      roomState.reset();
+    }
+  }
+
+  function runAction(action: string) {
+    if (liveApiEnabled && apiClient) {
+      void runLiveAction(action);
+      return;
+    }
+    runDemoAction(action);
+  }
+
   function resync() {
     if (!roomState.snapshot) return;
     clearTimers();
     isRunning = false;
     roomState.setResult(null);
     session.setConnection('syncing');
+
+    if (liveApiEnabled && apiClient) {
+      const roomId = roomState.snapshot.roomId;
+      void apiClient.getRoom(roomId).then((snapshot) => {
+        if (roomState.snapshot?.roomId !== roomId) return;
+        roomState.setSnapshot(snapshot, true);
+        session.setConnection('connected');
+      }).catch((error) => {
+        session.setConnection('offline');
+        apiError = error instanceof Error ? error.message : 'Не удалось синхронизировать комнату';
+      });
+      return;
+    }
+
     after(320, () => {
       session.setConnection('demo');
       if (roomState.snapshot) roomState.setSnapshot(roomState.snapshot, true);
@@ -169,10 +307,12 @@
 
   function backToRooms() {
     clearTimers();
+    closeRoomStream?.();
+    closeRoomStream = null;
     isRunning = false;
     roomState.reset();
     selectedGame = null;
-    session.setConnection('demo');
+    session.setConnection(liveApiEnabled ? 'connected' : 'demo');
   }
 
   onMount(() => {
@@ -182,6 +322,19 @@
     webApp.setHeaderColor('#0b0b11');
     webApp.setBackgroundColor('#0b0b11');
 
+    liveApiEnabled = isLiveApiEnabled(PUBLIC_API_BASE_URL, webApp.initData);
+    if (liveApiEnabled) {
+      apiClient = new ApiClient(PUBLIC_API_BASE_URL, webApp.initData);
+      session.setConnection('connecting');
+      void Promise.all([apiClient.getCurrentUser(), apiClient.getWallet()]).then(([, wallet]) => {
+        session.setBalance(wallet.balance, wallet.currency_code);
+        session.setConnection('connected');
+      }).catch((error) => {
+        session.setConnection('offline');
+        apiError = error instanceof Error ? error.message : 'Не удалось подключиться к API';
+      });
+    }
+
     motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     const updateMotionPreference = () => session.setReducedMotion(motionQuery?.matches ?? false);
     updateMotionPreference();
@@ -189,6 +342,8 @@
 
     return () => {
       clearTimers();
+      closeRoomStream?.();
+      closeRoomStream = null;
       motionQuery?.removeEventListener('change', updateMotionPreference);
     };
   });
@@ -203,11 +358,11 @@
   {#if selectedGame && roomState.snapshot}
     <RoomShell room={roomState.snapshot} connection={session.connection} motion={roomState.motion} onBack={backToRooms} onResync={resync}>
       {#if selectedGame === 'slot'}
-        <SlotRoom motion={roomState.motion} result={roomState.result} onAction={runAction} />
+        <SlotRoom motion={roomState.motion} result={roomState.result} onAction={runAction} resultSource={liveApiEnabled ? 'live' : 'demo'} />
       {:else if selectedGame === 'blackjack'}
-        <BlackjackRoom motion={roomState.motion} result={roomState.result} onAction={runAction} />
+        <BlackjackRoom motion={roomState.motion} result={roomState.result} onAction={runAction} resultSource={liveApiEnabled ? 'live' : 'demo'} />
       {:else}
-        <PokerRoom motion={roomState.motion} result={roomState.result} onAction={runAction} />
+        <PokerRoom motion={roomState.motion} result={roomState.result} onAction={runAction} resultSource={liveApiEnabled ? 'live' : 'demo'} />
       {/if}
     </RoomShell>
   {:else}
@@ -229,8 +384,15 @@
 
       <aside class="demo-banner" data-testid="demo-banner" role="status">
         <span class="banner-icon" aria-hidden="true">◎</span>
-        <span><strong>ДЕМО-КОНТУР</strong><small>Сейчас показываем механику и движение. Ставки не имеют денежной ценности.</small></span>
+        {#if liveApiEnabled}
+          <span><strong>LIVE API · SERVER-FIRST</strong><small>Комнаты и действия подтверждаются FastAPI. Денежной ценности у Jokergem нет.</small></span>
+        {:else}
+          <span><strong>ДЕМО-КОНТУР</strong><small>Сейчас показываем механику и движение. Ставки не имеют денежной ценности.</small></span>
+        {/if}
       </aside>
+      {#if apiError}
+        <p class="api-error" role="alert">API: {apiError}</p>
+      {/if}
 
       <section class="rooms-section" aria-labelledby="rooms-title">
         <div class="section-heading"><div><span class="eyebrow">CHOOSE YOUR TABLE</span><h2 id="rooms-title">Комнаты</h2></div><span class="room-count">03 / 03</span></div>
@@ -278,6 +440,7 @@
   .demo-banner > span:last-child { display: grid; gap: 3px; }
   .demo-banner strong { color: var(--brass-300); font-size: 10px; letter-spacing: 0.12em; }
   .demo-banner small { color: var(--muted-strong); font-size: 11px; line-height: 1.35; }
+  .api-error { margin: -18px 0 0; color: #ff9cae; font-size: 11px; line-height: 1.4; }
   .rooms-section { display: grid; gap: 13px; }
   .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 12px; }
   h2 { margin: 4px 0 0; color: var(--ivory); font-size: 25px; letter-spacing: -0.06em; }

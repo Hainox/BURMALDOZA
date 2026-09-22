@@ -4,12 +4,13 @@
 
   export let result: RoomResult | null = null;
   export let motion: MotionState = 'idle';
+  export let source: 'demo' | 'live' = 'demo';
 
   $: isConfirmed = result !== null && (motion === 'outcome' || motion === 'settle');
 </script>
 
 <section class="result-band" class:confirmed={isConfirmed} data-testid="result-band" aria-live="polite">
-  <span class="result-kicker">{isConfirmed ? 'SERVER CONFIRMED · DEMO' : result ? 'RESOLVING · SERVER RESULT' : 'RESULT BAND'}</span>
+  <span class="result-kicker">{isConfirmed ? `SERVER CONFIRMED · ${source.toUpperCase()}` : result ? 'RESOLVING · SERVER RESULT' : 'RESULT BAND'}</span>
   <div class="result-row">
     <div>
       <strong>{isConfirmed ? result?.headline : result ? 'Ожидаем подтверждённую остановку' : 'Готово к следующему раунду'}</strong>

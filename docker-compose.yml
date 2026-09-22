@@ -65,6 +65,8 @@ services:
     build:
       context: .
       dockerfile: apps/miniapp/Dockerfile
+      args:
+        PUBLIC_API_BASE_URL: ${PUBLIC_API_BASE_URL:-}
     ports:
       - "${MINIAPP_PORT:-4173}:8080"
     healthcheck:
