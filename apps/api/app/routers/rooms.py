@@ -29,6 +29,7 @@ from app.services.room_service import (
     RoomService,
     RoomServiceError,
 )
+from app.services.wallet_service import WalletService
 
 router = APIRouter(prefix="/api/v1", tags=["rooms"])
 
@@ -152,9 +153,11 @@ async def room_action(
 async def room_events(websocket: WebSocket, room_id: UUID) -> None:
     await websocket.accept()
     app_settings = websocket.app.state.settings
+    session = websocket.app.state.session_factory()
     service = RoomService(
-        session=websocket.app.state.session_factory(),
+        session=session,
         event_bus=get_event_bus(websocket),
+        wallet_service=WalletService(session=session),
         bot_token=app_settings.bot_token,
         max_auth_age_seconds=app_settings.telegram_init_data_max_age_seconds,
     )
