@@ -43,6 +43,7 @@ class SlotConfig:
 @dataclass(frozen=True, slots=True)
 class WinningLine:
     payline_index: int
+    rows: tuple[int, ...]
     symbols: tuple[str, ...]
     match_symbol: str
     matched_columns: int
@@ -52,6 +53,7 @@ class WinningLine:
 @dataclass(frozen=True, slots=True)
 class SlotOutcome:
     grid: tuple[tuple[str, ...], ...]
+    reel_stops: tuple[int, ...]
     winning_lines: tuple[WinningLine, ...]
     gross_payout: int
     net_delta: int
@@ -109,6 +111,7 @@ def calculate_payout(
         winning_lines.append(
             WinningLine(
                 payline_index=payline_index,
+                rows=payline,
                 symbols=symbols,
                 match_symbol=match_symbol,
                 matched_columns=matched_columns,
@@ -131,8 +134,10 @@ def spin(
     _validate_active_paylines(config, active_paylines)
 
     grid: list[tuple[str, ...]] = []
+    reel_stops: list[int] = []
     for reel_strip in config.reel_strips:
         stop = rng.randbelow(len(reel_strip))
+        reel_stops.append(stop)
         grid.append(tuple(reel_strip[(stop + row) % len(reel_strip)] for row in range(config.rows)))
 
     immutable_grid = tuple(grid)
@@ -140,6 +145,7 @@ def spin(
     gross_payout = sum(line.payout for line in winning_lines)
     return SlotOutcome(
         grid=immutable_grid,
+        reel_stops=tuple(reel_stops),
         winning_lines=winning_lines,
         gross_payout=gross_payout,
         net_delta=gross_payout - bet,
