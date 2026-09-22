@@ -117,6 +117,21 @@ test.describe('Slot v2 stop continuity', () => {
         })
       });
     });
+    await page.route(`**/api/v1/rooms/${roomId}`, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          room_id: roomId,
+          game_type: 'slot',
+          mode: 'solo',
+          status: 'active',
+          ruleset_version: 'slot-skeleton-1',
+          state_version: 1,
+          public_state: { phase: 'active', last_result: serverResult }
+        })
+      });
+    });
 
     await page.goto('/');
     await page.getByTestId('room-card-slot').click();
@@ -126,6 +141,12 @@ test.describe('Slot v2 stop continuity', () => {
     await expect(page.getByTestId('slot-machine')).toHaveAttribute('data-stopped-reels', '3', { timeout: 5_000 });
     await expect(page.getByTestId('result-band')).toContainText('SERVER CONFIRMED · LIVE');
     await expect(page.getByTestId('result-band')).toContainText('+20 JG');
+    await expect(page.getByTestId('slot-confirmed-grid')).toBeVisible();
+
+    await page.getByTestId('resync-button').click();
+    await expect(page.getByTestId('room-shell')).toHaveAttribute('data-motion', 'settle');
+    await expect(page.getByTestId('resync-button')).toHaveText('LIVE');
+    await expect(page.getByTestId('result-band')).toContainText('SERVER CONFIRMED · LIVE');
     await expect(page.getByTestId('slot-confirmed-grid')).toBeVisible();
   });
 });
