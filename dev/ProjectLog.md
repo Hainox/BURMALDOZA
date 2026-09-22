@@ -131,4 +131,13 @@
 - Повтор `action_id` возвращает сохранённое событие; stale state version отклоняется существующим контрактом. Mini App разбирает только канонический результат сервера и восстанавливает баланс/результат из snapshot; payload `deal` содержит явную ставку. Промежуточные Blackjack-действия не выдаются за settlement, баланс после списания приходит в публичном состоянии solo-комнаты.
 - Добавлена явная проверка push при натуральном блэкджеке обеих сторон; существующий domain расчёт уже возвращал ставку корректно, поэтому production-правило не менялось.
 - Верификация: изолированный PostgreSQL 16, `uv run --locked alembic upgrade head`, `uv run --locked pytest -q` — 85 passed; `uv run --locked ruff check .` — clean; `pnpm@11.19.0 verify` — Svelte 0 ошибок/предупреждений, 24 Vitest passed, production build passed. E2E локально не запускался; CI остаётся обязательным PR gate. Два существующих Starlette/httpx deprecation warning остались без изменений.
-- Открыто: CCode UI handoff Blackjack после фиксации контракта и отдельный server/domain slice для Hold’em. Публичный launch, staging и owner release decisions не выполнены.
+- PR #5 (`71eff485`) слит в `main`; полный GitHub CI прошёл, включая E2E и Monte Carlo. CCode handoff зарегистрирован как issue #6, зависимость выполнена, задача готова к старту от свежего `main`.
+- Hold’em server integration пока не начат: BuildSpec задаёт две позиции и действия, но отсутствуют join/seat API и утверждённая модель оппонента; текущий API умеет только создать solo-комнату для одного участника. Не угадывать эти продуктовые решения.
+- Открыто: отдельная проверка `health/ready`, профиль/кошелёк/рейтинг и admin surfaces. Публичный launch, staging и owner release decisions не выполнены.
+
+## 2026-09-23 — dependency-aware API readiness
+
+- `/health/ready` проверяет PostgreSQL через `SELECT 1` и Redis через `PING` параллельно, с ограниченным временем ожидания и без публикации DSN или текста ошибок. Недоступность любой зависимости возвращает HTTP 503 со статусами зависимостей; `/health/live` остаётся независимой liveness-проверкой.
+- Добавлены unit-сценарии готовых и недоступных PostgreSQL/Redis, включая проверку освобождения Redis-клиента и отсутствия текста ошибок в ответе; integration-тест действительно подключается к обоим сервисам.
+- Верификация: изолированные PostgreSQL 16 и Redis 7, Alembic upgrade head, `uv run --locked pytest -q` — 90 passed; `uv run --locked ruff check .` — clean. Два прежних Starlette/httpx deprecation warning.
+- Открыто: полный GitHub CI/PR readiness; Hold’em требует решения об оппоненте и способе входа второго игрока. Mini App профиль/история/рейтинг и admin surfaces остаются отдельными задачами.
