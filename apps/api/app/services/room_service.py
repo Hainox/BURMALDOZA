@@ -232,7 +232,7 @@ class RoomService:
             async with self._lock:
                 room = self._get_memory_room(room_id)
                 self._require_member(room, user_id)
-                replay = room.actions.get(request.action_id)
+                replay = self._find_memory_action(room_id, request.action_id)
                 if replay is not None:
                     return replay
                 if request.expected_state_version != room.state_version:
@@ -319,6 +319,17 @@ class RoomService:
         if room is None:
             raise RoomNotFoundError("room not found")
         return room
+
+    def _find_memory_action(self, room_id: UUID, action_id: UUID) -> EventEnvelope | None:
+        assert self.store is not None
+        for stored_room in self.store.rooms.values():
+            replay = stored_room.actions.get(action_id)
+            if replay is None:
+                continue
+            if stored_room.room_id != room_id:
+                raise RoomServiceError("action_id already belongs to another room")
+            return replay
+        return None
 
     @staticmethod
     def _require_member(room: _MemoryRoom, user_id: int) -> None:
