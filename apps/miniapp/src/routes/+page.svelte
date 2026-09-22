@@ -10,10 +10,9 @@
   import SlotRoom from '$lib/rooms/SlotRoom.svelte';
   import {
     SLOT_ACTION_ACCEPT_DELAY,
-    SLOT_RESULT_DELAY,
-    SLOT_REVEAL_DURATION,
     SLOT_SERVER_RESULT_PRELUDE,
-    SLOT_SPIN_DURATION,
+    SLOT_SETTLE_DURATION,
+    SLOT_TOTAL_DURATION,
     type SlotOutcome
   } from '$lib/game/slot';
   import { ApiClient, type ApiEventEnvelope } from '$lib/api/client';
@@ -183,25 +182,31 @@
     isRunning = true;
     roomState.setResult(null);
     roomState.transition({ type: 'USER_INTENT' }, session.reducedMotion);
+    const confirmedResult = selectedGame === 'slot'
+      ? buildDemoSlotResult(action)
+      : demoResults[selectedGame as GameType];
+
     after(SLOT_ACTION_ACCEPT_DELAY, () => {
       roomState.transition({ type: 'ACTION_ACCEPTED' }, session.reducedMotion);
-      after(SLOT_SERVER_RESULT_PRELUDE, () => {
-        const confirmedResult = selectedGame === 'slot'
-          ? buildDemoSlotResult(action)
-          : demoResults[selectedGame as GameType];
-        const resultDelay = selectedGame === 'slot'
-          ? SLOT_RESULT_DELAY
-          : 0;
+      if (selectedGame === 'slot') {
+        after(SLOT_SERVER_RESULT_PRELUDE, () => roomState.setResult(confirmedResult));
+        after(SLOT_TOTAL_DURATION, () => {
+          roomState.transition({ type: 'RESULT_CONFIRMED' }, session.reducedMotion);
+          after(SLOT_SETTLE_DURATION, () => {
+            roomState.transition({ type: 'SETTLE_COMPLETE' }, session.reducedMotion);
+            isRunning = false;
+          });
+        });
+        return;
+      }
 
-        after(resultDelay, () => {
-          roomState.setResult(confirmedResult);
-          const revealDelay = selectedGame === 'slot' ? SLOT_REVEAL_DURATION : 360;
-          after(revealDelay, () => {
-            roomState.transition({ type: 'RESULT_CONFIRMED' }, session.reducedMotion);
-            after(360, () => {
-              roomState.transition({ type: 'SETTLE_COMPLETE' }, session.reducedMotion);
-              isRunning = false;
-            });
+      after(360, () => {
+        roomState.setResult(confirmedResult);
+        after(360, () => {
+          roomState.transition({ type: 'RESULT_CONFIRMED' }, session.reducedMotion);
+          after(360, () => {
+            roomState.transition({ type: 'SETTLE_COMPLETE' }, session.reducedMotion);
+            isRunning = false;
           });
         });
       });
@@ -247,19 +252,17 @@
       });
       roomState.transition({ type: 'ACTION_ACCEPTED' }, session.reducedMotion);
 
+      if (!selectedGame || roomState.snapshot?.roomId !== roomAtStart.roomId) return;
+      roomState.setResult(mapApiEventResult(event, selectedGame));
       const resultDelay = selectedGame === 'slot'
-        ? Math.max(0, SLOT_SPIN_DURATION - (performance.now() - startedAt))
-        : 0;
+        ? Math.max(0, SLOT_TOTAL_DURATION - (performance.now() - startedAt))
+        : 360;
       after(resultDelay, () => {
         if (!selectedGame || roomState.snapshot?.roomId !== roomAtStart.roomId) return;
-        roomState.setResult(mapApiEventResult(event, selectedGame));
-        const revealDelay = selectedGame === 'slot' ? SLOT_REVEAL_DURATION : 360;
-        after(revealDelay, () => {
-          roomState.transition({ type: 'RESULT_CONFIRMED' }, session.reducedMotion);
-          after(360, () => {
-            roomState.transition({ type: 'SETTLE_COMPLETE' }, session.reducedMotion);
-            isRunning = false;
-          });
+        roomState.transition({ type: 'RESULT_CONFIRMED' }, session.reducedMotion);
+        after(selectedGame === 'slot' ? SLOT_SETTLE_DURATION : 360, () => {
+          roomState.transition({ type: 'SETTLE_COMPLETE' }, session.reducedMotion);
+          isRunning = false;
         });
       });
     } catch (error) {
