@@ -101,7 +101,9 @@
 
   function isWinningSymbol(reelIndex: number, symbolIndex: number) {
     const finalStart = reelTracks[reelIndex].length - SLOT_ROW_COUNT;
-    return showConfirmedGrid && winningRows.includes(symbolIndex - finalStart);
+    const row = symbolIndex - finalStart;
+    const lineHit = slotOutcome?.winningLines?.some((line) => line.rows[reelIndex] === row) ?? false;
+    return showConfirmedGrid && (lineHit || (!slotOutcome?.winningLines && winningRows.includes(row)));
   }
 
   function getSymbolToneIndex(reelIndex: number, symbolIndex: number) {
@@ -185,7 +187,7 @@
     {#if showConfirmedGrid}
       <div class="confirmed-grid" data-testid="slot-confirmed-grid" aria-live="polite">
         <span>SERVER GRID CONFIRMED</span>
-        <strong>{slotOutcome?.winningRows.length ?? 0} PAYLINE{slotOutcome?.winningRows.length === 1 ? '' : 'S'}</strong>
+        <strong>{slotOutcome?.winningLines?.length ?? slotOutcome?.winningRows.length ?? 0} PAYLINE{(slotOutcome?.winningLines?.length ?? slotOutcome?.winningRows.length ?? 0) === 1 ? '' : 'S'}</strong>
       </div>
     {/if}
     <div class="machine-lights" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
