@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added the Blackjack GFL server action contract for explicit bets, deal/hit/stand/double transitions, server-only hole-card state, authoritative in-hand balance updates, idempotent ledger settlement, and result restoration. In-progress actions no longer appear as settled results. Deployments must apply Alembic revision `20260923_0003` before enabling the updated API. The visual Blackjack room handoff remains separate.
 - Fixed a motion regression where reel distance variables were scoped above the symbol-size context, making the browser resolve the travel transform as invalid; the regression suite now samples the live transform during travel.
 - Rebuilt Slot v2 motion handoff for seamless playback: the reel loop now advances by one repeated seven-row block, the stop phase is derived from the real action timeline, and deceleration uses a compositor-friendly transform transition without a delayed jump. Added soft confirmation/grid/result reveals and deterministic symbol tones so repeated blocks cannot change color at the loop seam.
 - Refined Slot v2 motion: wave launch from reel 1 to 3, 2.4-second full travel, a softer 960 ms inertial stop tail, compositor-friendly `translate3d` transforms, and 60-fps target timing contracts.

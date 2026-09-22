@@ -123,3 +123,12 @@
 - Для совместной работы с Command Code добавлен handoff workflow: каждая передаваемая задача получает точный model id, effort, ветку, границы файлов и acceptance criteria.
 - README hero заменён на присланную full-body композицию трёх персонажей; точный текст и статусы остаются в SVG-слое, а новый raster hero пересобран из этой основы.
 - Исправлен дрейф времени в auth route test: тестовая подпись теперь создаётся за пять минут до фактического запроса, а production TTL проверки Telegram не ослаблен.
+
+## 2026-09-23 — server-first Blackjack room
+
+- После слияния PR #3 и #4 на актуальную `main` начат Blackjack GFL server slice. Зафиксирован контракт в `docs/superpowers/specs/2026-09-23-blackjack-server-room-design.md`: ставка 25–100 JOKERGEM, дилер стоит на soft 17, натуральный блэкджек платит 3:2 целыми жетонами, split не входит в ruleset.
+- Добавлено приватное server-only состояние комнаты с миграцией `20260923_0003`; hole card не попадает в snapshot, event или публичный JSON до завершения руки. `deal`, `hit`, `stand`, `double` используют доменный движок; списание ставок, доплата double, выплата, ledger и сохранённый action event проходят в одной PostgreSQL транзакции.
+- Повтор `action_id` возвращает сохранённое событие; stale state version отклоняется существующим контрактом. Mini App разбирает только канонический результат сервера и восстанавливает баланс/результат из snapshot; payload `deal` содержит явную ставку. Промежуточные Blackjack-действия не выдаются за settlement, баланс после списания приходит в публичном состоянии solo-комнаты.
+- Добавлена явная проверка push при натуральном блэкджеке обеих сторон; существующий domain расчёт уже возвращал ставку корректно, поэтому production-правило не менялось.
+- Верификация: изолированный PostgreSQL 16, `uv run --locked alembic upgrade head`, `uv run --locked pytest -q` — 85 passed; `uv run --locked ruff check .` — clean; `pnpm@11.19.0 verify` — Svelte 0 ошибок/предупреждений, 24 Vitest passed, production build passed. E2E локально не запускался; CI остаётся обязательным PR gate. Два существующих Starlette/httpx deprecation warning остались без изменений.
+- Открыто: CCode UI handoff Blackjack после фиксации контракта и отдельный server/domain slice для Hold’em. Публичный launch, staging и owner release decisions не выполнены.
