@@ -14,7 +14,7 @@
 ## Персонажи и атрибуция
 
 - Порядок 52 карт Deck A и 52 карт Deck B зафиксирован в [интерактивной матрице состава](../../../../docs/design/blackjack-card-roster.html).
-- Портреты T-Doll и ссылки на страницы файлов собраны в [sources.json](./sources.json) и [sources-deck-b.json](./sources-deck-b.json). В Deck B найдено 51 изображение; источник PTRS не подтверждён и в превью стоит нейтральный placeholder.
+- Портреты T-Doll и ссылки на страницы файлов собраны в [sources.json](./sources.json) и [sources-deck-b.json](./sources-deck-b.json). В Deck B 52 уникальных персонажа с портретами из IOP Wiki; M82A1 занимает 6♥, PTRD — 7♥.
 - Владелец одобрил изображения для этого некоммерческого GFL fan-превью с атрибуцией MICA Team / SUNBORN. Это согласование не заявляет общую открытую лицензию на повторное использование.
 - [Интерактивное превью на GitHub Pages](https://hainox.github.io/BURMALDOZA/design/blackjack-deck-a/) показывает комнату, рубашку и позволяет переключать Deck A/B; есть поиск, фильтры и карточки-досье. [Мобильный контактный лист](../../../../docs/design/blackjack-gfl-deck-a-preview/README.md) содержит снимки Deck A.
 

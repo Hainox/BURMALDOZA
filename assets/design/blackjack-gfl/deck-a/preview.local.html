@@ -62,7 +62,6 @@ h1 span{display:block;color:var(--gold);font-size:.57em;letter-spacing:.16em;mar
 .variant-switch button[aria-pressed="true"]{border-color:#8e7953;background:#2a241b;color:#f6d991;box-shadow:0 3px 10px #0007}
 .variant-switch button:hover{color:#fff0c4}
 .variant-note{margin:7px 0 0;color:#bfb6a9;font-size:11px}
-.source-flag{position:absolute;z-index:2;top:34px;left:9px;padding:3px 5px;border:1px solid #d7bd81a0;border-radius:4px;background:#11151ddd;color:#ffe2a6;font-size:7px;font-weight:750;letter-spacing:.04em;text-transform:uppercase}.source-flag:empty{display:none}.portrait-unverified{border-style:dashed}
 .deck-tools{display:grid;grid-template-columns:minmax(180px,1.5fr) repeat(2,minmax(150px,.7fr));gap:10px;align-items:end;margin:18px 0 8px;padding:14px;border:1px solid var(--line);border-radius:14px;background:#12131bf2;backdrop-filter:blur(12px)}
 .field{display:grid;gap:6px;min-width:0}
 .field span{color:#c9c3bd;font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase}
@@ -179,7 +178,7 @@ footer{padding:22px 2px;color:#777781;font-size:11px}
   <div class="hero-copy">
    <div class="kicker">Personnel dossier · Blackjack · <span id="hero-deck-label">Deck A</span></div>
    <h1>Sector 09<span>Blackjack archive</span></h1>
-   <p class="lead">Карточная партия в заброшенном здании на внешнем периметре. В каждом варианте — 52 карты; источник одного портрета Deck B отмечен отдельно.</p>
+   <p class="lead">Карточная партия в заброшенном здании на внешнем периметре. В каждом варианте — 52 уникальные T-Doll; источники портретов собраны рядом с превью.</p>
    <div class="hero-tags"><span class="tag"><b>52</b> карты в варианте</span><span class="tag">4 масти · 13 номиналов</span><span class="tag">Колода <b id="hero-deck-value">A</b> · досье</span></div>
    <div class="meta-line"><strong>Визуальный слой не влияет на правила:</strong> A = 1/11, 2–10 = номинал, J/Q/K = 10. Образ дилера-бота выбирается только как косметика на партию и сохраняется после reconnect.</div>
   </div>
@@ -221,7 +220,7 @@ footer{padding:22px 2px;color:#777781;font-size:11px}
  const suits=[
   {id:"spades",symbol:"♠",name:"Пики",theme:"Скрытая операция · ночной рейд",cards:{A:["UMP45","Vector","Welrod MkII","C-MS","P90","Grizzly","Thompson","MP5","Five-seveN","Contender","G11","UMP9","HK416"],B:["AKS-74U","Skorpion","PPD-40","MP40","M3","M12","TMP","Micro Uzi","PP-2000","SR-3MP","PP-19","MP7","Honey Badger"]}},
   {id:"clubs",symbol:"♣",name:"Трефы",theme:"Линия контакта · штурмовая группа",cards:{A:["M4A1","G36","G36C","G41","FAL","TAR-21","K2","Type 95","Type 97","RO635","M4 SOPMOD II","ST AR-15","M16A1"],B:["Zas M21","AK-47","AK-74M","FNC","AUG","T91","T65","XM8","Ribeyrolles","MDR","AR-18","AS Val","Type 64"]}},
-  {id:"hearts",symbol:"♥",name:"Червы",theme:"Связь и прикрытие · наблюдение",cards:{A:["RPK-16","Makarov","SVD","Mosin-Nagant","Suomi","PPSh-41","PPS-43","Lee-Enfield","WA2000","Kar98k","AN-94","AK-15","AK-12"],B:["R93","M21","SV-98","Carcano M1891","Carcano M91/38","PTRD","PTRS","SRS","Ballista","PzB 39","TAC-50","IWS 2000","KSVK"]}},
+  {id:"hearts",symbol:"♥",name:"Червы",theme:"Связь и прикрытие · наблюдение",cards:{A:["RPK-16","Makarov","SVD","Mosin-Nagant","Suomi","PPSh-41","PPS-43","Lee-Enfield","WA2000","Kar98k","AN-94","AK-15","AK-12"],B:["R93","M21","SV-98","Carcano M1891","Carcano M91/38","M82A1","PTRD","SRS","Ballista","PzB 39","TAC-50","IWS 2000","KSVK"]}},
   {id:"diamonds",symbol:"♦",name:"Бубны",theme:"Опора базы · снабжение и специалисты",cards:{A:["Springfield","G3","Sten MkII","M1918","Negev","M1895","P7","M99","M200","G28","M1 Garand","Hecate II","OTs-14"],B:["M9","P99","CZ52","Glock 17","P226","Stechkin","NZ75","Thunder","Python","K5","Jericho","M1911","Mk23"]}}
  ];
  function esc(v){return String(v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
@@ -231,7 +230,7 @@ footer{padding:22px 2px;color:#777781;font-size:11px}
  let activeDeck="A";
  let cardRecords=[];
  function deckBFileName(name){if(name==="AKS-74U")return "AK-74U_S.png";if(name==="Carcano M91/38")return "Carcano_M91∕38_S.png";return name.replace(/ /g,"_")+"_S.png"}
- function portraitPath(deckId,name){if(deckId==="A")return "web/portraits/"+fileName(name);return name==="PTRS"?"../deck-b/portraits/portrait-source-pending.svg":"../deck-b/portraits/"+encodeURIComponent(deckBFileName(name))}
+ function portraitPath(deckId,name){if(deckId==="A")return "web/portraits/"+fileName(name);return "../deck-b/portraits/"+encodeURIComponent(deckBFileName(name))}
  function renderDeck(){
   deck.innerHTML="";cardRecords=[];
   suits.forEach(function(suit){
@@ -239,13 +238,13 @@ footer{padding:22px 2px;color:#777781;font-size:11px}
    section.className="suit-section"+((suit.id==="hearts"||suit.id==="diamonds")?" red":"");
    section.setAttribute("aria-label",suit.name+" — 13 карт");
    const cards=names.map(function(name,index){
-    const rank=ranks[index],sourcePending=activeDeck==="B"&&name==="PTRS",img=portraitPath(activeDeck,name),group=rank==="A"?"ace":(["J","Q","K"].includes(rank)?"face":"number");
-    return '<button type="button" class="playing-card'+(sourcePending?' portrait-unverified':'')+'" data-source-status="'+(sourcePending?"unverified":"verified")+'" data-card="'+esc(rank+suit.symbol)+'" data-name="'+esc(name)+'" data-rank="'+esc(rank)+'" data-rank-group="'+group+'" data-suit="'+suit.id+'" aria-label="'+esc(rank+" "+suit.name+" — "+name+(sourcePending?". Портрет не подтверждён.":".")+" Открыть досье")+'"><span class="rank">'+esc(rank)+'<em>'+suit.symbol+'</em></span><span class="corner-bottom" aria-hidden="true">'+suit.symbol+' '+esc(rank)+'</span><span class="source-flag">'+(sourcePending?"Портрет не подтверждён":"")+'</span><img src="'+img+'" alt="" loading="lazy" decoding="async"><span class="card-copy"><small>G&amp;K / '+esc(cardValue(rank))+'</small><strong>'+esc(name)+'</strong><span>'+esc(suit.name)+' · '+esc(rank)+'</span></span></button>';
+    const rank=ranks[index],img=portraitPath(activeDeck,name),group=rank==="A"?"ace":(["J","Q","K"].includes(rank)?"face":"number");
+    return '<button type="button" class="playing-card" data-card="'+esc(rank+suit.symbol)+'" data-name="'+esc(name)+'" data-rank="'+esc(rank)+'" data-rank-group="'+group+'" data-suit="'+suit.id+'" aria-label="'+esc(rank+" "+suit.name+" — "+name+". Открыть досье")+'"><span class="rank">'+esc(rank)+'<em>'+suit.symbol+'</em></span><span class="corner-bottom" aria-hidden="true">'+suit.symbol+' '+esc(rank)+'</span><img src="'+img+'" alt="" loading="lazy" decoding="async"><span class="card-copy"><small>G&amp;K / '+esc(cardValue(rank))+'</small><strong>'+esc(name)+'</strong><span>'+esc(suit.name)+' · '+esc(rank)+'</span></span></button>';
    }).join("");
    section.innerHTML='<div class="suit-head"><span class="suit-mark" aria-hidden="true">'+suit.symbol+'</span><div><h3>'+suit.name+'</h3><p>'+suit.theme+'</p></div><span class="count">13 / 52</span></div><div class="cards">'+cards+'</div>';
    deck.appendChild(section);
    section.querySelectorAll(".playing-card").forEach(function(button,index){
-    const rank=ranks[index],name=names[index],card={button:button,rank:rank,name:name,suit:suit,deck:activeDeck,sourcePending:activeDeck==="B"&&name==="PTRS",group:rank==="A"?"ace":(["J","Q","K"].includes(rank)?"face":"number")};
+    const rank=ranks[index],name=names[index],card={button:button,rank:rank,name:name,suit:suit,deck:activeDeck,group:rank==="A"?"ace":(["J","Q","K"].includes(rank)?"face":"number")};
     cardRecords.push(card);button.addEventListener("click",function(){openCard(card)});
    });
   });
@@ -264,10 +263,10 @@ footer{padding:22px 2px;color:#777781;font-size:11px}
  }
  function openCard(card){
   const img=document.getElementById("dialog-image"),value=card.rank==="A"?"1 или 11":(["J","Q","K"].includes(card.rank)?"10":card.rank);
-  img.src=portraitPath(card.deck,card.name);img.alt=card.sourcePending?"Заглушка: портрет PTRS не подтверждён источником.":card.name+" — портрет T-Doll";
+  img.src=portraitPath(card.deck,card.name);img.alt=card.name+" — портрет T-Doll";
   document.getElementById("dialog-index").textContent=card.rank+" "+card.suit.symbol+" · G&K / PERSONNEL FILE";
   document.getElementById("dialog-title").textContent=card.name;
-  document.getElementById("dialog-theme").textContent=card.sourcePending?"Портрет PTRS не подтверждён в IOP Wiki. В превью оставлена нейтральная заглушка до проверки состава. "+card.suit.theme:card.suit.theme;
+  document.getElementById("dialog-theme").textContent=card.suit.theme;
   document.getElementById("dialog-rank").textContent=card.rank;
   document.getElementById("dialog-value").textContent=value;
   document.getElementById("dialog-suit").textContent=card.suit.name+" "+card.suit.symbol;
@@ -282,7 +281,7 @@ footer{padding:22px 2px;color:#777781;font-size:11px}
   document.getElementById("hero-deck-value").textContent=activeDeck;
   document.getElementById("back-deck-label").textContent=activeDeck;
   document.getElementById("footer-deck-label").textContent=activeDeck;
-  document.getElementById("variant-note").textContent=activeDeck==="A"?"Основной выбранный состав: A♥ — RPK-16, K♥ — AK-12.":"Deck B для сравнения; источник портрета PTRS пока не подтверждён.";
+  document.getElementById("variant-note").textContent=activeDeck==="A"?"Основной выбранный состав: A♥ — RPK-16, K♥ — AK-12.":"Deck B для сравнения: M82A1 занимает 6♥, PTRD — 7♥.";
   const showcaseName=suits[0].cards[activeDeck][0],showcaseImage=document.getElementById("showcase-image");
   showcaseImage.src=portraitPath(activeDeck,showcaseName);showcaseImage.alt=showcaseName+" — пример портрета лица карты";
   document.getElementById("showcase-name").textContent=showcaseName;
