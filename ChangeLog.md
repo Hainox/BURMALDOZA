@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added shared agent rules (`AGENTS.md`, imported by `CLAUDE.md`), a Claude Code on the web SessionStart hook that installs Python/Node dependencies and the Playwright-matched Chromium, a Codex ↔ Command Code ↔ Claude handoff section in the workflow doc, and the 2026-09-23 code audit (`docs/Code-Audit-2026-09-23.md`).
 - Made `/health/ready` probe PostgreSQL and Redis with bounded timeouts and return HTTP 503 when either dependency is unavailable; `/health/live` remains independent of dependency health.
 - Added the Blackjack GFL server action contract for explicit bets, deal/hit/stand/double transitions, server-only hole-card state, authoritative in-hand balance updates, idempotent ledger settlement, and result restoration. In-progress actions no longer appear as settled results. Deployments must apply Alembic revision `20260923_0003` before enabling the updated API. The visual Blackjack room handoff remains separate.
 - Fixed a motion regression where reel distance variables were scoped above the symbol-size context, making the browser resolve the travel transform as invalid; the regression suite now samples the live transform during travel.
