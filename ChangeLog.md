@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Published an interactive mobile-friendly Blackjack GFL Deck A preview on GitHub Pages with the Sector 09 room, card back, all 52 character cards, suit/rank filters, search, and card dossiers.
 - Made `/health/ready` probe PostgreSQL and Redis with bounded timeouts and return HTTP 503 when either dependency is unavailable; `/health/live` remains independent of dependency health.
 - Added the Blackjack GFL server action contract for explicit bets, deal/hit/stand/double transitions, server-only hole-card state, authoritative in-hand balance updates, idempotent ledger settlement, and result restoration. In-progress actions no longer appear as settled results. Deployments must apply Alembic revision `20260923_0003` before enabling the updated API. The visual Blackjack room handoff remains separate.
 - Fixed a motion regression where reel distance variables were scoped above the symbol-size context, making the browser resolve the travel transform as invalid; the regression suite now samples the live transform during travel.
