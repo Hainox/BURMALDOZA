@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Expanded the Blackjack GFL Pages preview to switch between Deck A and Deck B, assigned RPK-16 to A♥ and AK-12 to K♥, added 51 attributed Deck B portraits, and marked the unresolved PTRS portrait source. Replaced the room concept with an abandoned-building police perimeter scene and updated its ambient sound direction.
 - Published an interactive mobile-friendly Blackjack GFL Deck A preview on GitHub Pages with the Sector 09 room, card back, all 52 character cards, suit/rank filters, search, and card dossiers.
 - Made `/health/ready` probe PostgreSQL and Redis with bounded timeouts and return HTTP 503 when either dependency is unavailable; `/health/live` remains independent of dependency health.
 - Added the Blackjack GFL server action contract for explicit bets, deal/hit/stand/double transitions, server-only hole-card state, authoritative in-hand balance updates, idempotent ledger settlement, and result restoration. In-progress actions no longer appear as settled results. Deployments must apply Alembic revision `20260923_0003` before enabling the updated API. The visual Blackjack room handoff remains separate.
