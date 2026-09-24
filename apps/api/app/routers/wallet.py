@@ -76,18 +76,38 @@ async def ledger(
     ]
 
 
+def _request_key(x_request_id: str | None) -> UUID:
+    try:
+        return parse_idempotency_key(x_request_id)
+    except InvalidIdempotencyKey as error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
+
+
 @router.post("/daily-bonus/claim")
 async def claim_daily_bonus(
     current_user: CurrentUser = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
     x_request_id: str | None = Header(default=None, alias="X-Request-ID"),
 ) -> dict[str, object]:
-    try:
-        key: UUID = parse_idempotency_key(x_request_id)
-    except InvalidIdempotencyKey as error:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
+    key = _request_key(x_request_id)
     try:
         result = await WalletService(session).claim_daily_bonus(
+            current_user.user_id, datetime.now(UTC), key
+        )
+    except ValueError as error:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
+    return _ledger_result(result)
+
+
+@router.post("/relief/claim")
+async def claim_relief_grant(
+    current_user: CurrentUser = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+    x_request_id: str | None = Header(default=None, alias="X-Request-ID"),
+) -> dict[str, object]:
+    key = _request_key(x_request_id)
+    try:
+        result = await WalletService(session).claim_relief_grant(
             current_user.user_id, datetime.now(UTC), key
         )
     except ValueError as error:

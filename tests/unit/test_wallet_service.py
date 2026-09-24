@@ -1,5 +1,5 @@
 from datetime import UTC, datetime, timedelta
-from uuid import uuid4
+from uuid import NAMESPACE_URL, uuid4, uuid5
 
 import pytest
 from burmaldoza_domain.core import InsufficientBalanceError
@@ -7,8 +7,10 @@ from burmaldoza_domain.economy import LedgerReason
 
 from apps.api.app.services.wallet_service import (
     CooldownError,
+    GrantAlreadyClaimedError,
     MemoryWalletStore,
     WalletService,
+    WalletServiceError,
 )
 
 
@@ -82,3 +84,54 @@ async def test_game_settlement_uses_one_operation_with_stake_and_payout_entries(
     assert len(result.entries) == 2
     assert store.operation_count == 2
     assert store.ledger_entry_count == 3
+
+
+@pytest.mark.asyncio
+async def test_idempotency_key_of_another_wallet_is_rejected_not_replayed() -> None:
+    store = MemoryWalletStore()
+    service = WalletService(store=store)
+    now = datetime(2026, 9, 20, 12, tzinfo=UTC)
+    shared_key = uuid4()
+
+    await service.claim_daily_bonus(1, now, shared_key)
+
+    with pytest.raises(WalletServiceError, match="another wallet"):
+        await service.claim_daily_bonus(2, now, shared_key)
+    assert (await service.get_or_create(2)).balance == 0
+    assert store.operation_count == 1
+
+
+@pytest.mark.asyncio
+async def test_key_reserved_at_old_predictable_welcome_uuid_cannot_block_next_welcome() -> None:
+    store = MemoryWalletStore()
+    service = WalletService(store=store)
+    # The former key scheme: anyone could compute the next user's welcome key.
+    predicted_key = uuid5(NAMESPACE_URL, "burmaldoza:welcome-grant:2")
+    await service.claim_welcome_grant(1, uuid4())
+    await service.settle_game_round(1, uuid4(), stake=10, payout=0, idempotency_key=predicted_key)
+
+    welcome = await service.claim_welcome_grant_in_transaction(2)
+
+    assert welcome.balance_after == 1000
+    assert welcome.idempotency_key != predicted_key
+    with pytest.raises(GrantAlreadyClaimedError):
+        await service.claim_welcome_grant_in_transaction(2)
+    assert (await service.get_or_create(2)).balance == 1000
+
+
+@pytest.mark.asyncio
+async def test_claim_rejects_request_id_already_used_by_another_claim_reason() -> None:
+    store = MemoryWalletStore()
+    service = WalletService(store=store)
+    now = datetime(2026, 9, 20, 12, tzinfo=UTC)
+    request_id = uuid4()
+
+    daily = await service.claim_daily_bonus(1, now, request_id)
+
+    with pytest.raises(WalletServiceError, match="another wallet operation"):
+        await service.claim_relief_grant(1, now, request_id)
+    with pytest.raises(WalletServiceError, match="another wallet operation"):
+        await service.claim_welcome_grant(1, request_id)
+    assert await service.claim_daily_bonus(1, now, request_id) == daily
+    assert (await service.get_or_create(1)).balance == 250
+    assert store.operation_count == 1

@@ -43,6 +43,8 @@ async def _upsert_user(session: AsyncSession, context: TelegramAuthContext) -> C
             )
             session.add(user)
             await session.flush()
+            # New players start with the welcome bonus; otherwise their first bet fails.
+            await WalletService(session).claim_welcome_grant_in_transaction(user.id)
         else:
             user.display_name = context.display_name
             user.last_seen_at = datetime.now(UTC)

@@ -10,7 +10,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.core.config import settings
+from app.core.config import cors_origin, settings
 from app.db.session import SessionFactory
 from app.routers import auth, internal, rooms, wallet
 from app.services.event_bus import EventBus
@@ -21,9 +21,11 @@ app.state.event_bus = EventBus()
 app.state.session_factory = SessionFactory
 app.state.redis_client_factory = Redis.from_url
 
+_miniapp_origin = cors_origin(settings.miniapp_url)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.miniapp_url] if settings.miniapp_url else [],
+    allow_origins=[_miniapp_origin] if _miniapp_origin else [],
     allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["Content-Type", "X-Telegram-Init-Data", "X-Request-ID"],

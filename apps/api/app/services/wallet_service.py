@@ -146,7 +146,7 @@ class WalletService:
         assert self.session is not None
         async with self.session.begin():
             wallet = await self._db_get_or_create_wallet(user_id, lock=True)
-            existing = await self._db_replay(idempotency_key)
+            existing = await self._db_replay(idempotency_key, wallet.user_id)
             if existing is not None:
                 if not isinstance(existing, LedgerResult):
                     raise WalletServiceError("idempotency key belongs to another operation")
@@ -165,7 +165,7 @@ class WalletService:
 
         if self.store is not None:
             async with self.store.lock:
-                existing = self.store.operations.get(idempotency_key)
+                existing = self._memory_replay(idempotency_key, user_id)
                 if existing is not None:
                     return self._as_ledger_result(existing)
                 wallet = self.store.get_wallet(user_id)
@@ -174,7 +174,7 @@ class WalletService:
         if not self.session.in_transaction():
             raise RuntimeError("caller-owned wallet delta requires an active transaction")
         wallet = await self._db_get_or_create_wallet(user_id, lock=True)
-        existing = await self._db_replay(idempotency_key)
+        existing = await self._db_replay(idempotency_key, wallet.user_id)
         if existing is not None:
             return self._as_ledger_result(existing)
         return await self._db_apply_delta(wallet, delta, reason, reference_id, idempotency_key)
@@ -194,9 +194,9 @@ class WalletService:
         if self.store is not None:
             async with self.store.lock:
                 wallet = self.store.get_wallet(user_id)
-                replay = self.store.operations.get(idempotency_key)
+                replay = self._memory_replay(idempotency_key, user_id)
                 if replay is not None:
-                    return self._as_ledger_result(replay)
+                    return self._as_claim_result(replay, LedgerReason.WELCOME)
                 if wallet.welcome_granted_at is not None:
                     raise GrantAlreadyClaimedError("welcome grant already claimed")
                 result = self._memory_apply_delta_locked(
@@ -207,9 +207,9 @@ class WalletService:
         assert self.session is not None
         async with self.session.begin():
             wallet = await self._db_get_or_create_wallet(user_id, lock=True)
-            existing = await self._db_replay(idempotency_key)
+            existing = await self._db_replay(idempotency_key, wallet.user_id)
             if existing is not None:
-                return self._as_ledger_result(existing)
+                return self._as_claim_result(existing, LedgerReason.WELCOME)
             if wallet.welcome_granted_at is not None:
                 raise GrantAlreadyClaimedError("welcome grant already claimed")
             result = await self._db_apply_delta(
@@ -218,6 +218,30 @@ class WalletService:
             wallet.welcome_granted_at = datetime.now(UTC)
             return result
 
+    async def claim_welcome_grant_in_transaction(self, user_id: int) -> LedgerResult:
+        """Grant the one-time welcome bonus inside the caller's transaction.
+
+        Called only while the caller creates the user. The key is random: a key
+        derived from the sequential user id could be reserved in advance by another
+        player (for example as a room action_id) and block the next first login.
+        The locked wallet row and ``welcome_granted_at`` keep the grant one-time.
+        """
+
+        idempotency_key = uuid4()
+        if self.store is not None:
+            return await self.claim_welcome_grant(user_id, idempotency_key)
+        assert self.session is not None
+        if not self.session.in_transaction():
+            raise RuntimeError("caller-owned welcome grant requires an active transaction")
+        wallet = await self._db_get_or_create_wallet(user_id, lock=True)
+        if wallet.welcome_granted_at is not None:
+            raise GrantAlreadyClaimedError("welcome grant already claimed")
+        result = await self._db_apply_delta(
+            wallet, self.economy.welcome_grant, LedgerReason.WELCOME, None, idempotency_key
+        )
+        wallet.welcome_granted_at = datetime.now(UTC)
+        return result
+
     async def claim_daily_bonus(
         self, user_id: int, now: datetime, idempotency_key: UUID
     ) -> LedgerResult:
@@ -225,9 +249,9 @@ class WalletService:
         if self.store is not None:
             async with self.store.lock:
                 wallet = self.store.get_wallet(user_id)
-                replay = self.store.operations.get(idempotency_key)
+                replay = self._memory_replay(idempotency_key, user_id)
                 if replay is not None:
-                    return self._as_ledger_result(replay)
+                    return self._as_claim_result(replay, LedgerReason.DAILY_BONUS)
                 self._check_cooldown(wallet.daily_bonus_at, now, self.economy.daily_cooldown_seconds, "daily")
                 result = self._memory_apply_delta_locked(
                     wallet, self.economy.daily_bonus, LedgerReason.DAILY_BONUS, None, idempotency_key
@@ -237,9 +261,9 @@ class WalletService:
         assert self.session is not None
         async with self.session.begin():
             wallet = await self._db_get_or_create_wallet(user_id, lock=True)
-            existing = await self._db_replay(idempotency_key)
+            existing = await self._db_replay(idempotency_key, wallet.user_id)
             if existing is not None:
-                return self._as_ledger_result(existing)
+                return self._as_claim_result(existing, LedgerReason.DAILY_BONUS)
             self._check_cooldown(wallet.daily_bonus_at, now, self.economy.daily_cooldown_seconds, "daily")
             result = await self._db_apply_delta(
                 wallet, self.economy.daily_bonus, LedgerReason.DAILY_BONUS, None, idempotency_key
@@ -254,9 +278,9 @@ class WalletService:
         if self.store is not None:
             async with self.store.lock:
                 wallet = self.store.get_wallet(user_id)
-                replay = self.store.operations.get(idempotency_key)
+                replay = self._memory_replay(idempotency_key, user_id)
                 if replay is not None:
-                    return self._as_ledger_result(replay)
+                    return self._as_claim_result(replay, LedgerReason.RELIEF)
                 if wallet.balance >= self.economy.relief_threshold:
                     raise ReliefUnavailableError("relief is available only below the balance threshold")
                 self._check_cooldown(wallet.relief_grant_at, now, self.economy.relief_cooldown_seconds, "relief")
@@ -268,9 +292,9 @@ class WalletService:
         assert self.session is not None
         async with self.session.begin():
             wallet = await self._db_get_or_create_wallet(user_id, lock=True)
-            existing = await self._db_replay(idempotency_key)
+            existing = await self._db_replay(idempotency_key, wallet.user_id)
             if existing is not None:
-                return self._as_ledger_result(existing)
+                return self._as_claim_result(existing, LedgerReason.RELIEF)
             if wallet.balance >= self.economy.relief_threshold:
                 raise ReliefUnavailableError("relief is available only below the balance threshold")
             self._check_cooldown(wallet.relief_grant_at, now, self.economy.relief_cooldown_seconds, "relief")
@@ -292,7 +316,7 @@ class WalletService:
             raise ValueError("stake and payout must be non-negative")
         if self.store is not None:
             async with self.store.lock:
-                existing = self.store.operations.get(idempotency_key)
+                existing = self._memory_replay(idempotency_key, user_id)
                 if existing is not None:
                     return self._as_settlement_result(existing)
                 wallet = self.store.get_wallet(user_id)
@@ -337,7 +361,7 @@ class WalletService:
     ) -> SettlementResult:
         assert self.session is not None
         wallet = await self._db_get_or_create_wallet(user_id, lock=True)
-        existing = await self._db_replay(idempotency_key)
+        existing = await self._db_replay(idempotency_key, wallet.user_id)
         if existing is not None:
             return self._as_settlement_result(existing)
         return await self._db_settle(wallet, round_id, stake, payout, idempotency_key)
@@ -353,7 +377,7 @@ class WalletService:
         self, user_id: int, delta: int, reason: LedgerReason, reference_id: UUID | None, key: UUID
     ) -> LedgerResult:
         wallet = self.store.get_wallet(user_id)  # type: ignore[union-attr]
-        existing = self.store.operations.get(key)  # type: ignore[union-attr]
+        existing = self._memory_replay(key, user_id)
         if existing is not None:
             return self._as_ledger_result(existing)
         return self._memory_apply_delta_locked(wallet, delta, reason, reference_id, key)
@@ -392,6 +416,16 @@ class WalletService:
             return result
         raise WalletServiceError("idempotency key belongs to a game settlement")
 
+    @classmethod
+    def _as_claim_result(
+        cls, result: LedgerResult | SettlementResult, expected_reason: LedgerReason
+    ) -> LedgerResult:
+        # Replaying e.g. a daily bonus as a relief claim would report a grant that never happened.
+        ledger_result = cls._as_ledger_result(result)
+        if ledger_result.reason is not expected_reason:
+            raise WalletServiceError("idempotency key belongs to another wallet operation")
+        return ledger_result
+
     @staticmethod
     def _as_settlement_result(result: LedgerResult | SettlementResult) -> SettlementResult:
         if isinstance(result, SettlementResult):
@@ -423,13 +457,22 @@ class WalletService:
             await self.session.flush()
         return wallet
 
-    async def _db_replay(self, key: UUID) -> LedgerResult | SettlementResult | None:
+    def _memory_replay(self, key: UUID, user_id: int) -> LedgerResult | SettlementResult | None:
+        existing = self.store.operations.get(key)  # type: ignore[union-attr]
+        if existing is not None and existing.user_id != user_id:
+            raise WalletServiceError("idempotency key belongs to another wallet")
+        return existing
+
+    async def _db_replay(self, key: UUID, user_id: int) -> LedgerResult | SettlementResult | None:
         assert self.session is not None
         operation = (
             await self.session.execute(select(WalletOperation).where(WalletOperation.idempotency_key == key))
         ).scalar_one_or_none()
         if operation is None:
             return None
+        # Keys are globally unique; never replay (and leak) another user's operation.
+        if operation.wallet_id != user_id:
+            raise WalletServiceError("idempotency key belongs to another wallet")
         entries = tuple(
             
                 LedgerEntryResult(

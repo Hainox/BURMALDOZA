@@ -417,6 +417,7 @@ class RoomService:
                 )
                 self.session.add(user)
                 await self.session.flush()
+                await self.wallet_service.claim_welcome_grant_in_transaction(user.id)
             else:
                 user.display_name = context.display_name
                 await self.session.flush()
