@@ -227,3 +227,10 @@
 - По снимкам интерфейса владельца от 24.09.2026 зафиксированы имена Claude-моделей и effort-метки; `Fable 5.1` и `Fable 5` помечены как требующие usage credits. Локальный CLI `2.1.281` принимает effort `low|medium|high|xhigh|max`; отображения меток `Extra` и `Ultracode` на значения CLI не подтверждено.
 - Claude Code подготовил серверные изменения PR #10; Codex завершил исправления аудита в stacked PR #12 и влил их в ветку `claude/audit-fixes`. PR #10 остаётся открытым, его текущий head `9b5b284` включает исправления из #12 и ещё ждёт приёмки/слияния в `main`. CCode #6 остаётся за визуальной Blackjack-комнатой после PR #8; issue #11 ждёт принятого PR #10 и завершения #6, чтобы не делить `+page.svelte`.
 - Проверка документации: `git diff --check` — passed. Изменение внутреннего процесса; `ChangeLog.md` не обновлялся.
+
+## 2026-09-24 — separate internal API token (Codex PR B)
+
+- Internal bot routes now authenticate with `INTERNAL_API_TOKEN` and `X-Internal-API-Token`, separately from Telegram `BOT_TOKEN`. The API returns the existing 401 error when the internal token is absent, wrong, or identical to `BOT_TOKEN`; the bot refuses startup if its internal token is absent or reused. Telegram login verification is unchanged.
+- Compose passes the setting to API and bot; `.env.example` leaves its value empty. Production must provision one separate matching value to both services before rollout. This is a coordinated deployment change, so it is recorded in `ChangeLog.md`.
+- Local verification: `uv run --locked ruff check .` passed; `uv run --locked pytest -q` returned 127 passed, 6 skipped, 2 existing deprecation warnings; `docker compose --env-file .env.example config --quiet` and `git diff --check` passed. Tests cover valid/wrong/absent/reused/non-ASCII tokens, old header rejection, bot configuration, and client header. PostgreSQL integration did not run locally because `TEST_DATABASE_URL` is absent; GitHub CI is required before merge.
+- Open: owner review and CI before merge/deployment; provision the real value outside repository and logs.

@@ -14,7 +14,7 @@ def create_bot(config: BotConfig) -> Bot:
 def create_dispatcher(config: BotConfig) -> Dispatcher:
     dispatcher = Dispatcher()
     dispatcher["config"] = config
-    dispatcher["api_client"] = BotApiClient(config.api_base_url, config.token)
+    dispatcher["api_client"] = BotApiClient(config.api_base_url, config.internal_api_token)
     dispatcher.include_router(start_router)
     dispatcher.include_router(help_router)
     dispatcher.include_router(casino_router)

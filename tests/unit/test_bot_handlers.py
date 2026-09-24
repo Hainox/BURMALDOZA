@@ -16,6 +16,7 @@ from apps.bot.app.main import BotConfig
 def config() -> BotConfig:
     return BotConfig(
         token="TEST_BOT_TOKEN",
+        internal_api_token="TEST_INTERNAL_TOKEN",
         miniapp_url="https://miniapp.example.test",
         api_base_url="https://api.example.test",
         environment="test",

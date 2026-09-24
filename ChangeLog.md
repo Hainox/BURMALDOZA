@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Bot-to-API requests now require a separate `INTERNAL_API_TOKEN` in both services and use `X-Internal-API-Token`; deploy both services with the same newly provisioned internal token. The bot refuses startup without it, and the API rejects internal requests when it is unset or reused from `BOT_TOKEN`.
 - Expanded the Blackjack GFL Pages preview to switch between Deck A and Deck B, assigned RPK-16 to A♥ and AK-12 to K♥, and added 52 sourced Deck B portraits with M82A1 at 6♥ and PTRD at 7♥. Replaced the room concept with an abandoned-building police perimeter scene and updated its ambient sound direction.
 - Published an interactive mobile-friendly Blackjack GFL Deck A preview on GitHub Pages with the Sector 09 room, card back, all 52 character cards, suit/rank filters, search, and card dossiers.
 - Made `/health/ready` probe PostgreSQL and Redis with bounded timeouts and return HTTP 503 when either dependency is unavailable; `/health/live` remains independent of dependency health.

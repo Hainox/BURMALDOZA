@@ -19,7 +19,7 @@ FastAPI (источник подтверждённого состояния), Po
 - `packages/domain` — чистые правила игр (slot, blackjack, holdem), экономика, RNG. Без I/O.
 - `packages/contracts` — Pydantic-контракты API/событий, общие для API и клиента.
 - `apps/api` — FastAPI: `routers/` (HTTP/WebSocket), `services/` (wallet_service, room_service), `db/models`.
-- `apps/bot` — aiogram-бот; ходит в API через `/api/v1/internal/bot/*` с заголовком `X-Bot-Token`.
+- `apps/bot` — aiogram-бот; ходит в API через `/api/v1/internal/bot/*` с заголовком `X-Internal-API-Token` и отдельным `INTERNAL_API_TOKEN`.
 - `apps/miniapp` — SvelteKit + `adapter-static`; без `PUBLIC_API_BASE_URL`/Telegram `initData` работает в DEMO.
 - `migrations/` — Alembic; `devtools/monte_carlo` — офлайн-симуляции RTP; `dev/`, `docs/` — спецификации и журнал.
 

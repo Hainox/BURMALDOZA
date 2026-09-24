@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     )
     redis_url: str = "redis://localhost:6379/0"
     bot_token: str = ""
+    internal_api_token: str = ""
     miniapp_url: str = "https://example.invalid"
     telegram_init_data_max_age_seconds: int = 86400
     environment: str = "development"
