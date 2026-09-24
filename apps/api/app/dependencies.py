@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings, settings
 from app.core.telegram_auth import TelegramAuthContext, TelegramAuthError, verify_telegram_init_data
+from app.db.conflict_insert import conflict_insert
 from app.db.models import User
 from app.db.session import get_session
 from app.services.event_bus import EventBus
@@ -33,23 +34,26 @@ def get_app_settings(request: Request) -> Settings:
 
 async def _upsert_user(session: AsyncSession, context: TelegramAuthContext) -> CurrentUser:
     async with session.begin():
-        user = (
-            await session.execute(select(User).where(User.telegram_user_id == context.telegram_user_id))
-        ).scalar_one_or_none()
-        if user is None:
-            user = User(
+        inserted_id = await session.scalar(
+            conflict_insert(session, User)
+            .values(
                 telegram_user_id=context.telegram_user_id,
                 display_name=context.display_name,
             )
-            session.add(user)
-            await session.flush()
+            .on_conflict_do_nothing(index_elements=[User.telegram_user_id])
+            .returning(User.id)
+        )
+        if inserted_id is not None:
             # New players start with the welcome bonus; otherwise their first bet fails.
-            await WalletService(session).claim_welcome_grant_in_transaction(user.id)
+            await WalletService(session).claim_welcome_grant_in_transaction(inserted_id)
         else:
+            user = (
+                await session.execute(select(User).where(User.telegram_user_id == context.telegram_user_id))
+            ).scalar_one()
             user.display_name = context.display_name
             user.last_seen_at = datetime.now(UTC)
     return CurrentUser(
-        user_id=user.id,
+        user_id=inserted_id if inserted_id is not None else user.id,
         telegram_user_id=context.telegram_user_id,
         display_name=context.display_name,
         username=context.username,
