@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
-from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
+from uuid import UUID, uuid4
 
 from burmaldoza_contracts.wallet import WalletSnapshot
 from burmaldoza_domain.economy import (
@@ -93,10 +93,6 @@ class MemoryWalletStore:
 
     def get_wallet(self, user_id: int) -> _MemoryWallet:
         return self.wallets.setdefault(user_id, _MemoryWallet(user_id=user_id))
-
-
-def welcome_grant_key(user_id: int) -> UUID:
-    return uuid5(NAMESPACE_URL, f"burmaldoza:welcome-grant:{user_id}")
 
 
 def _utc(value: datetime) -> datetime:
@@ -200,7 +196,7 @@ class WalletService:
                 wallet = self.store.get_wallet(user_id)
                 replay = self._memory_replay(idempotency_key, user_id)
                 if replay is not None:
-                    return self._as_ledger_result(replay)
+                    return self._as_claim_result(replay, LedgerReason.WELCOME)
                 if wallet.welcome_granted_at is not None:
                     raise GrantAlreadyClaimedError("welcome grant already claimed")
                 result = self._memory_apply_delta_locked(
@@ -213,7 +209,7 @@ class WalletService:
             wallet = await self._db_get_or_create_wallet(user_id, lock=True)
             existing = await self._db_replay(idempotency_key, wallet.user_id)
             if existing is not None:
-                return self._as_ledger_result(existing)
+                return self._as_claim_result(existing, LedgerReason.WELCOME)
             if wallet.welcome_granted_at is not None:
                 raise GrantAlreadyClaimedError("welcome grant already claimed")
             result = await self._db_apply_delta(
@@ -225,20 +221,19 @@ class WalletService:
     async def claim_welcome_grant_in_transaction(self, user_id: int) -> LedgerResult:
         """Grant the one-time welcome bonus inside the caller's transaction.
 
-        The key is derived from the user id, so concurrent or repeated first logins
-        replay one operation instead of granting twice.
+        Called only while the caller creates the user. The key is random: a key
+        derived from the sequential user id could be reserved in advance by another
+        player (for example as a room action_id) and block the next first login.
+        The locked wallet row and ``welcome_granted_at`` keep the grant one-time.
         """
 
-        idempotency_key = welcome_grant_key(user_id)
+        idempotency_key = uuid4()
         if self.store is not None:
             return await self.claim_welcome_grant(user_id, idempotency_key)
         assert self.session is not None
         if not self.session.in_transaction():
             raise RuntimeError("caller-owned welcome grant requires an active transaction")
         wallet = await self._db_get_or_create_wallet(user_id, lock=True)
-        existing = await self._db_replay(idempotency_key, wallet.user_id)
-        if existing is not None:
-            return self._as_ledger_result(existing)
         if wallet.welcome_granted_at is not None:
             raise GrantAlreadyClaimedError("welcome grant already claimed")
         result = await self._db_apply_delta(
@@ -256,7 +251,7 @@ class WalletService:
                 wallet = self.store.get_wallet(user_id)
                 replay = self._memory_replay(idempotency_key, user_id)
                 if replay is not None:
-                    return self._as_ledger_result(replay)
+                    return self._as_claim_result(replay, LedgerReason.DAILY_BONUS)
                 self._check_cooldown(wallet.daily_bonus_at, now, self.economy.daily_cooldown_seconds, "daily")
                 result = self._memory_apply_delta_locked(
                     wallet, self.economy.daily_bonus, LedgerReason.DAILY_BONUS, None, idempotency_key
@@ -268,7 +263,7 @@ class WalletService:
             wallet = await self._db_get_or_create_wallet(user_id, lock=True)
             existing = await self._db_replay(idempotency_key, wallet.user_id)
             if existing is not None:
-                return self._as_ledger_result(existing)
+                return self._as_claim_result(existing, LedgerReason.DAILY_BONUS)
             self._check_cooldown(wallet.daily_bonus_at, now, self.economy.daily_cooldown_seconds, "daily")
             result = await self._db_apply_delta(
                 wallet, self.economy.daily_bonus, LedgerReason.DAILY_BONUS, None, idempotency_key
@@ -285,7 +280,7 @@ class WalletService:
                 wallet = self.store.get_wallet(user_id)
                 replay = self._memory_replay(idempotency_key, user_id)
                 if replay is not None:
-                    return self._as_ledger_result(replay)
+                    return self._as_claim_result(replay, LedgerReason.RELIEF)
                 if wallet.balance >= self.economy.relief_threshold:
                     raise ReliefUnavailableError("relief is available only below the balance threshold")
                 self._check_cooldown(wallet.relief_grant_at, now, self.economy.relief_cooldown_seconds, "relief")
@@ -299,7 +294,7 @@ class WalletService:
             wallet = await self._db_get_or_create_wallet(user_id, lock=True)
             existing = await self._db_replay(idempotency_key, wallet.user_id)
             if existing is not None:
-                return self._as_ledger_result(existing)
+                return self._as_claim_result(existing, LedgerReason.RELIEF)
             if wallet.balance >= self.economy.relief_threshold:
                 raise ReliefUnavailableError("relief is available only below the balance threshold")
             self._check_cooldown(wallet.relief_grant_at, now, self.economy.relief_cooldown_seconds, "relief")
@@ -420,6 +415,16 @@ class WalletService:
         if isinstance(result, LedgerResult):
             return result
         raise WalletServiceError("idempotency key belongs to a game settlement")
+
+    @classmethod
+    def _as_claim_result(
+        cls, result: LedgerResult | SettlementResult, expected_reason: LedgerReason
+    ) -> LedgerResult:
+        # Replaying e.g. a daily bonus as a relief claim would report a grant that never happened.
+        ledger_result = cls._as_ledger_result(result)
+        if ledger_result.reason is not expected_reason:
+            raise WalletServiceError("idempotency key belongs to another wallet operation")
+        return ledger_result
 
     @staticmethod
     def _as_settlement_result(result: LedgerResult | SettlementResult) -> SettlementResult:

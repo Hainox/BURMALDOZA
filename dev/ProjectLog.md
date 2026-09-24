@@ -138,11 +138,20 @@
 ## 2026-09-24 — Claude Code: онбординг и исправления по аудиту
 
 - PR #9 (Claude Code, облачная сессия) слит владельцем: `AGENTS.md` (общая справка агентов), `.claude/CLAUDE.md` (облачные заметки, импортирует `AGENTS.md`), SessionStart hook с зависимостями и Chromium для Playwright, `docs/Code-Audit-2026-09-23.md`. `CLAUDE.md` побайтно совпадает с версией из PR #8, чтобы PR сливались без конфликта. Запись размещена здесь, а не в начале или конце журнала, по той же причине.
-- По явному разрешению владельца (API/ledger — зона Codex) ветка `claude/audit-fixes` закрывает находки аудита 1–4: welcome 1 000 начисляется при первом входе в той же транзакции, что и создание пользователя (детерминированный ключ `welcome_grant_key`, повтор не удваивает); добавлен `POST /api/v1/wallet/relief/claim`; CORS берёт origin из `MINIAPP_URL` без пути (Pages); WebSocket закрывается с 4401 через 5 с без авторизации; повтор idempotency key чужого кошелька отклоняется вместо выдачи чужого результата.
+- По явному разрешению владельца (API/ledger — зона Codex) ветка `claude/audit-fixes` закрывает находки аудита 1–4: welcome 1 000 начисляется при первом входе в той же транзакции, что и создание пользователя (случайный ключ на выдачу; однократность обеспечивается транзакцией и `welcome_granted_at`); добавлен `POST /api/v1/wallet/relief/claim`; CORS берёт origin из `MINIAPP_URL` без пути (Pages); WebSocket закрывается с 4401 через 5 с без авторизации; повтор idempotency key чужого кошелька отклоняется вместо выдачи чужого результата.
 - Mini App получил только API-методы `claimDailyBonus`/`claimReliefGrant`; кнопки не добавлены — UI за CCode.
 - **Для Codex (review):** (1) пользователи, созданные до этой правки, welcome не получат — в production их нет, backfill не делался; (2) одновременный первый вход двумя запросами по-прежнему может дать `IntegrityError` на `users.telegram_user_id` (было до правки); (3) `_db_get_or_create_wallet` всё ещё создаёт «фейкового» `User` при отсутствии пользователя — не трогал, это отдельное решение; (4) интеграционные PostgreSQL-тесты локально не запускались (нет Docker), проверяет CI.
 - Верификация: `ruff` clean; `pytest` 88 passed / 6 skipped; `miniapp:check` 0/0; Vitest 25 passed; build ok; Playwright 9 passed. Новые тесты: CORS-origin с путём, WebSocket-тайм-аут, чужой idempotency key, полный путь «первый вход → welcome → relief 409 → daily → повторный daily 409» на SQLite.
 - Открыто: кнопки daily/relief в Mini App (handoff для CCode); пункт 5–6 аудита.
+
+## 2026-09-24 — review follow-up к PR #10
+
+- Совместная проверка Codex и Claude Code подтвердила три дефекта: предсказуемый welcome key позволял зарезервировать ключ для следующего пользователя; один UUID в разных типах wallet claims возвращал ложный успешный ответ; CORS не нормализовал регистр hostname и стандартные порты.
+- В follow-up удалена derivation welcome key от последовательного user ID, wallet claims теперь сверяют тип операции при replay, а CORS приводит hostname/порт к browser Origin. Добавлены regressions для SQLite/API, памяти, client IDs и некорректных URL.
+- Проверки на Windows / Python 3.13: `uv run --locked ruff check .` — clean; `uv run --locked pytest -q` — 115 passed, 6 skipped; `pnpm miniapp:check` — 0 ошибок/предупреждений; `pnpm miniapp:test` — 25 passed; `pnpm miniapp:build` — passed. Два существующих Starlette/httpx deprecation warnings остались.
+- 6 пропусков — PostgreSQL integration tests: в локальном окружении не задан `TEST_DATABASE_URL`, PostgreSQL не запускался; их результат должен подтвердить GitHub CI на follow-up PR.
+- Дополнительно проверен реальный SQLite/API путь, где пользователь пытается повторно использовать чужой wallet request ID; операция отклоняется HTTP 409 и балансы обоих кошельков не смешиваются.
+- Первый запуск Mini App всё ещё параллелит неиспользуемый `/api/v1/me` с `/api/v1/wallet`; исправление и wallet grants UI переданы в CCode issue #11 после PR #10 и issue #6, чтобы избежать пересечения `+page.svelte`.
 
 ## 2026-09-23 — dependency-aware API readiness
 

@@ -111,13 +111,17 @@ describe('ApiClient room transport', () => {
       async () => new Response(JSON.stringify({ balance_after: 1250, delta: 250 }))
     );
     const client = new ApiClient('https://api.example.test', 'verified', fetcher);
-    const requestId = '00000000-0000-0000-0000-000000000002';
+    // Each claim is its own operation: the API rejects one request ID reused for another claim.
+    const requestIds = {
+      'daily-bonus': '00000000-0000-0000-0000-000000000002',
+      relief: '00000000-0000-0000-0000-000000000003'
+    };
 
-    const daily = await client.claimDailyBonus(requestId);
-    await client.claimReliefGrant(requestId);
+    const daily = await client.claimDailyBonus(requestIds['daily-bonus']);
+    await client.claimReliefGrant(requestIds.relief);
 
     expect(daily.balance_after).toBe(1250);
-    for (const path of ['daily-bonus', 'relief']) {
+    for (const [path, requestId] of Object.entries(requestIds)) {
       expect(fetcher).toHaveBeenCalledWith(
         `https://api.example.test/api/v1/wallet/${path}/claim`,
         expect.objectContaining({
