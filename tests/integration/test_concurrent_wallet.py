@@ -46,6 +46,26 @@ async def test_concurrent_first_login_grants_welcome_once(session_factory) -> No
 
 
 @pytest.mark.asyncio
+async def test_repeated_login_does_not_consume_user_ids(session_factory) -> None:
+    settings = Settings(bot_token=BOT_TOKEN)
+    auth_date = datetime.now(UTC) - timedelta(minutes=5)
+    returning = make_init_data(auth_date=auth_date, user={"id": 40044, "first_name": "Returning"})
+    newcomer = make_init_data(auth_date=auth_date, user={"id": 40045, "first_name": "Newcomer"})
+
+    async def login(raw: str):
+        async with session_factory() as session:
+            return await authenticate_raw_init_data(raw, session, settings)
+
+    first = await login(returning)
+    for _ in range(5):
+        assert (await login(returning)).user_id == first.user_id
+    second = await login(newcomer)
+
+    # A conflicting INSERT would draw from the users.id sequence on every request.
+    assert second.user_id == first.user_id + 1
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("protocols", [("http", "websocket"), ("websocket", "websocket")])
 async def test_concurrent_websocket_login_grants_welcome_once(session_factory, protocols) -> None:
     now = datetime.now(UTC)
