@@ -150,6 +150,7 @@
 - В follow-up удалена derivation welcome key от последовательного user ID, wallet claims теперь сверяют тип операции при replay, а CORS приводит hostname/порт к browser Origin. Добавлены regressions для SQLite/API, памяти, client IDs и некорректных URL.
 - Проверки на Windows / Python 3.13: `uv run --locked ruff check .` — clean; `uv run --locked pytest -q` — 115 passed, 6 skipped; `pnpm miniapp:check` — 0 ошибок/предупреждений; `pnpm miniapp:test` — 25 passed; `pnpm miniapp:build` — passed. Два существующих Starlette/httpx deprecation warnings остались.
 - 6 пропусков — PostgreSQL integration tests: в локальном окружении не задан `TEST_DATABASE_URL`, PostgreSQL не запускался; их результат должен подтвердить GitHub CI на follow-up PR.
+- GitHub Actions `Verify game platform`, run 74 (`35957785258`) на PR #12 завершился успешно: Python lint/tests, Mini App check/unit tests/build, Docker Compose image build, Playwright E2E и Monte Carlo evidence прошли.
 - Дополнительно проверен реальный SQLite/API путь, где пользователь пытается повторно использовать чужой wallet request ID; операция отклоняется HTTP 409 и балансы обоих кошельков не смешиваются.
 - Первый запуск Mini App всё ещё параллелит неиспользуемый `/api/v1/me` с `/api/v1/wallet`; исправление и wallet grants UI переданы в CCode issue #11 после PR #10 и issue #6, чтобы избежать пересечения `+page.svelte`.
 
