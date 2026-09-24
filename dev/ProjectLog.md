@@ -146,7 +146,7 @@
 
 ## 2026-09-24 — review follow-up к PR #10
 
-- Совместная проверка Codex и Claude Code подтвердила три дефекта: предсказуемый welcome key позволял зарезервировать ключ для следующего пользователя; один UUID в разных типах wallet claims возвращал ложный успешный ответ; CORS не нормализовал регистр hostname и стандартные порты.
+- Исходную реализацию PR #10 подготовил Claude Code CLI 2.1.281 через Pro с моделью `Opus 5.5 / High` (подтверждено владельцем); Codex (GPT-6, effort не отображался в runtime) в follow-up подтвердил три дефекта: предсказуемый welcome key позволял зарезервировать ключ для следующего пользователя; один UUID в разных типах wallet claims возвращал ложный успешный ответ; CORS не нормализовал регистр hostname и стандартные порты.
 - В follow-up удалена derivation welcome key от последовательного user ID, wallet claims теперь сверяют тип операции при replay, а CORS приводит hostname/порт к browser Origin. Добавлены regressions для SQLite/API, памяти, client IDs и некорректных URL.
 - Проверки на Windows / Python 3.13: `uv run --locked ruff check .` — clean; `uv run --locked pytest -q` — 115 passed, 6 skipped; `pnpm miniapp:check` — 0 ошибок/предупреждений; `pnpm miniapp:test` — 25 passed; `pnpm miniapp:build` — passed. Два существующих Starlette/httpx deprecation warnings остались.
 - 6 пропусков — PostgreSQL integration tests: в локальном окружении не задан `TEST_DATABASE_URL`, PostgreSQL не запускался; их результат должен подтвердить GitHub CI на follow-up PR.
