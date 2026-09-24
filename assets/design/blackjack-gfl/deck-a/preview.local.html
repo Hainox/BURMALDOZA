@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0b0b11">
+<meta name="description" content="Интерактивное превью двух вариантов колоды Blackjack GFL: по 52 карты, рубашка Sector 09 и комната GFL 1 в заброшенном здании с полицейским периметром.">
+<title>Blackjack GFL · Deck A / B · Sector 09</title>
+<style>
+:root{color-scheme:dark;--ink:#f2eee8;--muted:#b5b2b2;--gold:#e6c17b;--red:#a4505b;--panel:#11131b;--line:#393843}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:#080a10;color:var(--ink);font:15px/1.5 "Segoe UI",system-ui,-apple-system,sans-serif}
+a{color:inherit}
+button,input,select{font:inherit}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible,.playing-card:focus-visible{outline:3px solid #f8d38b;outline-offset:3px}
+.skip-link{position:absolute;z-index:10;top:8px;left:8px;transform:translateY(-150%);padding:9px 12px;border-radius:6px;background:#f8d38b;color:#111}
+.skip-link:focus{transform:translateY(0)}
+.shell{max-width:1600px;margin:auto;padding:20px clamp(14px,3vw,44px) 60px}
+.hero{min-height:620px;position:relative;overflow:hidden;border:1px solid #48414a;border-radius:22px;background:#11131a url("./web/room-police-perimeter.png") center 47%/cover no-repeat;box-shadow:0 24px 80px #0009}
+.hero:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#090a10ed 0%,#090a10c9 42%,#090a1050 76%,#090a1080),linear-gradient(0deg,#090a10ef 0%,transparent 55%,#090a106b)}
+.hero:after{content:"";position:absolute;inset:12px;border:1px solid #e6c17b2b;border-radius:15px;pointer-events:none}
+.hero-inner{position:relative;z-index:1;min-height:620px;display:grid;grid-template-columns:minmax(0,1.12fr) minmax(350px,.88fr);gap:28px;align-items:center;padding:36px clamp(24px,5vw,72px)}
+.topline{position:absolute;z-index:2;top:30px;left:clamp(24px,5vw,72px);right:clamp(24px,5vw,72px);display:flex;justify-content:space-between;gap:14px;color:#ddd2c5;font-size:11px;letter-spacing:.2em;text-transform:uppercase}
+.topline strong{color:var(--gold);font-weight:700}
+.hero-copy{max-width:640px;padding-top:44px}
+.kicker,.micro{color:var(--gold);font-size:11px;font-weight:750;letter-spacing:.22em;text-transform:uppercase}
+h1{margin:12px 0 13px;font-size:clamp(42px,6vw,80px);line-height:.92;letter-spacing:-.045em;text-transform:uppercase}
+h1 span{display:block;color:var(--gold);font-size:.57em;letter-spacing:.16em;margin-top:13px}
+.lead{max-width:560px;color:#e5dfd5;font-size:clamp(15px,1.7vw,19px)}
+.hero-tags{display:flex;flex-wrap:wrap;gap:8px;margin:23px 0}
+.tag{border:1px solid #d0b68470;background:#0c0d12a8;padding:7px 10px;border-radius:999px;color:#eee5d7;font-size:12px}
+.tag b{color:var(--gold);font-weight:700}
+.meta-line{max-width:520px;border-top:1px solid #ffffff33;padding-top:15px;color:#d0c8c0;font-size:12px}
+.meta-line strong{color:white}
+.showcase{display:flex;align-items:center;justify-content:center;gap:clamp(12px,2vw,26px);padding-top:38px;perspective:1000px}
+.showcase-card{position:relative;flex:none;width:min(40%,210px);aspect-ratio:2.5/3.65;border:1px solid #eee1c68c;border-radius:12px;overflow:hidden;box-shadow:0 24px 46px #000c,0 0 0 5px #11131ca8;transform:rotate(-7deg);background:#141822}
+.showcase-card.back{transform:rotate(8deg) translateY(12px);background:url("./web/card-back.webp") center/cover no-repeat}
+.showcase-card.face{display:grid;grid-template-rows:1fr auto;background:linear-gradient(150deg,#1b1c24,#34303a)}
+.showcase-card.face img{width:100%;height:100%;min-height:0;object-fit:cover;object-position:50% 16%;mix-blend-mode:normal}
+.showcase-card.face:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#090b1200 44%,#0a0b10ee 100%);pointer-events:none}
+.sample-label{position:absolute;z-index:1;top:9px;left:10px;color:#fff;text-shadow:0 2px 5px #000;font-family:Georgia,serif;font-size:24px;line-height:1}
+.sample-label small{display:block;color:#e9c778;font-size:15px}
+.sample-info{position:absolute;z-index:1;left:12px;right:8px;bottom:12px}
+.sample-info span{display:block;color:#e9c778;font-size:8px;letter-spacing:.17em}
+.sample-info b{display:block;margin-top:2px;font:700 15px/1.1 Georgia,serif}
+.back-stamp{position:absolute;inset:8%;display:flex;flex-direction:column;justify-content:space-between;align-items:center;color:#f2d28b;font-size:8px;letter-spacing:.16em;text-align:center;text-shadow:0 2px 4px #000}
+.back-stamp b{font-size:10px}
+.back-stamp span:last-child{font-size:8px}
+.showcase-caption{position:absolute;left:0;right:0;bottom:-37px;display:flex;justify-content:space-around;color:#e7ddcf;font-size:10px;letter-spacing:.15em;text-transform:uppercase}
+.showcase-wrap{position:relative;width:100%;display:flex;justify-content:center}
+.readout{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0 44px}
+.readout article{min-height:128px;border:1px solid var(--line);border-radius:14px;padding:16px;background:linear-gradient(150deg,#171820,#0f1016)}
+.readout h2{margin:0 0 7px;color:var(--gold);font-size:12px;letter-spacing:.15em;text-transform:uppercase}
+.readout p{margin:0;color:#c5c1c0;font-size:13px}
+.section-head{display:flex;justify-content:space-between;align-items:end;gap:20px;margin:45px 0 14px}
+.section-head h2{margin:0;font-size:clamp(24px,3vw,34px);line-height:1.05;text-transform:uppercase;letter-spacing:.04em}
+.section-head p{max-width:530px;margin:0;color:var(--muted);font-size:13px}
+.variant-switch{display:inline-flex;gap:4px;margin-top:12px;padding:4px;border:1px solid #484957;border-radius:10px;background:#12131b}
+.variant-switch button{min-height:42px;padding:8px 14px;border:1px solid transparent;border-radius:7px;background:transparent;color:#ccc5bd;font-weight:750;cursor:pointer}
+.variant-switch button[aria-pressed="true"]{border-color:#8e7953;background:#2a241b;color:#f6d991;box-shadow:0 3px 10px #0007}
+.variant-switch button:hover{color:#fff0c4}
+.variant-note{margin:7px 0 0;color:#bfb6a9;font-size:11px}
+.deck-tools{display:grid;grid-template-columns:minmax(180px,1.5fr) repeat(2,minmax(150px,.7fr));gap:10px;align-items:end;margin:18px 0 8px;padding:14px;border:1px solid var(--line);border-radius:14px;background:#12131bf2;backdrop-filter:blur(12px)}
+.field{display:grid;gap:6px;min-width:0}
+.field span{color:#c9c3bd;font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase}
+.field input,.field select{width:100%;min-height:44px;padding:9px 11px;border:1px solid #484957;border-radius:8px;background:#1a1b24;color:var(--ink)}
+.tool-actions{display:flex;grid-column:1/-1;align-items:center;justify-content:space-between;gap:12px;padding-top:2px}
+.tool-actions button{min-height:42px;padding:8px 12px;border:1px solid #705c3d;border-radius:8px;background:#211d17;color:#f1d28e;font-weight:700;cursor:pointer}
+.tool-actions button:hover{border-color:var(--gold);background:#2a241b}
+.deck-status{color:#d2ccd0;font-size:12px}
+.empty-state{margin:20px 0;padding:28px 16px;border:1px dashed #665944;border-radius:12px;color:#d3c6ad;text-align:center}
+.suit-section{margin:20px 0 32px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(145deg,#12131a,#0d0e14);overflow:hidden}
+.suit-head{display:flex;align-items:center;gap:13px;padding:15px 18px;border-bottom:1px solid var(--line)}
+.suit-mark{display:grid;place-items:center;width:40px;height:40px;border:1px solid #ffffff26;border-radius:11px;background:#20212a;color:var(--gold);font:28px/1 Georgia,serif}
+.suit-section.red .suit-mark,.suit-section.red .suit-head h3{color:#df858b}
+.suit-head h3{margin:0;font-size:17px;letter-spacing:.08em;text-transform:uppercase}
+.suit-head p{margin:2px 0 0;color:var(--muted);font-size:12px}
+.count{margin-left:auto;color:#aaa6a8;font-size:11px;letter-spacing:.1em}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(138px,1fr));gap:11px;padding:16px}
+.playing-card{position:relative;display:block;width:100%;min-width:0;aspect-ratio:2.5/3.65;overflow:hidden;padding:0;border:1px solid #777078;border-radius:9px;background:linear-gradient(155deg,#24232b,#0d1017 62%);color:var(--ink);text-align:left;cursor:pointer;box-shadow:0 8px 16px #0008;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.playing-card:hover{transform:translateY(-3px);border-color:#d9bd7d;box-shadow:0 12px 22px #000a}
+.playing-card[hidden],.suit-section[hidden]{display:none}
+.playing-card:before{content:"";position:absolute;z-index:1;inset:5px;border:1px solid #d7bd8140;border-radius:5px;pointer-events:none}
+.playing-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 15%;opacity:.94;filter:saturate(.9) contrast(1.04)}
+.playing-card:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#090b125c 0%,transparent 24%,#0a0b10 100%)}
+.rank{position:absolute;z-index:2;top:10px;left:11px;color:#fff;font:700 19px/1 Georgia,serif;text-shadow:0 2px 6px #000}
+.rank em{display:block;margin-top:4px;color:var(--gold);font-style:normal;font-size:15px;text-align:center}
+.red .rank em,.red .corner-bottom{color:#e47d83}
+.card-copy{position:absolute;z-index:2;left:12px;right:12px;bottom:13px;display:block}
+.card-copy small{display:block;color:#e6c17b;font-size:8px;font-weight:750;letter-spacing:.16em}
+.card-copy strong{display:block;margin-top:2px;font:700 16px/1.05 Georgia,serif;text-shadow:0 2px 8px #000}
+.card-copy span{display:block;margin-top:5px;color:#c3bdb8;font-size:9px;letter-spacing:.08em;text-transform:uppercase}
+.corner-bottom{position:absolute;z-index:2;right:10px;top:9px;color:#e8ded0;font:16px/1 Georgia,serif}
+.card-dialog{width:min(620px,calc(100vw - 28px));max-height:min(86svh,760px);overflow:auto;padding:20px;border:1px solid #8e7953;border-radius:14px;background:#11131b;color:var(--ink);box-shadow:0 24px 90px #000d}
+.card-dialog::backdrop{background:#05060ad9;backdrop-filter:blur(4px)}
+.dialog-close{float:right;min-width:42px;min-height:42px;border:1px solid #444550;border-radius:8px;background:#1b1c25;color:var(--ink);font-size:22px;cursor:pointer}
+.dialog-content{display:grid;grid-template-columns:minmax(130px,.75fr) minmax(0,1fr);gap:20px;clear:both;padding-top:8px}
+.dialog-content img{width:100%;aspect-ratio:2.5/3.65;object-fit:cover;object-position:50% 15%;border:1px solid #786b57;border-radius:9px}
+.dialog-index{margin:0;color:var(--gold);font-size:12px;font-weight:750;letter-spacing:.16em;text-transform:uppercase}
+.dialog-content h2{margin:5px 0 12px;font-size:clamp(24px,5vw,34px);line-height:1.05}
+.dialog-content p,.dialog-content dd{color:#c9c4c3}
+.dialog-content dl{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;margin:16px 0 0;font-size:13px}
+.dialog-content dt{color:#aaa5aa}.dialog-content dd{margin:0}
+.deck-note{margin:14px 2px;color:#8f8c94;font-size:11px}
+.local-note{margin-top:40px;padding:18px;border:1px solid #67533a;border-radius:12px;background:#18140f;color:#d0c2a4;font-size:12px}
+.local-note strong{color:#f0d38e}
+.local-note a{color:#e9ce91}
+footer{padding:22px 2px;color:#777781;font-size:11px}
+@media(max-width:850px){
+ .shell{padding:12px 12px 40px}
+ .hero,.hero-inner{min-height:760px}
+ .hero-inner{grid-template-columns:1fr;align-content:start;gap:8px;padding:78px 25px 35px}
+ .hero-copy{padding-top:0}
+ .topline{top:22px;left:24px;right:24px;font-size:9px}
+ .showcase{padding:7px 0 44px}
+ .showcase-card{width:min(38vw,190px)}
+ .readout{grid-template-columns:1fr;gap:8px;margin:14px 0 35px}
+ .readout article{min-height:0;padding:12px 14px}
+ .section-head{display:block;margin-top:35px}
+ .section-head p{margin-top:8px}
+ .deck-tools{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+ .field.search{grid-column:1/-1}
+}
+@media(max-width:480px){
+ .hero,.hero-inner{min-height:750px}
+ .hero{border-radius:15px}
+ .hero-inner{padding:74px 18px 22px}
+ .topline{left:18px;right:18px;letter-spacing:.12em}
+ .topline span:last-child{max-width:120px;text-align:right}
+ h1{font-size:48px}
+ .lead{font-size:14px}
+ .hero-tags{gap:6px;margin:16px 0}
+ .tag{padding:6px 8px;font-size:10px}
+ .meta-line{font-size:11px}
+ .showcase-card{width:42%;border-radius:9px}
+ .sample-label{top:7px;left:8px;font-size:20px}
+ .sample-label small{font-size:12px}
+ .sample-info{left:9px;bottom:9px}
+ .sample-info b{font-size:13px}
+ .back-stamp{inset:7%;font-size:7px}
+ .back-stamp b{font-size:8px}
+ .suit-head{padding:12px}
+ .suit-mark{width:36px;height:36px}
+ .suit-head h3{font-size:15px}
+ .suit-head p{max-width:220px;font-size:10px}
+ .count{font-size:9px}
+ .cards{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:11px}
+ .playing-card{border-radius:7px}
+ .playing-card:before{inset:4px}
+ .rank{top:7px;left:8px;font-size:16px}
+ .rank em{font-size:13px}
+ .corner-bottom{top:7px;right:7px;font-size:13px}
+ .card-copy{left:8px;right:6px;bottom:8px}
+ .card-copy small{font-size:7px;letter-spacing:.1em}
+ .card-copy strong{font-size:12px;overflow-wrap:anywhere}
+ .card-copy span{font-size:7px;letter-spacing:.04em}
+ .deck-tools{grid-template-columns:1fr;gap:8px;padding:11px}
+ .field.search{grid-column:auto}
+ .tool-actions{align-items:flex-start;flex-direction:column}
+ .tool-actions button{width:100%}
+ .dialog-content{grid-template-columns:minmax(100px,.7fr) minmax(0,1fr);gap:12px}
+ .card-dialog{padding:14px}
+ .dialog-content dl{grid-template-columns:1fr;gap:2px}
+ .dialog-content dd{margin-bottom:7px}
+}
+@media(max-width:360px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.card-copy strong{font-size:14px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#deck-title">Перейти к колоде</a>
+<main class="shell">
+<header class="hero">
+ <div class="topline"><strong>Griffin &amp; Kryuger · Field Archive</strong><span>Forward base / Sector 09 · 2062</span></div>
+ <div class="hero-inner">
+  <div class="hero-copy">
+   <div class="kicker">Personnel dossier · Blackjack · <span id="hero-deck-label">Deck A</span></div>
+   <h1>Sector 09<span>Blackjack archive</span></h1>
+   <p class="lead">Карточная партия в заброшенном здании на внешнем периметре. В каждом варианте — 52 уникальные T-Doll; источники портретов собраны рядом с превью.</p>
+   <div class="hero-tags"><span class="tag"><b>52</b> карты в варианте</span><span class="tag">4 масти · 13 номиналов</span><span class="tag">Колода <b id="hero-deck-value">A</b> · досье</span></div>
+   <div class="meta-line"><strong>Визуальный слой не влияет на правила:</strong> A = 1/11, 2–10 = номинал, J/Q/K = 10. Образ дилера-бота выбирается только как косметика на партию и сохраняется после reconnect.</div>
+  </div>
+  <div class="showcase-wrap" aria-label="Пример лица карты и рубашки">
+   <div class="showcase">
+    <article class="showcase-card face"><span class="sample-label">A<small>♠</small></span><img id="showcase-image" src="./web/portraits/UMP45_S.webp" alt="UMP45 — пример портрета лица карты"><div class="sample-info"><span>G&amp;K / Personnel file</span><b id="showcase-name">UMP45</b></div></article>
+    <article class="showcase-card back"><div class="back-stamp"><span>G&amp;K · SECTOR 09</span><b>FIELD<br>ARCHIVE</b><span>BLACKJACK / DECK <span id="back-deck-label">A</span></span></div></article>
+   </div>
+   <div class="showcase-caption"><span>Face · dossier portrait</span><span>Shared back · S09 archive</span></div>
+  </div>
+ </div>
+</header>
+<section class="readout" aria-label="Направление дизайна">
+ <article><h2>Комната</h2><p>Посткатастрофический мир GFL 1: заброшенное современное здание стало временной комнатой для партии; снаружи зону держит полицейский периметр. Атмосфера после коллапса, не WWII.</p></article>
+ <article><h2>Звук · концепция</h2><p>Дождь по крыше, низкий гул генератора и вентиляции. Снаружи — редкие радиопереговоры и далёкие сирены, без навязчивого постоянного цикла. Сдача — короткий бумажный слайд; подтверждённое действие — сухой щелчок.</p></article>
+ <article><h2>Дилер-бот</h2><p>Случайная T-Doll из состава — аватар текущей партии. Выбор косметический, стабилен при reconnect и не управляет составом колоды или RNG.</p></article>
+</section>
+<section aria-labelledby="deck-title">
+ <div class="section-head"><div><div class="micro">Two roster options · 52 cards each</div><h2 id="deck-title"><span id="deck-title-name">Колода A</span> · досье личного состава</h2><div class="variant-switch" role="group" aria-label="Вариант колоды"><button type="button" data-deck="A" aria-pressed="true">A · Выбранная</button><button type="button" data-deck="B" aria-pressed="false">B · Для сравнения</button></div><p class="variant-note" id="variant-note">Основной выбранный состав: A♥ — RPK-16, K♥ — AK-12.</p></div><p>Переключай состав и сравнивай карты. Фильтруй по масти, номиналу или позывному; нажми на карту, чтобы открыть досье.</p></div>
+ <div class="deck-tools" aria-label="Фильтры колоды">
+  <label class="field search"><span>Поиск по карте или T-Doll</span><input id="card-search" type="search" placeholder="UMP45, 10, пики" autocomplete="off"></label>
+  <label class="field"><span>Масть</span><select id="suit-filter"><option value="">Все масти</option><option value="spades">♠ Пики</option><option value="clubs">♣ Трефы</option><option value="hearts">♥ Червы</option><option value="diamonds">♦ Бубны</option></select></label>
+  <label class="field"><span>Номинал</span><select id="rank-filter"><option value="">Все номиналы</option><option value="ace">Туз</option><option value="number">2–10</option><option value="face">J / Q / K</option></select></label>
+  <div class="tool-actions"><span class="deck-status" id="deck-status" role="status" aria-live="polite">Показаны все 52 карты</span><button type="button" id="reset-filters">Сбросить фильтры</button></div>
+ </div>
+ <div id="deck"></div>
+ <p class="empty-state" id="empty-state" hidden>Под такую фильтрацию карт нет. Сбрось фильтры или измени поиск.</p>
+</section>
+<aside class="local-note"><strong>Fan design preview.</strong> Портреты T-Doll принадлежат MICA Team / SUNBORN; источники Deck A и Deck B указаны в <a href="./sources.json">sources.json</a> и <a href="./sources-deck-b.json">sources-deck-b.json</a>. По указанию владельца проекта изображения используются с атрибуцией в некоммерческом превью для знакомства с GFL. Это не заявление об открытой лицензии на иное использование. См. <a href="https://iopwiki.com/wiki/IOP_Wiki:General_disclaimer" target="_blank" rel="noopener noreferrer">дисклеймер IOP Wiki</a>.</aside>
+<footer>BLACKJACK GFL / Deck <span id="footer-deck-label">A</span> / Draft 02 · Исходные персонажи принадлежат правообладателям Girls' Frontline. Room concept и рубашка созданы специально для этого дизайн-черновика.</footer>
+</main>
+<dialog class="card-dialog" id="card-dialog" aria-labelledby="dialog-title">
+ <form method="dialog"><button class="dialog-close" aria-label="Закрыть досье">×</button></form>
+ <div class="dialog-content"><img id="dialog-image" alt=""><div><p class="dialog-index" id="dialog-index"></p><h2 id="dialog-title"></h2><p id="dialog-theme"></p><dl><dt>Номинал</dt><dd id="dialog-rank"></dd><dt>Значение в Blackjack</dt><dd id="dialog-value"></dd><dt>Масть</dt><dd id="dialog-suit"></dd></dl></div></div>
+</dialog>
+<script>
+(function(){
+ const ranks=["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+ const suits=[
+  {id:"spades",symbol:"♠",name:"Пики",theme:"Скрытая операция · ночной рейд",cards:{A:["UMP45","Vector","Welrod MkII","C-MS","P90","Grizzly","Thompson","MP5","Five-seveN","Contender","G11","UMP9","HK416"],B:["AKS-74U","Skorpion","PPD-40","MP40","M3","M12","TMP","Micro Uzi","PP-2000","SR-3MP","PP-19","MP7","Honey Badger"]}},
+  {id:"clubs",symbol:"♣",name:"Трефы",theme:"Линия контакта · штурмовая группа",cards:{A:["M4A1","G36","G36C","G41","FAL","TAR-21","K2","Type 95","Type 97","RO635","M4 SOPMOD II","ST AR-15","M16A1"],B:["Zas M21","AK-47","AK-74M","FNC","AUG","T91","T65","XM8","Ribeyrolles","MDR","AR-18","AS Val","Type 64"]}},
+  {id:"hearts",symbol:"♥",name:"Червы",theme:"Связь и прикрытие · наблюдение",cards:{A:["RPK-16","Makarov","SVD","Mosin-Nagant","Suomi","PPSh-41","PPS-43","Lee-Enfield","WA2000","Kar98k","AN-94","AK-15","AK-12"],B:["R93","M21","SV-98","Carcano M1891","Carcano M91/38","M82A1","PTRD","SRS","Ballista","PzB 39","TAC-50","IWS 2000","KSVK"]}},
+  {id:"diamonds",symbol:"♦",name:"Бубны",theme:"Опора базы · снабжение и специалисты",cards:{A:["Springfield","G3","Sten MkII","M1918","Negev","M1895","P7","M99","M200","G28","M1 Garand","Hecate II","OTs-14"],B:["M9","P99","CZ52","Glock 17","P226","Stechkin","NZ75","Thunder","Python","K5","Jericho","M1911","Mk23"]}}
+ ];
+ function esc(v){return String(v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+ function fileName(name){return encodeURIComponent(name+"_S.webp")}
+ function cardValue(rank){if(rank==="A")return "ACE";if(rank==="J"||rank==="Q"||rank==="K")return "FACE";return "RANK "+rank}
+ const deck=document.getElementById("deck");
+ let activeDeck="A";
+ let cardRecords=[];
+ function deckBFileName(name){if(name==="AKS-74U")return "AK-74U_S.png";if(name==="Carcano M91/38")return "Carcano_M91∕38_S.png";return name.replace(/ /g,"_")+"_S.png"}
+ function portraitPath(deckId,name){if(deckId==="A")return "web/portraits/"+fileName(name);return "../deck-b/portraits/"+encodeURIComponent(deckBFileName(name))}
+ function renderDeck(){
+  deck.innerHTML="";cardRecords=[];
+  suits.forEach(function(suit){
+   const names=suit.cards[activeDeck],section=document.createElement("section");
+   section.className="suit-section"+((suit.id==="hearts"||suit.id==="diamonds")?" red":"");
+   section.setAttribute("aria-label",suit.name+" — 13 карт");
+   const cards=names.map(function(name,index){
+    const rank=ranks[index],img=portraitPath(activeDeck,name),group=rank==="A"?"ace":(["J","Q","K"].includes(rank)?"face":"number");
+    return '<button type="button" class="playing-card" data-card="'+esc(rank+suit.symbol)+'" data-name="'+esc(name)+'" data-rank="'+esc(rank)+'" data-rank-group="'+group+'" data-suit="'+suit.id+'" aria-label="'+esc(rank+" "+suit.name+" — "+name+". Открыть досье")+'"><span class="rank">'+esc(rank)+'<em>'+suit.symbol+'</em></span><span class="corner-bottom" aria-hidden="true">'+suit.symbol+' '+esc(rank)+'</span><img src="'+img+'" alt="" loading="lazy" decoding="async"><span class="card-copy"><small>G&amp;K / '+esc(cardValue(rank))+'</small><strong>'+esc(name)+'</strong><span>'+esc(suit.name)+' · '+esc(rank)+'</span></span></button>';
+   }).join("");
+   section.innerHTML='<div class="suit-head"><span class="suit-mark" aria-hidden="true">'+suit.symbol+'</span><div><h3>'+suit.name+'</h3><p>'+suit.theme+'</p></div><span class="count">13 / 52</span></div><div class="cards">'+cards+'</div>';
+   deck.appendChild(section);
+   section.querySelectorAll(".playing-card").forEach(function(button,index){
+    const rank=ranks[index],name=names[index],card={button:button,rank:rank,name:name,suit:suit,deck:activeDeck,group:rank==="A"?"ace":(["J","Q","K"].includes(rank)?"face":"number")};
+    cardRecords.push(card);button.addEventListener("click",function(){openCard(card)});
+   });
+  });
+  filterCards();
+ }
+ const search=document.getElementById("card-search"),suitFilter=document.getElementById("suit-filter"),rankFilter=document.getElementById("rank-filter"),status=document.getElementById("deck-status"),empty=document.getElementById("empty-state"),dialog=document.getElementById("card-dialog");
+ function filterCards(){
+  const query=search.value.trim().toLocaleLowerCase("ru");let visible=0;
+  cardRecords.forEach(function(card){
+   const searchable=[card.rank,card.suit.symbol,card.suit.name,card.name,card.suit.theme].join(" ").toLocaleLowerCase("ru");
+   const match=(!query||searchable.includes(query))&&(!suitFilter.value||card.suit.id===suitFilter.value)&&(!rankFilter.value||card.group===rankFilter.value);
+   card.button.hidden=!match;if(match)visible++;
+  });
+  deck.querySelectorAll(".suit-section").forEach(function(section){section.hidden=!section.querySelector(".playing-card:not([hidden])")});
+  status.textContent="Показано "+visible+" из 52 карт · колода "+activeDeck;empty.hidden=visible!==0;
+ }
+ function openCard(card){
+  const img=document.getElementById("dialog-image"),value=card.rank==="A"?"1 или 11":(["J","Q","K"].includes(card.rank)?"10":card.rank);
+  img.src=portraitPath(card.deck,card.name);img.alt=card.name+" — портрет T-Doll";
+  document.getElementById("dialog-index").textContent=card.rank+" "+card.suit.symbol+" · G&K / PERSONNEL FILE";
+  document.getElementById("dialog-title").textContent=card.name;
+  document.getElementById("dialog-theme").textContent=card.suit.theme;
+  document.getElementById("dialog-rank").textContent=card.rank;
+  document.getElementById("dialog-value").textContent=value;
+  document.getElementById("dialog-suit").textContent=card.suit.name+" "+card.suit.symbol;
+  if(typeof dialog.showModal==="function")dialog.showModal();
+ }
+ function selectDeck(deckId){
+  if(deckId!=="A"&&deckId!=="B")return;
+  activeDeck=deckId;
+  document.querySelectorAll("[data-deck]").forEach(function(button){button.setAttribute("aria-pressed",String(button.dataset.deck===activeDeck))});
+  document.getElementById("deck-title-name").textContent="Колода "+activeDeck;
+  document.getElementById("hero-deck-label").textContent="Deck "+activeDeck;
+  document.getElementById("hero-deck-value").textContent=activeDeck;
+  document.getElementById("back-deck-label").textContent=activeDeck;
+  document.getElementById("footer-deck-label").textContent=activeDeck;
+  document.getElementById("variant-note").textContent=activeDeck==="A"?"Основной выбранный состав: A♥ — RPK-16, K♥ — AK-12.":"Deck B для сравнения: M82A1 занимает 6♥, PTRD — 7♥.";
+  const showcaseName=suits[0].cards[activeDeck][0],showcaseImage=document.getElementById("showcase-image");
+  showcaseImage.src=portraitPath(activeDeck,showcaseName);showcaseImage.alt=showcaseName+" — пример портрета лица карты";
+  document.getElementById("showcase-name").textContent=showcaseName;
+  document.title="Blackjack GFL · Deck "+activeDeck+" · Sector 09";
+  renderDeck();
+ }
+ search.addEventListener("input",filterCards);suitFilter.addEventListener("change",filterCards);rankFilter.addEventListener("change",filterCards);
+ document.getElementById("reset-filters").addEventListener("click",function(){search.value="";suitFilter.value="";rankFilter.value="";filterCards();search.focus()});
+ document.querySelectorAll("[data-deck]").forEach(function(button){button.addEventListener("click",function(){selectDeck(button.dataset.deck)})});
+ renderDeck();
+})();
+</script>
+</body>
+</html>

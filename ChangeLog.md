@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Expanded the Blackjack GFL Pages preview to switch between Deck A and Deck B, assigned RPK-16 to A♥ and AK-12 to K♥, and added 52 sourced Deck B portraits with M82A1 at 6♥ and PTRD at 7♥. Replaced the room concept with an abandoned-building police perimeter scene and updated its ambient sound direction.
+- Published an interactive mobile-friendly Blackjack GFL Deck A preview on GitHub Pages with the Sector 09 room, card back, all 52 character cards, suit/rank filters, search, and card dossiers.
 - Made `/health/ready` probe PostgreSQL and Redis with bounded timeouts and return HTTP 503 when either dependency is unavailable; `/health/live` remains independent of dependency health.
 - New players now receive the 1 000 JOKERGEM welcome grant on first login (HTTP or WebSocket), exactly once. Added `POST /api/v1/wallet/relief/claim` and Mini App client methods for daily/relief claims. CORS now allows the origin of `MINIAPP_URL` even when it contains a path (GitHub Pages). Unauthenticated room WebSockets close after 5 seconds, and a wallet idempotency key owned by another user is rejected instead of replayed.
 - Welcome grant keys no longer derive from predictable user IDs; reusing one request ID across different wallet claim types is rejected with HTTP 409. CORS now canonicalizes host case and default ports.

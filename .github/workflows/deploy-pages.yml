@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - "apps/miniapp/**"
+      - "assets/design/blackjack-gfl/deck-a/**"
+      - "assets/design/blackjack-gfl/deck-b/**"
       - "package.json"
       - "pnpm-lock.yaml"
       - ".github/workflows/deploy-pages.yml"
@@ -40,6 +42,16 @@ jobs:
           BASE_PATH: /BURMALDOZA
           PUBLIC_API_BASE_URL: ${{ vars.PUBLIC_API_BASE_URL }}
         run: pnpm --dir apps/miniapp build
+      - name: Add interactive Blackjack Deck A/B preview
+        run: |
+          target="apps/miniapp/build/design/blackjack-deck-a"
+          mkdir -p "$target"
+          cp assets/design/blackjack-gfl/deck-a/preview.local.html "$target/index.html"
+          cp assets/design/blackjack-gfl/deck-a/sources.json "$target/sources.json"
+          cp assets/design/blackjack-gfl/deck-a/sources-deck-b.json "$target/sources-deck-b.json"
+          cp -R assets/design/blackjack-gfl/deck-a/web "$target/web"
+          mkdir -p "$(dirname "$target")/deck-b/portraits"
+          cp -R assets/design/blackjack-gfl/deck-b/portraits/. "$(dirname "$target")/deck-b/portraits/"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
