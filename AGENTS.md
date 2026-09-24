@@ -1,11 +1,18 @@
 # AGENTS.md
 
-Общие правила для всех ИИ-агентов проекта: Codex, Command Code (CCode) и Claude Code.
-`CLAUDE.md` подключает этот файл; правила меняются только здесь.
+Общая справка для всех ИИ-агентов проекта: Codex, Command Code (CCode) и Claude Code.
+Роли, handoff и правила квот — в [docs/Command-Code-Workflow.md](./docs/Command-Code-Workflow.md);
+правила Claude Code — в [CLAUDE.md](./CLAUDE.md). Этот файл их не заменяет и не противоречит им.
 
 Бурмалдоза — игровой слой для Telegram-сообщества: aiogram-бот (вход), SvelteKit Mini App (UI),
 FastAPI (источник подтверждённого состояния), PostgreSQL + Redis. Валюта Jokergem — без реальных денег.
 Документация и коммуникация с владельцем — на русском; владелец не программист, объяснять простыми словами.
+
+## Источники истины
+
+Перед существенной работой: `dev/Vision.md` → `dev/BuildSpec.md` → `dev/ProjectLog.md` →
+`docs/Command-Code-Workflow.md` и связанное issue. Черновики, картинки и старые записи журнала
+не создают новых требований; при конфликте — актуальное решение владельца.
 
 ## Карта репозитория
 
@@ -24,11 +31,10 @@ pnpm install --frozen-lockfile         # frontend deps
 uv run --locked ruff check .           # lint
 uv run --locked pytest -q              # unit tests (integration skip без TEST_DATABASE_URL)
 pnpm miniapp:check && pnpm miniapp:test && pnpm miniapp:build
-pnpm miniapp:e2e                       # Playwright; нужен PLAYWRIGHT_BROWSERS_PATH (ставит session hook)
+pnpm miniapp:e2e                       # Playwright; нужен Chromium той версии, что ждёт @playwright/test
 ```
 
-Интеграционные тесты требуют PostgreSQL: `TEST_DATABASE_URL=postgresql+asyncpg://...`.
-В облачной сессии Docker недоступен — они пропускаются, в CI проходят.
+Интеграционные тесты требуют PostgreSQL: `TEST_DATABASE_URL=postgresql+asyncpg://...`; в CI поднимаются сервисы.
 
 ## Инварианты (не нарушать)
 
@@ -37,29 +43,23 @@ pnpm miniapp:e2e                       # Playwright; нужен PLAYWRIGHT_BROWS
 - Мутирующие запросы идемпотентны (`X-Request-ID` / `action_id` — UUID); комнаты версионируются `state_version`.
 - Боевой RNG — `SystemRandomSource` (CSPRNG); `SeededRandomSource` только для тестов и Monte Carlo.
 - Скрытые данные (колода, hole-card) — только в `private_state_json`, никогда в публичном состоянии/событиях.
-- Секреты не коммитить; `.env` в `.gitignore`, шаблон — `.env.example`.
+- Секреты не коммитить и не открывать в сессиях агентов; `.env` в `.gitignore`, шаблон — `.env.example`.
 
-## Процесс
+## Совместная работа
 
-- Изменения в domain/ledger/RNG/контрактах — только с тестами; при изменении правил обновить Monte Carlo отчёты.
-- Перед push: ruff, pytest, miniapp check/test/build; для UI-изменений — e2e.
-- Значимые изменения фиксировать в `dev/ProjectLog.md` и `ChangeLog.md`.
-
-## Совместная работа агентов
-
-Подробно — [docs/Command-Code-Workflow.md](./docs/Command-Code-Workflow.md). Коротко:
-
-| Агент | Префикс ветки | Роль по умолчанию |
+| Агент | Префикс ветки | Роль (подробно — в workflow-документе) |
 |---|---|---|
-| Codex | `codex/<задача>` | ведущий: архитектура, контракты, сложные merge, handoff-задачи для других |
-| Command Code | `ccode/<задача>` | изолированные UI/motion-задачи по handoff-шаблону |
-| Claude Code | `claude/<задача>` | облачные сессии: аудит и review, CI-фиксы, backend-задачи, доведение PR до зелёного |
+| Codex | `codex/<задача>` | архитектура, domain/RNG/ledger/API, безопасность, интеграция, финальная проверка |
+| Command Code | `ccode/<задача>` | назначенные UI/motion handoff-задачи |
+| Claude Code | `claude/<задача>` | read-only review, документация, тесты, небольшие задачи с точным allowlist |
 
-- Одна задача — одна ветка — один PR в `main`. Не пушить в чужую ветку; правки к чужому PR — комментарием
-  в PR или отдельной веткой поверх него.
-- Перед началом: `git fetch`, посмотреть открытые PR — не брать файлы, которые уже меняет другой агент.
-- Каждый PR указывает агента и модель в описании, список изменённых файлов, выполненные проверки и риски.
-- Handoff между агентами — по шаблону из workflow-документа (цель, разрешённые файлы, «не менять»,
-  acceptance criteria, проверки). Незаконченная работа передаётся через PR-черновик + запись в `dev/ProjectLog.md`,
-  чтобы следующий агент (например, после исчерпания лимита) продолжил без потери контекста.
-- Merge в `main` делает владелец (Hainox); агенты не мержат свои PR сами.
+- Один implementer на набор файлов; перед началом — `git fetch` и открытые PR, чтобы не взять чужие файлы.
+- Domain, RNG, ledger, API-контракты, миграции и deployment — только по задаче с явным scope владельца
+  и утверждённым BuildSpec.
+- Одна задача — одна ветка — один PR в `main`. Не пушить в чужую ветку, без force-push; merge и deploy
+  делает владелец.
+- Незаконченная работа (например, кончился лимит) передаётся через PR-черновик с описанием «сделано /
+  осталось / проверки» и запись в `dev/ProjectLog.md`; следующий агент продолжает в той же ветке.
+- `dev/ProjectLog.md` — после значимого изменения; `ChangeLog.md` — только пользовательские, deploy- или
+  compatibility-изменения.
+- Отчёт: изменённые файлы, команды и их фактические результаты, остаточные риски, branch/commit.
