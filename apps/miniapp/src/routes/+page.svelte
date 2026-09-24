@@ -8,6 +8,7 @@
   import BlackjackRoom from '$lib/rooms/BlackjackRoom.svelte';
   import PokerRoom from '$lib/rooms/PokerRoom.svelte';
   import SlotRoom from '$lib/rooms/SlotRoom.svelte';
+  import { planSlotReelStops } from '$lib/game/slot';
   import { SessionState } from '$lib/state/session.svelte';
   import { RoomState, type GameType, type RoomResult } from '$lib/state/room.svelte';
 
@@ -86,13 +87,23 @@
     roomState.reset();
   }
 
-  function runAction(action: string) {
-    if (!selectedGame || isRunning || !roomState.snapshot) return;
-    void action;
-    clearTimers();
-    isRunning = true;
-    roomState.setResult(null);
-    roomState.transition({ type: 'USER_INTENT' }, session.reducedMotion);
+  function runSlotTimeline(done: () => void) {
+    // Hold the reveal until the reels have finished their full stop sequence.
+    const revealDelayMs = planSlotReelStops({ reducedMotion: session.reducedMotion }).totalMs;
+    after(140, () => {
+      roomState.transition({ type: 'ACTION_ACCEPTED' }, session.reducedMotion);
+      after(revealDelayMs, () => {
+        roomState.setResult(demoResults.slot);
+        roomState.transition({ type: 'RESULT_CONFIRMED' }, session.reducedMotion);
+        after(360, () => {
+          roomState.transition({ type: 'SETTLE_COMPLETE' }, session.reducedMotion);
+          done();
+        });
+      });
+    });
+  }
+
+  function runDefaultTimeline(done: () => void) {
     after(140, () => {
       roomState.transition({ type: 'ACTION_ACCEPTED' }, session.reducedMotion);
       after(520, () => {
@@ -100,10 +111,27 @@
         roomState.transition({ type: 'RESULT_CONFIRMED' }, session.reducedMotion);
         after(360, () => {
           roomState.transition({ type: 'SETTLE_COMPLETE' }, session.reducedMotion);
-          isRunning = false;
+          done();
         });
       });
     });
+  }
+
+  function runAction(action: string) {
+    if (!selectedGame || isRunning || !roomState.snapshot) return;
+    void action;
+    clearTimers();
+    isRunning = true;
+    roomState.setResult(null);
+    roomState.transition({ type: 'USER_INTENT' }, session.reducedMotion);
+    const finish = () => {
+      isRunning = false;
+    };
+    if (selectedGame === 'slot') {
+      runSlotTimeline(finish);
+      return;
+    }
+    runDefaultTimeline(finish);
   }
 
   function resync() {
@@ -154,7 +182,7 @@
   {#if selectedGame && roomState.snapshot}
     <RoomShell room={roomState.snapshot} connection={session.connection} motion={roomState.motion} onBack={backToRooms} onResync={resync}>
       {#if selectedGame === 'slot'}
-        <SlotRoom motion={roomState.motion} result={roomState.result} onAction={runAction} />
+        <SlotRoom motion={roomState.motion} result={roomState.result} onAction={runAction} reducedMotion={session.reducedMotion} />
       {:else if selectedGame === 'blackjack'}
         <BlackjackRoom motion={roomState.motion} result={roomState.result} onAction={runAction} />
       {:else}
