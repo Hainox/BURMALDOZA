@@ -114,3 +114,67 @@ async def test_telegram_auth_route_verifies_and_persists_minimal_user() -> None:
         app.dependency_overrides.clear()
         app.state.settings = previous_settings
         await engine.dispose()
+
+
+def test_room_websocket_closes_when_client_never_authenticates(monkeypatch) -> None:
+    from app.routers import rooms
+    from starlette.websockets import WebSocketDisconnect
+
+    monkeypatch.setattr(rooms, "WEBSOCKET_AUTH_TIMEOUT_SECONDS", 0.05)
+    with (
+        TestClient(app) as client,
+        client.websocket_connect(f"/api/v1/rooms/{uuid4()}/events") as websocket,
+        pytest.raises(WebSocketDisconnect) as closed,
+    ):
+        websocket.receive_json()
+
+    assert closed.value.code == 4401
+    assert closed.value.reason == "authentication timeout"
+
+
+@pytest.mark.asyncio
+async def test_first_login_grants_welcome_once_and_faucets_are_claimable() -> None:
+    from app.db.models import LedgerEntry
+
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+    session_factory = async_sessionmaker(engine, expire_on_commit=False)
+    async with engine.begin() as connection:
+        await connection.run_sync(Base.metadata.create_all)
+
+    async def override_session():
+        async with session_factory() as session:
+            yield session
+
+    previous_settings = app.state.settings
+    app.state.settings = Settings(bot_token=BOT_TOKEN)
+    app.dependency_overrides[get_session] = override_session
+    headers = {"X-Telegram-Init-Data": make_init_data(auth_date=datetime.now(UTC) - timedelta(minutes=5))}
+    try:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            first = await client.get("/api/v1/wallet", headers=headers)
+            again = await client.get("/api/v1/wallet", headers=headers)
+            relief = await client.post(
+                "/api/v1/wallet/relief/claim", headers={**headers, "X-Request-ID": str(uuid4())}
+            )
+            daily = await client.post(
+                "/api/v1/wallet/daily-bonus/claim", headers={**headers, "X-Request-ID": str(uuid4())}
+            )
+            daily_again = await client.post(
+                "/api/v1/wallet/daily-bonus/claim", headers={**headers, "X-Request-ID": str(uuid4())}
+            )
+
+        assert first.status_code == 200
+        assert first.json()["balance"] == 1000
+        assert again.json()["balance"] == 1000
+        assert relief.status_code == 409  # balance is above the relief threshold
+        assert daily.status_code == 200
+        assert daily.json()["balance_after"] == 1250
+        assert daily_again.status_code == 409  # 24h cooldown
+        async with session_factory() as session:
+            reasons = sorted((await session.execute(select(LedgerEntry.reason))).scalars())
+        assert reasons == ["daily_bonus", "welcome"]
+    finally:
+        app.dependency_overrides.clear()
+        app.state.settings = previous_settings
+        await engine.dispose()

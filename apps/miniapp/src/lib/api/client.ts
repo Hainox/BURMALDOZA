@@ -33,6 +33,15 @@ export interface ApiWalletSnapshot {
   version: number;
 }
 
+export interface ApiLedgerResult {
+  operation_id: string;
+  idempotency_key: string;
+  user_id: number;
+  delta: number;
+  balance_after: number;
+  reason: string;
+}
+
 export interface ApiCurrentUser {
   user_id: number;
   telegram_user_id: number;
@@ -137,6 +146,16 @@ export class ApiClient {
 
   async getWallet(): Promise<ApiWalletSnapshot> {
     return this.get<ApiWalletSnapshot>('/api/v1/wallet');
+  }
+
+  /** Daily faucet; the server answers 409 while the 24h cooldown is active. */
+  async claimDailyBonus(requestId: string): Promise<ApiLedgerResult> {
+    return this.post<ApiLedgerResult>('/api/v1/wallet/daily-bonus/claim', {}, requestId);
+  }
+
+  /** Low-balance relief; the server answers 409 above the threshold or during cooldown. */
+  async claimReliefGrant(requestId: string): Promise<ApiLedgerResult> {
+    return this.post<ApiLedgerResult>('/api/v1/wallet/relief/claim', {}, requestId);
   }
 
   async getCurrentUser(): Promise<ApiCurrentUser> {

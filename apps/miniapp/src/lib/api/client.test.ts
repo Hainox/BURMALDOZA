@@ -106,6 +106,31 @@ describe('ApiClient room transport', () => {
     );
   });
 
+  it('claims wallet faucets with the idempotency request ID', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockImplementation(
+      async () => new Response(JSON.stringify({ balance_after: 1250, delta: 250 }))
+    );
+    const client = new ApiClient('https://api.example.test', 'verified', fetcher);
+    const requestId = '00000000-0000-0000-0000-000000000002';
+
+    const daily = await client.claimDailyBonus(requestId);
+    await client.claimReliefGrant(requestId);
+
+    expect(daily.balance_after).toBe(1250);
+    for (const path of ['daily-bonus', 'relief']) {
+      expect(fetcher).toHaveBeenCalledWith(
+        `https://api.example.test/api/v1/wallet/${path}/claim`,
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({
+            'X-Telegram-Init-Data': 'verified',
+            'X-Request-ID': requestId
+          })
+        })
+      );
+    }
+  });
+
   it('surfaces API status and response body for failed requests', async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(JSON.stringify({ detail: 'state conflict' }), { status: 409 })

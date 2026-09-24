@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from uuid import UUID
 
 from burmaldoza_contracts.common import GameType
@@ -32,6 +33,8 @@ from app.services.room_service import (
 from app.services.wallet_service import WalletService
 
 router = APIRouter(prefix="/api/v1", tags=["rooms"])
+
+WEBSOCKET_AUTH_TIMEOUT_SECONDS = 5.0
 
 
 class GameInfo(BaseModel):
@@ -162,7 +165,11 @@ async def room_events(websocket: WebSocket, room_id: UUID) -> None:
         max_auth_age_seconds=app_settings.telegram_init_data_max_age_seconds,
     )
     try:
-        first_message = WebSocketAuthMessage.model_validate(await websocket.receive_json())
+        # The socket is accepted before auth, so an idle client must not hold it
+        # (and its DB session) open indefinitely.
+        async with asyncio.timeout(WEBSOCKET_AUTH_TIMEOUT_SECONDS):
+            raw_auth = await websocket.receive_json()
+        first_message = WebSocketAuthMessage.model_validate(raw_auth)
         current_user = await service.authenticate_websocket(first_message)
         snapshot = await service.snapshot(room_id, current_user.user_id)
         async with service.event_bus.subscribe(room_id) as events:
@@ -170,6 +177,8 @@ async def room_events(websocket: WebSocket, room_id: UUID) -> None:
             while True:
                 event = await events.get()
                 await websocket.send_json({"type": "event", "event": event.model_dump(mode="json")})
+    except TimeoutError:
+        await websocket.close(code=4401, reason="authentication timeout")
     except (RoomNotFoundError, RoomAccessError, RoomServiceError, ValueError) as error:
         await websocket.close(code=4401, reason=str(error))
     except WebSocketDisconnect:

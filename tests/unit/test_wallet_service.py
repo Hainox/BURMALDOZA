@@ -9,6 +9,7 @@ from apps.api.app.services.wallet_service import (
     CooldownError,
     MemoryWalletStore,
     WalletService,
+    WalletServiceError,
 )
 
 
@@ -82,3 +83,18 @@ async def test_game_settlement_uses_one_operation_with_stake_and_payout_entries(
     assert len(result.entries) == 2
     assert store.operation_count == 2
     assert store.ledger_entry_count == 3
+
+
+@pytest.mark.asyncio
+async def test_idempotency_key_of_another_wallet_is_rejected_not_replayed() -> None:
+    store = MemoryWalletStore()
+    service = WalletService(store=store)
+    now = datetime(2026, 9, 20, 12, tzinfo=UTC)
+    shared_key = uuid4()
+
+    await service.claim_daily_bonus(1, now, shared_key)
+
+    with pytest.raises(WalletServiceError, match="another wallet"):
+        await service.claim_daily_bonus(2, now, shared_key)
+    assert (await service.get_or_create(2)).balance == 0
+    assert store.operation_count == 1
