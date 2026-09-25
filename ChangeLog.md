@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added the playable Blackjack GFL room UI: server-confirmed Deck A cards (RPK-16 at A♥, AK-12 at K♥), hidden hole-card back, 25–100 integer betting, legal-action buttons, error/retry and reconnect from the server snapshot, and reduced-motion support.
+
 - Expanded the Blackjack GFL Pages preview to switch between Deck A and Deck B, assigned RPK-16 to A♥ and AK-12 to K♥, and added 52 sourced Deck B portraits with M82A1 at 6♥ and PTRD at 7♥. Replaced the room concept with an abandoned-building police perimeter scene and updated its ambient sound direction.
 - Published an interactive mobile-friendly Blackjack GFL Deck A preview on GitHub Pages with the Sector 09 room, card back, all 52 character cards, suit/rank filters, search, and card dossiers.
 - Made `/health/ready` probe PostgreSQL and Redis with bounded timeouts and return HTTP 503 when either dependency is unavailable; `/health/live` remains independent of dependency health.
