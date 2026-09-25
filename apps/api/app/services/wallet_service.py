@@ -12,9 +12,10 @@ from burmaldoza_domain.economy import (
     LedgerReason,
     validate_wallet_delta,
 )
-from sqlalchemy import select
+from sqlalchemy import literal, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.db.conflict_insert import conflict_insert
 from app.db.models import LedgerEntry, User, Wallet, WalletOperation
 
 
@@ -443,18 +444,21 @@ class WalletService:
 
     async def _db_get_or_create_wallet(self, user_id: int, *, lock: bool) -> Wallet:
         assert self.session is not None
+        insert_wallet = (
+            conflict_insert(self.session, Wallet)
+            .from_select(
+                ["user_id", "balance", "version"],
+                select(User.id, literal(0), literal(0)).where(User.id == user_id),
+            )
+            .on_conflict_do_nothing(index_elements=[Wallet.user_id])
+        )
+        await self.session.execute(insert_wallet)
         query = select(Wallet).where(Wallet.user_id == user_id)
         if lock:
             query = query.with_for_update()
         wallet = (await self.session.execute(query)).scalar_one_or_none()
         if wallet is None:
-            user = await self.session.get(User, user_id)
-            if user is None:
-                self.session.add(User(id=user_id, telegram_user_id=user_id, display_name=str(user_id)))
-                await self.session.flush()
-            wallet = Wallet(user_id=user_id, balance=0, version=0)
-            self.session.add(wallet)
-            await self.session.flush()
+            raise WalletServiceError("user not found")
         return wallet
 
     def _memory_replay(self, key: UUID, user_id: int) -> LedgerResult | SettlementResult | None:

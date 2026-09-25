@@ -5,11 +5,12 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 from fastapi import Depends, HTTPException, Request, status
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings, settings
 from app.core.telegram_auth import TelegramAuthContext, TelegramAuthError, verify_telegram_init_data
+from app.db.conflict_insert import conflict_insert
 from app.db.models import User
 from app.db.session import get_session
 from app.services.event_bus import EventBus
@@ -31,25 +32,40 @@ def get_app_settings(request: Request) -> Settings:
     return getattr(request.app.state, "settings", settings)
 
 
+async def _find_user_id(session: AsyncSession, telegram_user_id: int) -> int | None:
+    return await session.scalar(select(User.id).where(User.telegram_user_id == telegram_user_id))
+
+
 async def _upsert_user(session: AsyncSession, context: TelegramAuthContext) -> CurrentUser:
     async with session.begin():
-        user = (
-            await session.execute(select(User).where(User.telegram_user_id == context.telegram_user_id))
-        ).scalar_one_or_none()
-        if user is None:
-            user = User(
-                telegram_user_id=context.telegram_user_id,
-                display_name=context.display_name,
+        # Look up first: PostgreSQL draws users.id from the sequence before the conflict
+        # check, so an INSERT on every request would burn one id per authentication.
+        user_id = await _find_user_id(session, context.telegram_user_id)
+        if user_id is None:
+            user_id = await session.scalar(
+                conflict_insert(session, User)
+                .values(
+                    telegram_user_id=context.telegram_user_id,
+                    display_name=context.display_name,
+                )
+                .on_conflict_do_nothing(index_elements=[User.telegram_user_id])
+                .returning(User.id)
             )
-            session.add(user)
-            await session.flush()
-            # New players start with the welcome bonus; otherwise their first bet fails.
-            await WalletService(session).claim_welcome_grant_in_transaction(user.id)
-        else:
-            user.display_name = context.display_name
-            user.last_seen_at = datetime.now(UTC)
+            if user_id is not None:
+                # New players start with the welcome bonus; otherwise their first bet fails.
+                await WalletService(session).claim_welcome_grant_in_transaction(user_id)
+        if user_id is None:
+            # A concurrent first login inserted the row between our lookup and insert.
+            user_id = await _find_user_id(session, context.telegram_user_id)
+        if user_id is None:
+            raise RuntimeError("user row missing after conflict-safe insert")
+        await session.execute(
+            update(User)
+            .where(User.id == user_id)
+            .values(display_name=context.display_name, last_seen_at=datetime.now(UTC))
+        )
     return CurrentUser(
-        user_id=user.id,
+        user_id=user_id,
         telegram_user_id=context.telegram_user_id,
         display_name=context.display_name,
         username=context.username,
