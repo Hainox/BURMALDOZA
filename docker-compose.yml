@@ -32,6 +32,7 @@ services:
       DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:-burmaldoza}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-burmaldoza}"
       REDIS_URL: redis://redis:6379/0
       BOT_TOKEN: ${BOT_TOKEN:-}
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-}
       MINIAPP_URL: ${MINIAPP_URL:-http://localhost:4173}
       ENVIRONMENT: ${ENVIRONMENT:-development}
       API_PORT: 8000
@@ -54,6 +55,7 @@ services:
       dockerfile: apps/bot/Dockerfile
     environment:
       BOT_TOKEN: ${BOT_TOKEN:?Set a fresh BOT_TOKEN in .env}
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-}
       MINIAPP_URL: ${MINIAPP_URL:-http://localhost:4173}
       API_BASE_URL: http://api:8000
       ENVIRONMENT: ${ENVIRONMENT:-development}
