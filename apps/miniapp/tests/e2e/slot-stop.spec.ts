@@ -1,6 +1,65 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+
+async function sampleTrackTransform(page: Page, index: number) {
+  return page.getByTestId(`slot-reel-track-${index}`).evaluate((element) => getComputedStyle(element).transform);
+}
 
 test.describe('Slot v2 stop continuity', () => {
+  test('moves the computed transform through travel and lands reels at staggered times', async ({ page }) => {
+    await page.goto('/');
+    await page.getByTestId('room-card-slot').click();
+    await page.getByTestId('slot-spin').click();
+
+    const machine = page.getByTestId('slot-machine');
+    await expect(machine).toHaveAttribute('data-slot-phase', 'spinning', { timeout: 2000 });
+
+    const launches = [
+      await page.getByTestId('slot-reel-0').getAttribute('data-launch-delay'),
+      await page.getByTestId('slot-reel-1').getAttribute('data-launch-delay'),
+      await page.getByTestId('slot-reel-2').getAttribute('data-launch-delay')
+    ];
+    expect(launches).toEqual(['0', '110', '220']);
+
+    const totalDuration = Number(await machine.getAttribute('data-spin-duration'));
+    expect(totalDuration).toBeGreaterThanOrEqual(2000);
+    expect(totalDuration).toBeLessThanOrEqual(3000);
+
+    const before = await sampleTrackTransform(page, 0);
+    await page.waitForTimeout(200);
+    const during = await sampleTrackTransform(page, 0);
+    expect(during).not.toBe(before);
+
+    const landedMs = await page.evaluate(async () => {
+      const read = (index: number) =>
+        (document.querySelector(`[data-testid="slot-reel-${index}"]`) as HTMLElement).getAttribute(
+          'data-reel-phase'
+        );
+      const stamps: number[] = [];
+      const started = performance.now();
+      for (let guard = 0; guard < 400; guard++) {
+        let landed = 0;
+        for (let index = 0; index < 3; index++) {
+          if (stamps[index] === undefined && read(index) === 'landed') {
+            stamps[index] = performance.now() - started;
+          }
+          if (read(index) === 'landed') landed += 1;
+        }
+        if (landed === 3) break;
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      }
+      return stamps;
+    });
+    expect(landedMs).toHaveLength(3);
+    expect(landedMs[1]).toBeGreaterThanOrEqual(landedMs[0]);
+    expect(landedMs[2]).toBeGreaterThanOrEqual(landedMs[1]);
+    expect(landedMs[2] - landedMs[0]).toBeGreaterThanOrEqual(100);
+
+    await expect(machine).toHaveAttribute('data-slot-phase', 'settled', { timeout: 5000 });
+    await expect(machine).toHaveAttribute('data-stopped-reels', '3');
+    await expect(machine.locator('[data-reel-phase="landed"]')).toHaveCount(3);
+    await expect(page.getByTestId('slot-confirmed-grid')).toBeVisible();
+  });
+
   test('runs travel and staged left-to-right landing phases', async ({ page }) => {
     await page.goto('/');
     await page.getByTestId('room-card-slot').click();
