@@ -1,7 +1,8 @@
 # Чекпоинт запуска — 24 сентября 2026
 
 Состояние подготовки боевого запуска Бурмалдозы. Сверено с `main` на коммите `80ef473`
-(после слияния PR #8), `dev/BuildSpec.md` и `docs/Development-Roadmap.md`.
+(после слияния PR #8), `dev/BuildSpec.md` и `docs/Development-Roadmap.md`. Обновлено 27.09.2026
+по `main` `07a7a75` (после слияния PR #14) и review PR #14, #16, #17 (issue #22).
 
 Репозиторий публичный. Поэтому здесь нет секретов и инфраструктурных идентификаторов:
 пароли, токены, приватные ключи, IP-адрес сервера и пути на ПК владельца хранятся только у
@@ -17,6 +18,7 @@
 | Blackjack Deck A — утверждённое визуальное направление (превью) | PR #8, в `main` |
 | Методы клиента Mini App `claimDailyBonus` / `claimReliefGrant` (без UI) | `apps/miniapp/src/lib/api/client.ts` |
 | Проверки здоровья API: `/health/live` и `/health/ready` (PostgreSQL + Redis) | `apps/api/app/main.py` |
+| Атомарный первый вход: одновременные HTTP/WebSocket-входы создают одного пользователя, один кошелёк и один welcome-грант; повторный вход не расходует `users.id` | PR #14, в `main` |
 
 ## 2. Со слов владельца (в репозитории не проверяется)
 
@@ -58,21 +60,23 @@
 7. **Не трогать** домен и хостинг JiraJura в том же аккаунте Рег.ру.
 
 ### Локальный агент (Codex) — PR деплоя
-Ветки `codex/production-deploy` и PR деплоя пока нет.
+Задача — issue #23; ветки `codex/production-deploy` и PR деплоя пока нет.
 1. Пользователь `deploy`, ufw, fail2ban, unattended-upgrades, swap. Вход по паролю отключать
    только после проверки входа по ключу.
 2. `docker-compose.prod.yml` с Caddy и `docs/Deploy-Production.md`. Caddy проксирует `/api/*`
    (включая WebSocket `/api/v1/rooms/{id}/events`) и `/health/*` в API, остальное — в Mini App.
 3. Сборка Mini App с `PUBLIC_API_BASE_URL=https://burmaldoza.ru` — это **build-arg образа**, а не
    runtime-переменная (см. R3). В `.env` сервера: `MINIAPP_URL=https://burmaldoza.ru`,
-   `ENVIRONMENT=production`, новый `BOT_TOKEN`.
+   `ENVIRONMENT=production`, новый `BOT_TOKEN` и — после слияния PR #17 — отдельный
+   `INTERNAL_API_TOKEN` для API и бота (см. R6). API запускается строго одним процессом:
+   явно `--workers 1`, без `WEB_CONCURRENCY` и `replicas` (см. R5).
 4. Ночной зашифрованный `pg_dump` вне сервера; пароль шифрования хранится у владельца. Без
    него копии бесполезны — это урок YUVI.
 5. BotFather: Mini App URL = `https://burmaldoza.ru`.
 
 ### CCode (очередь, по одной ветке на задачу)
 1. **Issue #6** — UI Blackjack-комнаты по Deck A (PR #8 уже в `main`), ветка
-   `ccode/blackjack-ui`.
+   `ccode/blackjack-ui`, PR #15 открыт и до слияния требует доработки по review.
 2. **Issue #11** — только после #6, от свежего `main`, ветка `ccode/wallet-grants-ui`. Scope:
    - последовательная первичная загрузка: `getCurrentUser()`, затем `getWallet()`, не
      параллельно; баланс берётся только из ответа `getWallet()`;
@@ -90,10 +94,11 @@
 |---|---|
 | Переустановка сервера, DNS, подтверждение `burmaldoza.ru` | Владелец |
 | Новый BotFather-токен (отзыв YUVI) | Владелец |
-| PR деплоя (`codex/production-deploy`) не создан | Codex |
+| PR деплоя (`codex/production-deploy`, issue #23) не создан | Codex |
 | Daily/Relief UI и последовательная загрузка кошелька (Issue #11, ждёт #6) | CCode |
 | Пункты 5–6 аудита (`docs/Code-Audit-2026-09-23.md`) | Codex |
-| Слияние PR #14 (гонка первого входа) и PR #16 (граница одного API-воркера) | Hainox после review |
+| Слияние PR #17 (отдельный `INTERNAL_API_TOKEN`), затем PR #16 (граница одного API-воркера); перед каждым — обновить ветку от `main` и дождаться зелёного CI | Hainox после review |
+| Сгенерировать `INTERNAL_API_TOKEN` (длинный случайный, не равный `BOT_TOKEN`) и положить в `.env` сервера | Владелец, к деплою после PR #17 |
 
 ## 6. Условия запуска
 
@@ -129,10 +134,17 @@
   (`import.meta.env`); при пустом значении `isLiveApiEnabled` возвращает `false`
   (`apps/miniapp/src/lib/api/runtime.ts`), и Mini App молча работает в demo. Условие
   «live API mode» в разделе 6 это проверяет.
-- **R4. Первый вход.** Одновременный первый вход двумя запросами может дать `IntegrityError` на
-  `users.telegram_user_id` (записано в `dev/ProjectLog.md`). Серверное исправление — PR #14
-  (`codex/wallet-bootstrap-hardening`, открыт, в `main` ещё нет); последовательная загрузка из #11
-  дополнительно снижает риск со стороны Mini App.
+- **R4. Первый вход — закрыт на сервере.** Одновременный первый вход двумя запросами мог дать
+  `IntegrityError` на `users.telegram_user_id`. PR #14 слит 26.09.2026: пользователь и кошелёк
+  создаются conflict-safe, welcome-грант выдаётся один раз, PostgreSQL-гонки покрыты тестами в CI.
+  Последовательная загрузка из #11 остаётся задачей Mini App, но блокером запуска больше не является.
 - **R5. Один API-воркер.** Пока EventBus живёт в памяти процесса, продакшен поддерживает только один
   процесс, один Uvicorn-воркер и одну реплику API (PR #16, открыт). `docker-compose.prod.yml` не
-  должен масштабировать API.
+  должен масштабировать API. Отсутствие `--workers` в `apps/api/Dockerfile` этого не гарантирует:
+  при заданной переменной `WEB_CONCURRENCY` Uvicorn сам поднимет несколько воркеров, и live-события
+  между ними потеряются. Поэтому в продакшене — явно `--workers 1` и без `WEB_CONCURRENCY`.
+- **R6. Скоординированный переход на `INTERNAL_API_TOKEN`.** После PR #17 бот ходит во внутренний
+  API только с отдельным токеном, а API отклоняет пустой токен или токен, равный `BOT_TOKEN`. Одно и
+  то же значение должно быть у API и бота, оба сервиса обновляются одновременно, иначе `/balance` и
+  `/top` в боте перестанут работать. `docker-compose.yml` подставляет пустое значение по умолчанию:
+  забытый токен не остановит compose — бот упадёт при старте, API будет отвечать 401.

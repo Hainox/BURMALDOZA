@@ -245,3 +245,11 @@
 - Local verification: `uv run --locked ruff check .` passed; `uv run --locked pytest -q` returned 120 passed, 9 skipped, 2 existing deprecation warnings. PostgreSQL integration was not run locally because `TEST_DATABASE_URL` is absent and Docker Desktop daemon is unavailable; GitHub CI PostgreSQL job is required before merge.
 - GitHub Actions `verify`, run `36056757537`, passed with PostgreSQL integration: 129 passed, no skips. Owner review is still required before merge/deploy. The 32-bit balance and multiworker event transport remain separate decisions.
 - Review follow-up (Claude Code CLI 2.1.282, `Opus 5.5 / high`, temporarily covering Codex): Codex Review P2 confirmed — every authentication ran the conflict-safe `INSERT`, and PostgreSQL draws `users.id` from the sequence before the conflict check, so each request burned an id of the 32-bit key. `_upsert_user` now looks the user up first and inserts only on first login, re-reading the row if a concurrent first login wins. PostgreSQL regression `test_repeated_login_does_not_consume_user_ids` failed on CI run `36058235402` before the fix (`assert 7 == 2` after five repeat logins). `wallets` is keyed by `user_id` and has no sequence, so its conflict insert is unaffected.
+
+## 2026-09-27 — сверка чекпоинта запуска после слияния PR #14
+
+- Claude Code CLI через Claude Pro, `Opus 5.5` (`claude-opus-5-5`); effort интерфейсом сессии не показан, поэтому не указан. Ветка `claude/checkpoint-sync-after-14` от `main` `07a7a75`.
+- `docs/Launch-Checkpoint.md` приведён к `main` после слияния PR #14 и к review PR #14, #16, #17 (issue #22): атомарный первый вход перенесён в выполненное, R4 закрыт на сервере; из блокеров убрано слияние #14, добавлены слияние #17 и генерация `INTERNAL_API_TOKEN` владельцем.
+- В план деплоя (issue #23) и риски добавлены: отдельный `INTERNAL_API_TOKEN` для API и бота с одновременным обновлением обоих сервисов (R6) и явный `--workers 1` без `WEB_CONCURRENCY`, так как Uvicorn по этой переменной сам поднимает несколько воркеров (R5).
+- `docs/Code-Audit-2026-09-23.md` (гонка кошелька всё ещё описана как открытая) не менялся: файл входит в открытый PR #16 Codex. Обновить после его слияния.
+- Проверка: `git diff --check` — passed. Изменение только документации; `ChangeLog.md` не обновлялся.
