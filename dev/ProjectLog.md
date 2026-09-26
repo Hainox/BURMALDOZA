@@ -171,6 +171,16 @@
 - Дополнительно проверен реальный SQLite/API путь, где пользователь пытается повторно использовать чужой wallet request ID; операция отклоняется HTTP 409 и балансы обоих кошельков не смешиваются.
 - Первый запуск Mini App всё ещё параллелит неиспользуемый `/api/v1/me` с `/api/v1/wallet`; исправление и wallet grants UI переданы в CCode issue #11 после PR #10 и issue #6, чтобы избежать пересечения `+page.svelte`.
 
+## 2026-09-24 — чекпоинт подготовки запуска
+
+- PR #10 (исправления по аудиту + review Codex из #12) слит владельцем.
+- Инфраструктура (со слов владельца): VPS HostKey NL (4 vCPU / 6 GB / 120 GB) переходит под Бурмалдозу; YUVI выводится из эксплуатации без переноса данных. Куплены `burmaldoza.ru` (ждёт подтверждения данных) и `burmaldoza.online`.
+- Решения: Caddy + TLS, один origin для Mini App и API; деплой делает локальный агент на ПК владельца (облачный Claude не имеет SSH), Claude проверяет PR деплоя. Приватный SSH-ключ не покидает ПК владельца.
+- Полный чекпоинт, шаги и критерии готовности — `docs/Launch-Checkpoint.md`.
+- Сверка чекпоинта с `main` (`80ef473`) и BuildSpec — Claude Code CLI 2.1.282, `Opus 5.5 / high` (effort подтверждён в сессии командой `/effort`): scope CCode #11 приведён к Issue #11 (Daily, Relief, последовательная загрузка `getCurrentUser()` → `getWallet()`; Help UI — только по отдельному решению Hainox); выполненное отделено от плана, блокеров и условий запуска; IP сервера и путь к ключу на ПК владельца убраны, так как репозиторий публичный. Добавлены риски: Portainer наружу, build-time `PUBLIC_API_BASE_URL` (пустое значение даёт demo-режим), гонка первого входа на сервере.
+- Решение Hainox (24.09): Portainer — только через SSH-туннель, 9443 наружу не публикуется. В чекпоинт добавлено, что Docker публикует порты в обход ufw, поэтому в продакшен-compose наружу выходит только Caddy; R4 связан с PR #14, граница одного API-воркера — с PR #16.
+- Открыто: переустановка сервера и DNS (владелец), PR деплоя `codex/production-deploy` (ещё не создан), Blackjack UI #6 и затем Daily/Relief #11 (CCode), пункты 5–6 аудита (Codex).
+
 ## 2026-09-23 — dependency-aware API readiness
 
 - `/health/ready` проверяет PostgreSQL через `SELECT 1` и Redis через `PING` параллельно, с ограниченным временем ожидания и без публикации DSN или текста ошибок. Недоступность любой зависимости возвращает HTTP 503 со статусами зависимостей; `/health/live` остаётся независимой liveness-проверкой.
@@ -227,6 +237,14 @@
 - По снимкам интерфейса владельца от 24.09.2026 зафиксированы имена Claude-моделей и effort-метки; `Fable 5.1` и `Fable 5` помечены как требующие usage credits. Локальный CLI `2.1.281` принимает effort `low|medium|high|xhigh|max`; отображения меток `Extra` и `Ultracode` на значения CLI не подтверждено.
 - Claude Code подготовил серверные изменения PR #10; Codex завершил исправления аудита в stacked PR #12 и влил их в ветку `claude/audit-fixes`. PR #10 остаётся открытым, его текущий head `9b5b284` включает исправления из #12 и ещё ждёт приёмки/слияния в `main`. CCode #6 остаётся за визуальной Blackjack-комнатой после PR #8; issue #11 ждёт принятого PR #10 и завершения #6, чтобы не делить `+page.svelte`.
 - Проверка документации: `git diff --check` — passed. Изменение внутреннего процесса; `ChangeLog.md` не обновлялся.
+
+## 2026-09-24 — atomic wallet bootstrap (Codex PR A)
+
+- Wallet creation now requires an existing `User` and uses conflict-safe insertion; it cannot create a placeholder user with a manually assigned primary key. HTTP and WebSocket first login share one atomic user insert and welcome grant transaction. The grant amount and API error contract are unchanged.
+- SQLite regression tests cover a missing user, repeated/concurrent wallet creation, concurrent HTTP/HTTP, HTTP/WebSocket and WebSocket/WebSocket login, and a single welcome ledger entry. PostgreSQL integration cases cover concurrent logins. A failing mixed HTTP/WebSocket regression reproduced the original unique-key error before the fix.
+- Local verification: `uv run --locked ruff check .` passed; `uv run --locked pytest -q` returned 120 passed, 9 skipped, 2 existing deprecation warnings. PostgreSQL integration was not run locally because `TEST_DATABASE_URL` is absent and Docker Desktop daemon is unavailable; GitHub CI PostgreSQL job is required before merge.
+- GitHub Actions `verify`, run `36056757537`, passed with PostgreSQL integration: 129 passed, no skips. Owner review is still required before merge/deploy. The 32-bit balance and multiworker event transport remain separate decisions.
+- Review follow-up (Claude Code CLI 2.1.282, `Opus 5.5 / high`, temporarily covering Codex): Codex Review P2 confirmed — every authentication ran the conflict-safe `INSERT`, and PostgreSQL draws `users.id` from the sequence before the conflict check, so each request burned an id of the 32-bit key. `_upsert_user` now looks the user up first and inserts only on first login, re-reading the row if a concurrent first login wins. PostgreSQL regression `test_repeated_login_does_not_consume_user_ids` failed on CI run `36058235402` before the fix (`assert 7 == 2` after five repeat logins). `wallets` is keyed by `user_id` and has no sequence, so its conflict insert is unaffected.
 
 ## 2026-09-24 — separate internal API token (Codex PR B)
 
