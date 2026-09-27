@@ -74,6 +74,10 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    # load_skeleton_config reads this tracked runtime ruleset; the API image does not copy tests/.
+    configs:
+      - source: slot_ruleset
+        target: /app/tests/fixtures/slot_skeleton.json
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready')"]
       interval: 10s
@@ -91,13 +95,16 @@ services:
       BOT_TOKEN: ${BOT_TOKEN:?Set the new BotFather token in the server .env}
       INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:?Set INTERNAL_API_TOKEN (long random, not equal to BOT_TOKEN) in the server .env}
       MINIAPP_URL: ${MINIAPP_URL:-https://burmaldoza.ru}
-      API_BASE_URL: http://api:8000
+      # BotConfig requires HTTPS in production. Resolve this host to Caddy on the edge network.
+      API_BASE_URL: https://burmaldoza.ru
       ENVIRONMENT: production
     depends_on:
       api:
         condition: service_healthy
-    # backend: reaches the API; edge: outbound access to the Telegram Bot API.
-    networks: [backend, edge]
+      caddy:
+        condition: service_started
+    # Caddy provides HTTPS to the API; edge also allows outbound Telegram Bot API access.
+    networks: [edge]
 
   miniapp:
     build:
@@ -133,9 +140,13 @@ services:
         condition: service_healthy
       miniapp:
         condition: service_healthy
-    networks: [edge]
+    networks:
+      edge:
+        aliases: [burmaldoza.ru]
 
 configs:
+  slot_ruleset:
+    file: ./tests/fixtures/slot_skeleton.json
   caddyfile:
     # Let's Encrypt certificates are issued automatically once DNS points at the server.
     # /api/* (incl. the WebSocket /api/v1/rooms/{id}/events) and /health* go to the API,
@@ -163,7 +174,7 @@ configs:
       }
 
 networks:
-  # No outside connectivity: PostgreSQL and Redis are reachable only from api/bot.
+  # No outside connectivity: PostgreSQL and Redis are reachable only from api.
   backend:
     internal: true
   edge: {}

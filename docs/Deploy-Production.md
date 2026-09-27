@@ -13,12 +13,15 @@
 ```text
 Интернет ──80/443──▶ caddy ──/api/*, /health*──▶ api (1 процесс, 1 worker) ──▶ postgres, redis
                         └────── всё остальное ────▶ miniapp (статика nginx)
-bot ──▶ api (внутренняя сеть) и Telegram Bot API (наружу)
+bot ──HTTPS──▶ caddy ──▶ api; bot ──▶ Telegram Bot API (наружу)
 ```
 
 - Наружу открыт только Caddy: 80 и 443 (TCP, плюс UDP для HTTP/3). У PostgreSQL, Redis, API и Mini App
   нет `ports`. Порты, опубликованные Docker, обходят ufw (R1), поэтому закрытость держится именно на этом.
-- PostgreSQL и Redis — во внутренней сети `backend` без выхода в интернет; до них достают только `api` и `bot`.
+- PostgreSQL и Redis — во внутренней сети `backend` без выхода в интернет; до них достаёт только `api`.
+- Бот использует `API_BASE_URL=https://burmaldoza.ru`: его production-конфигурация отклоняет HTTP.
+  Docker DNS разрешает это имя в Caddy через alias сети `edge`; сертификат проверяется обычным
+  способом, публичный IP и hairpin NAT для этого соединения не нужны. Боту нужен рабочий TLS Caddy.
 - API — ровно один процесс: явный `--workers 1`, одна реплика, без `WEB_CONCURRENCY` (R5). Пока
   `EventBus` живёт в памяти процесса, второй worker или реплика потеряет live-события.
 - Mini App получает адрес API **при сборке образа** (build-arg `PUBLIC_API_BASE_URL`, R3). По умолчанию
@@ -26,6 +29,9 @@ bot ──▶ api (внутренняя сеть) и Telegram Bot API (нару�
 - Сертификаты Let's Encrypt Caddy получает сам. `www.burmaldoza.ru`, `burmaldoza.online` и
   `www.burmaldoza.online` постоянно перенаправляются на `https://burmaldoza.ru`.
 - Конфигурация Caddy встроена в compose-файл (`configs.content`), поэтому нужен Docker Compose **2.23.1+**.
+- API читает правила слота из `/app/tests/fixtures/slot_skeleton.json`. Production Compose
+  монтирует этот отслеживаемый Git-файл read-only через `configs`; он должен присутствовать в
+  checkout выбранного SHA. Сам API-образ его не содержит: без mount создание комнаты даёт 500.
 
 ## 2. Что должно быть готово до начала (владелец)
 
@@ -44,6 +50,7 @@ bot ──▶ api (внутренняя сеть) и Telegram Bot API (нару�
 как вход по ключу под `deploy` проверен в отдельном окне.
 
 ```bash
+set -euo pipefail
 adduser --disabled-password --gecos "" deploy
 usermod -aG sudo deploy
 install -d -m 700 -o deploy -g deploy /home/deploy/.ssh
@@ -52,7 +59,7 @@ chown deploy:deploy /home/deploy/.ssh/authorized_keys && chmod 600 /home/deploy/
 passwd deploy            # пароль для sudo — в менеджер паролей владельца
 
 apt update && apt -y upgrade
-apt -y install ufw fail2ban unattended-upgrades age git ca-certificates curl
+apt -y install ufw fail2ban unattended-upgrades age git ca-certificates curl openssl python3
 dpkg-reconfigure -plow unattended-upgrades
 
 ufw default deny incoming && ufw default allow outgoing
@@ -73,6 +80,7 @@ Docker Engine и плагин Compose ставятся из официально
 **Portainer** (решение от 24.09.2026) — только на локальном интерфейсе, наружу не публикуется:
 
 ```bash
+set -euo pipefail
 docker volume create portainer_data
 docker run -d --name portainer --restart=unless-stopped -p 127.0.0.1:9443:9443 \
   -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce:lts
@@ -84,6 +92,7 @@ docker run -d --name portainer --restart=unless-stopped -p 127.0.0.1:9443:9443 \
 ## 4. Код и `.env`
 
 ```bash
+set -euo pipefail
 sudo install -d -o deploy -g deploy /srv/burmaldoza
 git clone https://github.com/Hainox/BURMALDOZA.git /srv/burmaldoza
 cd /srv/burmaldoza
@@ -91,23 +100,32 @@ git checkout <SHA из main, одобренный владельцем>
 ```
 
 `.env` создаётся на сервере и никогда не коммитится, не копируется в чат и не печатается в лог.
-Секреты генерируются прямо на сервере, их значения на экран не выводятся:
+Секреты генерируются прямо на сервере, их значения на экран не выводятся. Это процедура **первой
+установки**: существующий `.env` не перезаписывать; выключить shell tracing (`set +x`). Для пароля
+PostgreSQL используется hex, чтобы символы `@`, `:`, `/` не ломали DSN. Дальнейшая ротация пароля
+требует отдельного согласованного изменения роли в PostgreSQL и конфигурации API.
 
 ```bash
+set -euo pipefail
 cd /srv/burmaldoza
+(
+set -eu
 umask 077
+set -o noclobber
 cat > .env <<'EOF'
 POSTGRES_DB=burmaldoza
 POSTGRES_USER=burmaldoza
 MINIAPP_URL=https://burmaldoza.ru
 PUBLIC_API_BASE_URL=https://burmaldoza.ru
 EOF
+set +o noclobber
 printf 'POSTGRES_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env
 printf 'INTERNAL_API_TOKEN=%s\n' "$(openssl rand -hex 32)" >> .env
 # Токен из @BotFather вводит владелец; ввод не отображается и не попадает в историю shell:
 read -rsp 'BOT_TOKEN: ' t && printf 'BOT_TOKEN=%s\n' "$t" >> .env; unset t; echo
 chmod 600 .env
 cut -d= -f1 .env         # проверка: только имена переменных, без значений
+)
 ```
 
 | Переменная | Откуда | Примечание |
@@ -126,55 +144,93 @@ cut -d= -f1 .env         # проверка: только имена перем�
 ## 5. Предварительные проверки перед каждым запуском
 
 ```bash
+set -euo pipefail
 cd /srv/burmaldoza
-C="docker compose -f docker-compose.prod.yml --env-file .env"
+C=(docker compose -f /srv/burmaldoza/docker-compose.prod.yml --env-file /srv/burmaldoza/.env)
 git status --short && git log -1 --format='%h %s'      # чистое дерево, ожидаемый SHA
 docker compose version                                 # 2.23.1+
-$C config --quiet && echo "compose OK"                  # падает, если нет обязательного секрета
-$C config --format json | grep -c WEB_CONCURRENCY       # должно быть 0
-$C config | grep -E '^\s+published:'                   # только 80, 443, 443 (caddy)
+"${C[@]}" config --quiet                                # обязательные значения заданы
+"${C[@]}" config --format json | python3 -c '
+import json, sys
+s = json.load(sys.stdin)["services"]
+assert {k for k,v in s.items() if v.get("ports")} == {"caddy"}
+assert {(str(p["published"]), p["protocol"]) for p in s["caddy"]["ports"]} == {("80","tcp"),("443","tcp"),("443","udp")}
+assert "--workers 1" in " ".join(s["api"]["command"])
+assert "WEB_CONCURRENCY" not in s["api"]["environment"]
+assert s["miniapp"]["build"]["args"]["PUBLIC_API_BASE_URL"] == "https://burmaldoza.ru"
+assert s["bot"]["environment"]["API_BASE_URL"] == "https://burmaldoza.ru"
+assert s["api"]["environment"]["MINIAPP_URL"] == s["bot"]["environment"]["MINIAPP_URL"] == "https://burmaldoza.ru"
+token = s["api"]["environment"]["INTERNAL_API_TOKEN"]
+assert len(token) >= 64 and token.isascii() and token.isalnum()
+assert token == s["bot"]["environment"]["INTERNAL_API_TOKEN"] != s["api"]["environment"]["BOT_TOKEN"]
+print("Production configuration OK")'
 getent hosts burmaldoza.ru www.burmaldoza.ru burmaldoza.online www.burmaldoza.online
 sudo ufw status verbose                                 # 22, 80, 443/tcp, 443/udp
 df -h / && free -h
 ```
 
-`config` без `--quiet` печатает значения секретов — не запускать его в логируемой сессии и не
-копировать вывод в чат.
+Во всех блоках нужен Bash; при любой ошибке остановиться и исправить её до следующей команды.
+Вывод `config --format json` выше идёт прямо в валидатор, который печатает только результат.
+Не добавлять `tee`, shell tracing и вывод исходного JSON: в нём находятся секреты.
 
 ## 6. Запуск и проверка
 
 ```bash
-$C build --pull
-$C up -d
-$C ps                     # все сервисы healthy; колонка PORTS заполнена только у caddy
-$C logs --tail=100 caddy  # «certificate obtained successfully» для четырёх имён
-$C logs --tail=100 api    # миграции Alembic применились, Uvicorn стартовал с одним процессом
+set -euo pipefail
+"${C[@]}" build --pull api bot miniapp
+"${C[@]}" pull postgres redis caddy
+"${C[@]}" up -d --no-build --pull never --wait --wait-timeout 180 postgres redis api miniapp caddy
+curl -fsS https://burmaldoza.ru/health/ready
+"${C[@]}" run --rm --no-deps -T --entrypoint python bot - <<'PY'
+import asyncio
+from app.main import load_config
+from app.api_client import BotApiClient
+async def check():
+    c = load_config()
+    client = BotApiClient(c.api_base_url, c.internal_api_token)
+    try:
+        await client.get_top()
+        print("Bot HTTPS/API auth OK")
+    finally:
+        await client.close()
+asyncio.run(check())
+PY
+"${C[@]}" up -d --no-build --pull never bot
+"${C[@]}" ps
 ```
 
-API при старте сам выполняет `alembic upgrade head`. Первый выпуск сертификатов занимает до минуты.
+API при старте сам выполняет `alembic upgrade head`. Четыре сервиса с healthcheck должны быть
+`healthy`; Caddy и bot — `running` (у них нет healthcheck). `--wait` не доказывает готовность TLS
+и Telegram polling: поэтому бот запускается после успешного HTTPS/API probe. В `PORTS` могут быть
+видны внутренние `EXPOSE` Dockerfile; только Caddy должен иметь привязки хоста вида `0.0.0.0:…->…`.
+При ошибке проверить локально отфильтрованные логи нужного сервиса; не публиковать сырые логи бота,
+в которых HTTP-клиент может включить Telegram URL с токеном. Срок выпуска сертификата не гарантирован.
 
 Проверки после запуска (условия технического запуска из чекпоинта, раздел 6):
 
 | Проверка | Как | Ожидается |
 |---|---|---|
 | Готовность API | `curl -fsS https://burmaldoza.ru/health/ready` | HTTP 200 |
-| Сертификат и редиректы | `curl -sI http://burmaldoza.online` и `https://www.burmaldoza.ru` | 301/308 на `https://burmaldoza.ru/…` |
+| Сертификат и редиректы | `curl -fsSL -o /dev/null -w '%{url_effective}\n' http://burmaldoza.online` и аналогично для `https://www.burmaldoza.ru` и `https://www.burmaldoza.online` | Итоговый URL — `https://burmaldoza.ru/`; HTTP сначала может перейти на HTTPS того же alias |
 | Live, а не DEMO | Открыть Mini App из бота | Индикатор подключения **не** показывает `DEMO` |
 | Первый вход | `/start` → Mini App новым аккаунтом | Баланс 1 000 JOKERGEM, спин слота проходит |
 | Внутренние порты закрыты | С ПК владельца: `Test-NetConnection <сервер> -Port 5432` (и 6379, 8000, 8080) | `TcpTestSucceeded: False` |
 | Слушающие порты на сервере | `sudo ss -tlnp` | Наружу только 22, 80, 443 и `127.0.0.1:9443` |
 | Бот ходит в API | `/balance` в боте | Баланс, а не ошибка (иначе проверить `INTERNAL_API_TOKEN`) |
-| Один API-процесс | `$C top api` | Один процесс `uvicorn`, без дочерних worker-ов |
+| Один API-процесс | `"${C[@]}" top api` и `"${C[@]}" ps -q api` | Один процесс `uvicorn`, без дочерних worker-ов, один контейнер |
 
 ## 7. Резервное копирование
 
 Ночная копия PostgreSQL шифруется открытым ключом `age`. На сервере лежит только открытый ключ, поэтому
-даже с сервером копию не прочитать. Закрытый ключ хранится у владельца; без него копии бесполезны —
-это урок YUVI. Redis хранит только временные блокировки и присутствие, в копию не входит.
+архив нельзя расшифровать одним лишь ключом шифрования на сервере. Доступ к работающему серверу
+всё равно даёт доступ к исходной базе. Закрытый ключ хранится у владельца; без него копии бесполезны.
+Redis не является источником игровых данных, в копию не входит. Секреты `.env` владелец отдельно
+сохраняет в менеджере паролей; дамп PostgreSQL их не заменяет.
 
 ### 7.1. Ключи (владелец, на своём ПК, однократно)
 
 ```bash
+set -euo pipefail
 age-keygen -o burmaldoza-backup.key     # печатает открытый ключ вида age1...
 ```
 
@@ -184,26 +240,36 @@ age-keygen -o burmaldoza-backup.key     # печатает открытый кл
 ### 7.2. Ночной дамп (сервер)
 
 ```bash
+set -euo pipefail
 sudo install -d -m 700 -o deploy -g deploy /var/backups/burmaldoza /etc/burmaldoza
 echo 'age1...открытый ключ владельца...' | sudo tee /etc/burmaldoza/backup-recipient.txt >/dev/null
 sudo tee /usr/local/bin/burmaldoza-backup >/dev/null <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
+umask 077
+exec 9>/var/backups/burmaldoza/.backup.lock
+flock -n 9 || exit 1
 cd /srv/burmaldoza
 out="/var/backups/burmaldoza/burmaldoza-$(date -u +%Y%m%dT%H%M%SZ).dump.age"
+test ! -e "$out"
+trap 'rm -f -- "$out.tmp"' EXIT
 docker compose -f docker-compose.prod.yml --env-file .env exec -T postgres \
   sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --format=custom' \
   | age -R /etc/burmaldoza/backup-recipient.txt > "$out.tmp"
 test -s "$out.tmp"
 mv "$out.tmp" "$out"
-find /var/backups/burmaldoza -name '*.dump.age' -mtime +14 -delete
+printf '%s\n' "$out"
 EOF
 sudo chmod 755 /usr/local/bin/burmaldoza-backup
 /usr/local/bin/burmaldoza-backup && ls -lh /var/backups/burmaldoza      # первый запуск вручную
 ( crontab -l 2>/dev/null; echo '30 3 * * * /usr/local/bin/burmaldoza-backup' ) | crontab -
 ```
 
-Копии на сервере хранятся 14 дней.
+Проверить `command -v age flock` перед установкой задания. Cron запускает `deploy`, а не root.
+Добавить строку cron один раз и проверить `crontab -l`. Владелец контролирует код завершения,
+возраст последнего архива и доставку вне сервера; без этого наличие cron не означает наличие копии.
+Хранить минимум 14 дней; удалять старые архивы только после подтверждения внешних копий. Скрипт
+не удаляет историю автоматически. Права файлов — 600, каталога — 700.
 
 ### 7.3. Копия вне сервера — решение владельца
 
@@ -219,63 +285,165 @@ sudo chmod 755 /usr/local/bin/burmaldoza-backup
 владельца, и закрытый ключ не попадает на сервер: поток уходит по SSH сразу в `pg_restore`.
 
 ```bash
+set -euo pipefail
 # на сервере: пустая база для проверки
-C="docker compose -f /srv/burmaldoza/docker-compose.prod.yml --env-file /srv/burmaldoza/.env"
-$C exec -T postgres sh -c 'createdb -U "$POSTGRES_USER" burmaldoza_restore_check'
+C=(docker compose -f /srv/burmaldoza/docker-compose.prod.yml --env-file /srv/burmaldoza/.env)
+restore_db="burmaldoza_restore_$(date -u +%Y%m%d%H%M%S)"
+"${C[@]}" exec -T postgres sh -c 'createdb -U "$POSTGRES_USER" "$1"' sh "$restore_db"
+printf '%s\n' "$restore_db"     # перенести это несекретное имя в следующий блок на ПК
 ```
 
 ```bash
+set -euo pipefail
 # на ПК владельца, в Git Bash (Windows PowerShell 5 портит двоичный поток в конвейере):
 # расшифровать свежую копию и восстановить в проверочную базу
+read -rp 'Имя новой проверочной базы с сервера: ' restore_db
+[[ "$restore_db" =~ ^burmaldoza_restore_[0-9]{14}$ ]] || exit 1
 age -d -i burmaldoza-backup.key burmaldoza-<дата>.dump.age | ssh deploy@<сервер> \
   "docker compose -f /srv/burmaldoza/docker-compose.prod.yml --env-file /srv/burmaldoza/.env exec -T postgres \
-   sh -c 'pg_restore -U \"\$POSTGRES_USER\" -d burmaldoza_restore_check --no-owner --exit-on-error'"
+   sh -c 'pg_restore -U \"\$POSTGRES_USER\" -d \"$restore_db\" --no-owner --exit-on-error --single-transaction'"
 ```
 
 ```bash
-# на сервере: сравнить с боевой базой и удалить проверочную
-for db in burmaldoza burmaldoza_restore_check; do
-  $C exec -T postgres sh -c "psql -U \"\$POSTGRES_USER\" -d $db -Atc \
-    'select (select count(*) from users), (select count(*) from wallets), (select count(*) from ledger_entries)'"
-done
-$C exec -T postgres sh -c 'dropdb -U "$POSTGRES_USER" burmaldoza_restore_check'
+set -euo pipefail
+# на сервере: агрегаты и согласованность кошельков с ledger; записей игроков не печатаем
+[[ "$restore_db" =~ ^burmaldoza_restore_[0-9]{14}$ ]] || exit 1
+"${C[@]}" exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$1" -v ON_ERROR_STOP=1' sh "$restore_db" <<'SQL'
+SELECT (SELECT count(*) FROM users) AS users,
+       (SELECT count(*) FROM wallets) AS wallets,
+       (SELECT count(*) FROM wallet_operations) AS operations,
+       (SELECT count(*) FROM ledger_entries) AS entries,
+       (SELECT coalesce(sum(balance),0) FROM wallets) AS balance,
+       (SELECT coalesce(sum(amount_delta),0) FROM ledger_entries) AS ledger_delta;
+SELECT count(*) AS inconsistent_wallets FROM wallets w
+LEFT JOIN (SELECT wallet_id, sum(amount_delta) AS total FROM ledger_entries GROUP BY wallet_id) l
+ON w.user_id = l.wallet_id WHERE w.balance <> coalesce(l.total,0);
+SELECT version_num FROM alembic_version;
+SQL
 ```
 
-Числа должны совпадать с боевой базой на момент копии (боевая могла вырасти с тех пор). Дату
-успешной проверки записать в `dev/ProjectLog.md`.
+Нужен успешный exit code всего конвейера, `inconsistent_wallets=0` и ожидаемая версия миграции.
+При проверке копии перед обновлением сравнить агрегаты с исходной базой, пока писатели остановлены.
+Для ночной копии текущая боевая база могла измениться: сравнивать её текущие числа на равенство нельзя.
+Каждая проверка получает новое имя с датой; `createdb` с существующим именем должен завершиться
+ошибкой. Не подставлять в этот сценарий имя боевой базы. Проверочную базу можно удалить отдельно после
+проверки результата. Записать дату, SHA кода, файл копии, ревизию и результат в `dev/ProjectLog.md`.
 
 ## 9. Обновление и откат
 
 Обновление — только на SHA из `main`, одобренный владельцем, после зелёного CI на этом SHA.
+До обновления сохранить **реально запущенные образы всех шести сервисов**. Повторная сборка старого
+SHA не является точным откатом: базовые image tags могут уже указывать на другие версии.
 
 ```bash
+set -euo pipefail
 cd /srv/burmaldoza
-C="docker compose -f docker-compose.prod.yml --env-file .env"
-git rev-parse HEAD | tee -a ~/burmaldoza-deployed-shas.txt   # запомнить текущую версию
-/usr/local/bin/burmaldoza-backup                             # свежая копия перед обновлением
-git fetch origin && git checkout <новый SHA>
-$C build --pull && $C up -d
+C=(docker compose -f /srv/burmaldoza/docker-compose.prod.yml --env-file /srv/burmaldoza/.env)
+umask 077
+release="$(git rev-parse HEAD)-$(date -u +%Y%m%dT%H%M%SZ)"
+release_dir="/srv/burmaldoza-releases/$release"
+sudo install -d -m 700 -o deploy -g deploy "$release_dir"
+git rev-parse HEAD > "$release_dir/source.sha"
+printf 'services:\n' > "$release_dir/images.yml"
+images=()
+for service in postgres redis api bot miniapp caddy; do
+  container=$("${C[@]}" ps -q "$service")
+  test -n "$container" || break
+  id=$(docker inspect --format '{{.Image}}' "$container")
+  source="$id"
+  if ! docker image inspect "$id" >/dev/null 2>&1; then
+    # containerd store: .Image is a config digest, while tags address manifests/indices.
+    source=$(docker inspect --format '{{.Config.Image}}' "$container")
+    expected=$(docker inspect --format '{{.ImageManifestDescriptor.digest}}' "$container")
+    platform=$(docker inspect --format '{{.ImageManifestDescriptor.platform.os}}/{{.ImageManifestDescriptor.platform.architecture}}' "$container")
+    actual=$(docker image inspect --platform "$platform" --format '{{.Id}}' "$source")
+    test -n "$expected" && test "$actual" = "$expected" || break
+  fi
+  tag="burmaldoza-rollback/$service:$release"
+  docker tag "$source" "$tag" || break
+  images+=("$tag")
+  printf '  %s:\n    image: %s\n' "$service" "$tag" >> "$release_dir/images.yml"
+done
+test "${#images[@]}" -eq 6                              # продолжать только при успехе
+docker image save -o "$release_dir/images.tar" "${images[@]}"
+sha256sum "$release_dir/images.tar" > "$release_dir/images.tar.sha256"
 ```
 
-Затем — проверки из раздела 6. Бот и API пересобираются вместе, так что `INTERNAL_API_TOKEN`
-у них всегда один и тот же.
+Проверить свободное место для образов, дампа и второй базы. `images.yml` содержит только имена
+образов, `.env` туда не копируется. Не удалять сохранённые образы и архив до приёмки нового выпуска.
+Если сохранение любого из шести образов не прошло, остановить обновление. Для containerd image store
+сверяется digest платформы текущего контейнера; если tag уже заменён другой сборкой, команда
+останавливается. Сохранять образы нужно до новой сборки/pull. На старом image store используется ID.
+Проверить `git status`, выполнить `git fetch origin`, затем перейти на одобренный SHA и собрать
+новые `api bot miniapp`. Образы PostgreSQL/Redis/Caddy не обновлять вместе с кодом приложения;
+их обновление и совместимость данных проверяются отдельно. При ошибке сборки вернуть прежний SHA:
+запущенные контейнеры ещё не менялись.
 
-**Откат кода** (схема базы не менялась): вернуть прежний SHA из `~/burmaldoza-deployed-shas.txt`,
-затем `git checkout <старый SHA> && $C build && $C up -d`.
-
-**Откат, если новая версия применила миграцию.** API применяет `alembic upgrade head` при старте,
-и старый код может не работать с новой схемой. `alembic downgrade` использовать, только если
-downgrade этой миграции проверен в review. Иначе — восстановление из копии, сделанной перед
-обновлением (простой сервиса, игровые действия после копии теряются):
+Окно обслуживания: остановить **оба** источника запросов до финальной копии. С этого момента
+игры недоступны; не запускать API новой версии до успешного резервного копирования.
 
 ```bash
-$C stop api bot
-$C exec -T postgres sh -c 'dropdb -U "$POSTGRES_USER" --force "$POSTGRES_DB" && createdb -U "$POSTGRES_USER" "$POSTGRES_DB"'
-# на ПК владельца (Git Bash) — как в разделе 8, но в боевую базу:
-#   age -d -i burmaldoza-backup.key <копия перед обновлением> | ssh deploy@<сервер> \
-#     "... exec -T postgres sh -c 'pg_restore -U \"\$POSTGRES_USER\" -d \"\$POSTGRES_DB\" --no-owner --exit-on-error'"
-git checkout <старый SHA> && $C build && $C up -d
+set -euo pipefail
+"${C[@]}" stop bot api
+backup_file=$(/usr/local/bin/burmaldoza-backup)
+test -s "$backup_file"
+printf '%s\n' "$backup_file" > "$release_dir/backup.path"
+# Проверить восстановление именно этого архива по разделу 8, сравнить агрегаты при остановленных API/bot.
+# После успеха: обновить только приложение, без пересоздания DB/Redis/Caddy.
+"${C[@]}" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 api miniapp
+curl -fsS https://burmaldoza.ru/health/ready
+# Выполнить bot HTTPS/API probe из раздела 6, затем:
+"${C[@]}" up -d --no-deps --no-build --pull never bot
 ```
+
+Если меняется конфигурация самого Caddy — применить её отдельным шагом после review и проверки
+сертификата. При ротации `INTERNAL_API_TOKEN` API и бот останавливаются вместе, получают одно новое
+значение, затем выполняется HTTPS/API probe и запускается бот. `compose up` сам по себе не является
+атомарным обновлением двух сервисов. После запуска выполнить всю таблицу раздела 6.
+
+**Откат кода** (схема совместима). Выбрать сохранённый `release_dir`; проверить SHA/архив, загрузить
+образы, вернуть старый source SHA. Использовать override с сохранёнными образами и запретить сборку
+и pull. Не запускать старые инфраструктурные образы поверх данных от новой major-версии PostgreSQL.
+
+```bash
+set -euo pipefail
+sha256sum -c "$release_dir/images.tar.sha256"
+docker image load -i "$release_dir/images.tar"
+"${C[@]}" stop bot api
+git checkout --detach "$(cat "$release_dir/source.sha")"
+R=("${C[@]}" -f "$release_dir/images.yml")
+"${R[@]}" config --quiet
+"${R[@]}" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 api miniapp
+curl -fsS https://burmaldoza.ru/health/ready
+# HTTPS/API probe из раздела 6, используя R вместо C, затем:
+"${R[@]}" up -d --no-deps --no-build --pull never bot
+```
+
+**Откат после несовместимой миграции.** Сначала остановить bot/API. Владелец выбирает копию и
+подтверждает, что действия после её создания не попадут в восстановленную базу. Сохранить также
+зашифрованный дамп текущего состояния для разбора. Полностью восстановить предрелизную копию в
+новую базу `$restore_db` по разделу 8, проверить суммы, количество записей и старую ревизию схемы.
+При любой ошибке не переключать базу. Исходная база не удаляется: после успешной проверки имена
+меняются местами, а исходная остаётся под именем `burmaldoza_failed_<дата>`.
+
+```bash
+set -euo pipefail
+failed_db="burmaldoza_failed_$(date -u +%Y%m%dT%H%M%SZ)"
+[[ "$restore_db" =~ ^burmaldoza_restore_[0-9]{14}$ ]] || exit 1
+"${C[@]}" exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d postgres -v ON_ERROR_STOP=1 -v live="$POSTGRES_DB" -v failed="$1" -v restored="$2"' sh "$failed_db" "$restore_db" <<'SQL'
+ALTER DATABASE :"live" ALLOW_CONNECTIONS false;
+SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = :'live';
+ALTER DATABASE :"live" RENAME TO :"failed";
+ALTER DATABASE :"restored" RENAME TO :"live";
+SQL
+# Только после успеха: откат кода на сохранённые образы по блоку выше, затем проверки раздела 6.
+```
+
+Переименование не является одной транзакцией: при ошибке оставить API/bot остановленными,
+проверить имена через `psql -lqt` и завершить переключение вручную. `burmaldoza_failed_<дата>`
+остаётся с запрещёнными подключениями и сохраняется до отдельного решения владельца.
+`alembic downgrade` допускается только после проверки downgrade конкретной миграции в review.
+
 
 ## 10. Чего не делать
 
