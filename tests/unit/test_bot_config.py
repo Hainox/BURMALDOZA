@@ -60,6 +60,41 @@ def test_production_rejects_placeholder_or_insecure_urls(monkeypatch: pytest.Mon
         load_config()
 
 
+def test_production_allows_only_the_fixed_internal_api_http_url(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("BOT_TOKEN", "TEST_BOT_TOKEN")
+    monkeypatch.setenv("INTERNAL_API_TOKEN", "TEST_INTERNAL_TOKEN")
+    monkeypatch.setenv("MINIAPP_URL", "https://burmaldoza.example.test")
+    monkeypatch.setenv("API_BASE_URL", "http://api:8000")
+    monkeypatch.setenv("ENVIRONMENT", "production")
+
+    assert load_config().api_base_url == "http://api:8000"
+
+
+@pytest.mark.parametrize(
+    "api_url",
+    [
+        "http://api:8001",
+        "http://api.internal:8000",
+        "http://api:8000/",
+        "http://user@api:8000",
+        "http://localhost:8000",
+    ],
+)
+def test_production_rejects_other_http_api_urls(
+    monkeypatch: pytest.MonkeyPatch, api_url: str
+) -> None:
+    monkeypatch.setenv("BOT_TOKEN", "TEST_BOT_TOKEN")
+    monkeypatch.setenv("INTERNAL_API_TOKEN", "TEST_INTERNAL_TOKEN")
+    monkeypatch.setenv("MINIAPP_URL", "https://burmaldoza.example.test")
+    monkeypatch.setenv("API_BASE_URL", api_url)
+    monkeypatch.setenv("ENVIRONMENT", "production")
+
+    with pytest.raises(RuntimeError, match="API_BASE_URL must use HTTPS in production"):
+        load_config()
+
+
 def test_missing_or_reused_internal_token_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("BOT_TOKEN", "TEST_BOT_TOKEN")
     monkeypatch.setenv("MINIAPP_URL", "http://localhost:4173")

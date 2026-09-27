@@ -34,7 +34,11 @@ def _validate_url(name: str, value: str, environment: str) -> None:
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
         raise RuntimeError(f"{name} must be an absolute http(s) URL")
     if environment == "production":
-        if parsed.scheme != "https":
+        # The production bot may use plain HTTP only for the API's fixed Docker
+        # service address. The production Compose file places bot and API on an
+        # internal-only network; all other production URLs must use HTTPS.
+        internal_api_url = name == "API_BASE_URL" and value == "http://api:8000"
+        if parsed.scheme != "https" and not internal_api_url:
             raise RuntimeError(f"{name} must use HTTPS in production")
         if parsed.hostname in {"example.invalid", "localhost", "127.0.0.1"}:
             raise RuntimeError(f"{name} must point to a real production host")

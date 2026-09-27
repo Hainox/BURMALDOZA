@@ -13,15 +13,18 @@
 ```text
 Интернет ──80/443──▶ caddy ──/api/*, /health*──▶ api (1 процесс, 1 worker) ──▶ postgres, redis
                         └────── всё остальное ────▶ miniapp (статика nginx)
-bot ──HTTPS──▶ caddy ──▶ api; bot ──▶ Telegram Bot API (наружу)
+bot ──HTTP по внутренней сети bot_api──▶ api; bot ──edge/наружу──▶ Telegram Bot API
 ```
 
 - Наружу открыт только Caddy: 80 и 443 (TCP, плюс UDP для HTTP/3). У PostgreSQL, Redis, API и Mini App
   нет `ports`. Порты, опубликованные Docker, обходят ufw (R1), поэтому закрытость держится именно на этом.
 - PostgreSQL и Redis — во внутренней сети `backend` без выхода в интернет; до них достаёт только `api`.
-- Бот использует `API_BASE_URL=https://burmaldoza.ru`: его production-конфигурация отклоняет HTTP.
-  Docker DNS разрешает это имя в Caddy через alias сети `edge`; сертификат проверяется обычным
-  способом, публичный IP и hairpin NAT для этого соединения не нужны. Боту нужен рабочий TLS Caddy.
+- Бот обращается к API напрямую по `API_BASE_URL=http://api:8000` через отдельную сеть `bot_api`
+  с `internal: true`, доступную только сервисам `bot` и `api`. Конфигурация бота в production
+  разрешает HTTP только для этого точного адреса; `MINIAPP_URL` остаётся HTTPS. Сеть `edge` у бота
+  нужна только для исходящих запросов к Telegram Bot API.
+- Caddy возвращает 404 на публичном сайте для `/api/v1/internal` и всех его подмаршрутов до общего
+  проксирования `/api/*`. Внутренние маршруты API дополнительно требуют отдельный `INTERNAL_API_TOKEN`.
 - API — ровно один процесс: явный `--workers 1`, одна реплика, без `WEB_CONCURRENCY` (R5). Пока
   `EventBus` живёт в памяти процесса, второй worker или реплика потеряет live-события.
 - Mini App получает адрес API **при сборке образа** (build-arg `PUBLIC_API_BASE_URL`, R3). По умолчанию
@@ -184,7 +187,10 @@ assert {(str(p["published"]), p["protocol"]) for p in s["caddy"]["ports"]} == {(
 assert "--workers 1" in " ".join(s["api"]["command"])
 assert "WEB_CONCURRENCY" not in s["api"]["environment"]
 assert s["miniapp"]["build"]["args"]["PUBLIC_API_BASE_URL"] == "https://burmaldoza.ru"
-assert s["bot"]["environment"]["API_BASE_URL"] == "https://burmaldoza.ru"
+assert s["bot"]["environment"]["API_BASE_URL"] == "http://api:8000"
+assert set(s["bot"]["networks"]) == {"edge", "bot_api"}
+assert set(s["api"]["networks"]) == {"backend", "edge", "bot_api"}
+assert s["networks"]["bot_api"]["internal"] is True
 assert s["api"]["environment"]["MINIAPP_URL"] == s["bot"]["environment"]["MINIAPP_URL"] == "https://burmaldoza.ru"
 token = s["api"]["environment"]["INTERNAL_API_TOKEN"]
 assert len(token) >= 64 and token.isascii() and token.isalnum()
@@ -227,7 +233,7 @@ async def check():
     client = BotApiClient(c.api_base_url, c.internal_api_token)
     try:
         await client.get_top()
-        print("Bot HTTPS/API auth OK")
+        print("Bot internal API auth OK")
     finally:
         await client.close()
 asyncio.run(check())
@@ -251,9 +257,10 @@ API при старте сам выполняет `alembic upgrade head`. Чет
 | Сертификат и редиректы | `curl -fsSL -o /dev/null -w '%{url_effective}\n' http://burmaldoza.online` и аналогично для `https://www.burmaldoza.ru` и `https://www.burmaldoza.online` | Итоговый URL — `https://burmaldoza.ru/`; HTTP сначала может перейти на HTTPS того же alias |
 | Live, а не DEMO | Открыть Mini App из бота | Индикатор подключения **не** показывает `DEMO` |
 | Первый вход | `/start` → Mini App новым аккаунтом | Баланс 1 000 JOKERGEM, спин слота проходит |
+| Внутренние API-маршруты закрыты снаружи | С внешнего ПК выполнить `curl -i https://burmaldoza.ru/api/v1/internal/bot/top` и `curl -i https://burmaldoza.ru/api/v1/internal/bot/users/1/wallet` | Оба ответа — HTTP 404, без содержимого внутренних обработчиков |
 | Внутренние порты закрыты | С ПК владельца: `Test-NetConnection <сервер> -Port 5432` (и 6379, 8000, 8080) | `TcpTestSucceeded: False` |
 | Слушающие порты на сервере | `sudo ss -tlnp` | Наружу только 22, 80, 443 и `127.0.0.1:9443` |
-| Бот ходит в API | `/balance` в боте | Баланс, а не ошибка (иначе проверить `INTERNAL_API_TOKEN`) |
+| Бот ходит во внутренний API | `/balance` и `/top` в боте | Баланс и рейтинг отображаются; иначе проверить `bot_api`, `INTERNAL_API_TOKEN` и логи без публикации сырых Telegram URL |
 | Один API-процесс | `"${C[@]}" top api` и `"${C[@]}" ps -q api` | Один процесс `uvicorn`, без дочерних worker-ов, один контейнер |
 
 ## 7. Резервное копирование
@@ -456,7 +463,7 @@ printf '%s\n' "$backup_file" > "$release_dir/backup.path"
 # После успеха: обновить только приложение, без пересоздания DB/Redis/Caddy.
 "${C[@]}" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 api miniapp
 curl -fsS https://burmaldoza.ru/health/ready
-# Выполнить bot HTTPS/API probe из раздела 6, затем:
+# Выполнить bot internal API probe из раздела 6, затем:
 "${C[@]}" up -d --no-deps --no-build --pull never bot
 ```
 

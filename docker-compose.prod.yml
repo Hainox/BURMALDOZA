@@ -84,7 +84,7 @@ services:
       timeout: 5s
       retries: 12
       start_period: 30s
-    networks: [backend, edge]
+    networks: [backend, edge, bot_api]
 
   bot:
     build:
@@ -95,16 +95,14 @@ services:
       BOT_TOKEN: ${BOT_TOKEN:?Set the new BotFather token in the server .env}
       INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:?Set INTERNAL_API_TOKEN (long random, not equal to BOT_TOKEN) in the server .env}
       MINIAPP_URL: ${MINIAPP_URL:-https://burmaldoza.ru}
-      # BotConfig requires HTTPS in production. Resolve this host to Caddy on the edge network.
-      API_BASE_URL: https://burmaldoza.ru
+      # Private Docker service URL, reachable only through the internal bot_api network.
+      API_BASE_URL: http://api:8000
       ENVIRONMENT: production
     depends_on:
       api:
         condition: service_healthy
-      caddy:
-        condition: service_started
-    # Caddy provides HTTPS to the API; edge also allows outbound Telegram Bot API access.
-    networks: [edge]
+    # bot_api isolates the API hop; edge provides outbound Telegram Bot API access.
+    networks: [edge, bot_api]
 
   miniapp:
     build:
@@ -160,11 +158,12 @@ configs:
           Referrer-Policy "strict-origin-when-cross-origin"
           -Server
         }
-        @api path /api/* /health /health/*
-        handle @api {
-          reverse_proxy api:8000
-        }
-        handle {
+        route {
+          @internal_api path /api/v1/internal /api/v1/internal/*
+          respond @internal_api 404
+
+          @api path /api/* /health /health/*
+          reverse_proxy @api api:8000
           reverse_proxy miniapp:8080
         }
       }
@@ -176,6 +175,9 @@ configs:
 networks:
   # No outside connectivity: PostgreSQL and Redis are reachable only from api.
   backend:
+    internal: true
+  # Only the bot and API join this network; it is not routable outside Docker.
+  bot_api:
     internal: true
   edge: {}
 
