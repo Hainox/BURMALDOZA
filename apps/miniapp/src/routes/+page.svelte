@@ -81,6 +81,7 @@
   let liveApiEnabled = false;
   let apiLoading = false;
   let apiError: string | null = null;
+  let actionPending = false;
   let closeRoomStream: (() => void) | null = null;
 
   function clearTimers() {
@@ -143,6 +144,7 @@
     if (apiLoading) return;
     clearTimers();
     isRunning = false;
+    actionPending = false;
     selectedGame = gameType;
     demoFreeSpinsRemaining = 0;
     const definition = roomDefinitions.find((room) => room.gameType === gameType);
@@ -249,9 +251,10 @@
   }
 
   async function runLiveAction(action: string, fields: Record<string, unknown> = {}) {
-    if (!apiClient || !selectedGame || isRunning || !roomState.snapshot) return;
+    if (!apiClient || !selectedGame || isRunning || actionPending || !roomState.snapshot) return;
     clearTimers();
     isRunning = true;
+    actionPending = true;
     apiError = null;
     roomState.setResult(null);
     roomState.transition({ type: 'USER_INTENT' }, session.reducedMotion);
@@ -290,6 +293,7 @@
         clearTimers();
         roomState.reset();
         isRunning = false;
+        actionPending = false;
         return;
       }
       const resultDelay = selectedGame === 'slot'
@@ -302,11 +306,13 @@
         after(selectedGame === 'slot' ? SLOT_SETTLE_DURATION : 360, () => {
           roomState.transition({ type: 'SETTLE_COMPLETE' }, session.reducedMotion);
           isRunning = false;
+          actionPending = false;
         });
       });
     } catch (error) {
       clearTimers();
       isRunning = false;
+      actionPending = false;
       session.setConnection('offline');
       apiError = error instanceof Error ? error.message : 'Сервер не подтвердил действие';
       roomState.reset();
@@ -325,6 +331,7 @@
     if (!roomState.snapshot) return;
     clearTimers();
     isRunning = false;
+    actionPending = false;
     roomState.setResult(null);
     session.setConnection('syncing');
 
@@ -358,6 +365,7 @@
     closeRoomStream?.();
     closeRoomStream = null;
     isRunning = false;
+    actionPending = false;
     roomState.reset();
     selectedGame = null;
     session.setConnection(liveApiEnabled ? 'connected' : 'demo');
@@ -408,7 +416,15 @@
       {#if selectedGame === 'slot'}
         <SlotRoom motion={roomState.motion} result={roomState.result} onAction={runAction} resultSource={liveApiEnabled ? 'live' : 'demo'} />
       {:else if selectedGame === 'blackjack'}
-        <BlackjackRoom motion={roomState.motion} result={roomState.result} onAction={runAction} resultSource={liveApiEnabled ? 'live' : 'demo'} />
+        <BlackjackRoom
+          snapshot={roomState.snapshot}
+          motion={roomState.motion}
+          result={roomState.result}
+          pending={actionPending}
+          apiError={apiError}
+          onAction={runAction}
+          resultSource={liveApiEnabled ? 'live' : 'demo'}
+        />
       {:else}
         <PokerRoom motion={roomState.motion} result={roomState.result} onAction={runAction} resultSource={liveApiEnabled ? 'live' : 'demo'} />
       {/if}
