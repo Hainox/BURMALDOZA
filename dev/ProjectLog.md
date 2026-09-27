@@ -252,3 +252,10 @@
 - Compose passes the setting to API and bot; `.env.example` leaves its value empty. Production must provision one separate matching value to both services before rollout. This is a coordinated deployment change, so it is recorded in `ChangeLog.md`.
 - Local verification: `uv run --locked ruff check .` passed; `uv run --locked pytest -q` returned 127 passed, 6 skipped, 2 existing deprecation warnings; `docker compose --env-file .env.example config --quiet` and `git diff --check` passed. Tests cover valid/wrong/absent/reused/non-ASCII tokens, old header rejection, bot configuration, and client header. PostgreSQL integration did not run locally because `TEST_DATABASE_URL` is absent; GitHub CI is required before merge.
 - Open: owner review and CI before merge/deployment; provision the real value outside repository and logs.
+
+## 2026-09-24 — граница масштабирования API (Codex PR C)
+
+- Проверено: `EventBus` хранит подписчиков в памяти процесса; `apps/api/Dockerfile` запускает Uvicorn без `--workers`. В `docs/Local-Setup.md` закреплён поддерживаемый production режим: один API worker и одна реплика до утверждения межпроцессной доставки событий.
+- Redis Pub/Sub для игровых событий не реализован. Если владелец запросит несколько worker-ов/реплик, нужен отдельный архитектурный проект с отказами, порядком/повторами доставки, восстановлением из PostgreSQL и двухпроцессными тестами; этот PR его не внедряет.
+- 32-битный `Integer` для баланса/ledger отмечен как отложенный риск. Миграция на `BigInteger` ждёт утверждённого владельцем порога и требований совместимости.
+- Проверки: `git diff --check` и `uv run --locked ruff check .` прошли; `uv run --locked pytest -q` — 115 passed, 6 skipped, 2 прежних deprecation warnings. PostgreSQL integration локально не запускалась (`TEST_DATABASE_URL` отсутствует), CI обязателен перед merge. Код и поведение не изменены; `ChangeLog.md` не требуется. Merge/deploy — только после решения владельца.
