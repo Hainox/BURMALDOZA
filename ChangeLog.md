@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Fixed the slot reel stop: each reel now accelerates with its 0/110/220 ms stagger, holds a steady cruising speed to its own stop start (2000/2160/2320 ms), then brakes from that same speed to the exact server-confirmed grid. The shared slowdown that froze all reels together mid-spin and the visible relaunch jerk of the center and right reels are gone.
 - Added live Daily (+250 JG) and Relief (+300 JG) grant controls to the Mini App dashboard: one `getWallet()` bootstrap call, fresh idempotency key per claim, balance only from the confirmed `balance_after`, 409 shown as cooldown, and no grant simulation in demo mode.
 - Added the playable Blackjack GFL room UI: server-confirmed Deck A cards (RPK-16 at A♥, AK-12 at K♥), hidden hole-card back, 25–100 integer betting, legal-action buttons, error/retry and reconnect from the server snapshot, and reduced-motion support.
 - Hardened production runbook checks against exported shell variables shadowing `.env`; nightly backup scheduling now works on a fresh account and is idempotent. Added explicit recovery steps for a failed database-name switch during rollback.

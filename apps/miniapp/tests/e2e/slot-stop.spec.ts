@@ -29,30 +29,70 @@ test.describe('Slot v2 stop continuity', () => {
     const during = await sampleTrackTransform(page, 0);
     expect(during).not.toBe(before);
 
-    const landedMs = await page.evaluate(async () => {
+    const spinTelemetry = await page.evaluate(async () => {
       const read = (index: number) =>
         (document.querySelector(`[data-testid="slot-reel-${index}"]`) as HTMLElement).getAttribute(
           'data-reel-phase'
         );
       const stamps: number[] = [];
       const started = performance.now();
+      const frames: Array<{ transforms: string[]; phases: Array<string | null> }> = [];
       for (let guard = 0; guard < 400; guard++) {
         let landed = 0;
+        const phases: Array<string | null> = [];
         for (let index = 0; index < 3; index++) {
-          if (stamps[index] === undefined && read(index) === 'landed') {
+          const phase = read(index);
+          phases.push(phase);
+          if (stamps[index] === undefined && phase === 'landed') {
             stamps[index] = performance.now() - started;
           }
-          if (read(index) === 'landed') landed += 1;
+          if (phase === 'landed') landed += 1;
         }
+        frames.push({
+          transforms: [0, 1, 2].map(
+            (index) =>
+              getComputedStyle(
+                document.querySelector(`[data-testid="slot-reel-track-${index}"]`) as HTMLElement
+              ).transform
+          ),
+          phases
+        });
         if (landed === 3) break;
         await new Promise((resolve) => setTimeout(resolve, 10));
       }
-      return stamps;
+      return { stamps, frames };
     });
+    const { stamps: landedMs, frames } = spinTelemetry as {
+      stamps: number[];
+      frames: Array<{ transforms: string[]; phases: Array<string | null> }>;
+    };
     expect(landedMs).toHaveLength(3);
     expect(landedMs[1]).toBeGreaterThanOrEqual(landedMs[0]);
     expect(landedMs[2]).toBeGreaterThanOrEqual(landedMs[1]);
     expect(landedMs[2] - landedMs[0]).toBeGreaterThanOrEqual(100);
+
+    const firstLeftLanded = frames.findIndex((frame) => frame.phases[0] === 'landed');
+    expect(firstLeftLanded).toBeGreaterThanOrEqual(0);
+    const afterLeftLanded = frames.slice(Math.max(0, firstLeftLanded - 1), firstLeftLanded + 5);
+    const centerKeepsMoving = afterLeftLanded.some(
+      (frame, frameIndex) => frameIndex > 0 && frame.transforms[1] !== afterLeftLanded[frameIndex - 1].transforms[1]
+    );
+    const rightKeepsMoving = afterLeftLanded.some(
+      (frame, frameIndex) => frameIndex > 0 && frame.transforms[2] !== afterLeftLanded[frameIndex - 1].transforms[2]
+    );
+    expect(centerKeepsMoving).toBe(true);
+    expect(rightKeepsMoving).toBe(true);
+
+    const travelStart = frames.findIndex((frame) => frame.phases[0] === 'travel');
+    expect(travelStart).toBeGreaterThanOrEqual(0);
+    const earlyTravel = frames.slice(travelStart, travelStart + 8);
+    expect(earlyTravel.length).toBeGreaterThanOrEqual(4);
+    const transformMoves = [0, 1, 2].map((index) =>
+      earlyTravel.some(
+        (frame, frameIndex) => frameIndex > 0 && frame.transforms[index] !== earlyTravel[frameIndex - 1].transforms[index]
+      )
+    );
+    expect(transformMoves).toEqual([true, true, true]);
 
     await expect(machine).toHaveAttribute('data-slot-phase', 'settled', { timeout: 5000 });
     await expect(machine).toHaveAttribute('data-stopped-reels', '3');
