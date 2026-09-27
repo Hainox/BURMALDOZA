@@ -11,7 +11,7 @@
 
 ```bash
 cp .env.example .env
-# Задайте POSTGRES_PASSWORD и свежий BOT_TOKEN.
+# Задайте POSTGRES_PASSWORD, свежий BOT_TOKEN и отдельный INTERNAL_API_TOKEN.
 # Не используйте токен, который был отправлен в чат или коммит.
 pnpm install --frozen-lockfile
 uv sync --locked --all-groups
@@ -34,8 +34,14 @@ curl --fail http://localhost:8000/health/ready
 - `postgres` — PostgreSQL 16, durable volumes;
 - `redis` — Redis 7 AOF, locks/presence/pub-sub boundary;
 - `api` — Alembic upgrade + FastAPI на `API_PORT`;
-- `bot` — aiogram polling, требует свежий `BOT_TOKEN`;
+- `bot` — aiogram polling, требует свежий `BOT_TOKEN` и отдельный `INTERNAL_API_TOKEN`;
 - `miniapp` — статический SvelteKit build через nginx на `MINIAPP_PORT`.
+
+### Production API worker boundary
+
+Поддерживаемый режим до отдельного архитектурного решения — **один процесс API с одним Uvicorn worker и одна реплика API**. Текущий `apps/api/Dockerfile` запускает Uvicorn без `--workers`; не добавляйте workers и не масштабируйте сервис `api` на несколько реплик. `EventBus` хранит подписки WebSocket только в памяти этого процесса. Redis запущен в Compose, но транспорт событий через Redis Pub/Sub пока не реализован: событие из другого процесса не дойдёт до подключённого сокета. PostgreSQL хранит snapshot и действия, но сам по себе не доставляет live-события между процессами.
+
+Если понадобится несколько API workers или реплик, сначала утвердите отдельный проект Redis Pub/Sub: доставку и порядок событий, поведение при разрыве Redis, повторную доставку и восстановление из PostgreSQL, ограничение очередей, а также интеграционные тесты с двумя API процессами и отключением Redis. До принятия и проверки этого проекта сохраняйте один API worker/реплику.
 
 Для live-режима Mini App передайте API endpoint на этапе сборки:
 

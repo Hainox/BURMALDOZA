@@ -7,6 +7,7 @@ from apps.bot.app.main import BotConfig, load_config
 
 def test_missing_bot_configuration_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("BOT_TOKEN", raising=False)
+    monkeypatch.delenv("INTERNAL_API_TOKEN", raising=False)
     monkeypatch.delenv("MINIAPP_URL", raising=False)
     monkeypatch.delenv("API_BASE_URL", raising=False)
 
@@ -18,6 +19,7 @@ def test_missing_bot_configuration_is_rejected(monkeypatch: pytest.MonkeyPatch) 
 def test_missing_url_is_rejected(monkeypatch: pytest.MonkeyPatch, missing: str) -> None:
     values = {
         "BOT_TOKEN": "TEST_BOT_TOKEN",
+        "INTERNAL_API_TOKEN": "TEST_INTERNAL_TOKEN",
         "MINIAPP_URL": "https://miniapp.example.test",
         "API_BASE_URL": "https://api.example.test",
     }
@@ -31,6 +33,7 @@ def test_missing_url_is_rejected(monkeypatch: pytest.MonkeyPatch, missing: str) 
 
 def test_valid_development_config_is_loaded(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("BOT_TOKEN", "TEST_BOT_TOKEN")
+    monkeypatch.setenv("INTERNAL_API_TOKEN", "TEST_INTERNAL_TOKEN")
     monkeypatch.setenv("MINIAPP_URL", "http://localhost:4173")
     monkeypatch.setenv("API_BASE_URL", "http://localhost:8000")
     monkeypatch.setenv("ENVIRONMENT", "development")
@@ -39,6 +42,7 @@ def test_valid_development_config_is_loaded(monkeypatch: pytest.MonkeyPatch) -> 
 
     assert config == BotConfig(
         token="TEST_BOT_TOKEN",
+        internal_api_token="TEST_INTERNAL_TOKEN",
         miniapp_url="http://localhost:4173",
         api_base_url="http://localhost:8000",
         environment="development",
@@ -47,9 +51,29 @@ def test_valid_development_config_is_loaded(monkeypatch: pytest.MonkeyPatch) -> 
 
 def test_production_rejects_placeholder_or_insecure_urls(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("BOT_TOKEN", "TEST_BOT_TOKEN")
+    monkeypatch.setenv("INTERNAL_API_TOKEN", "TEST_INTERNAL_TOKEN")
     monkeypatch.setenv("MINIAPP_URL", "https://example.invalid")
     monkeypatch.setenv("API_BASE_URL", "http://localhost:8000")
     monkeypatch.setenv("ENVIRONMENT", "production")
 
     with pytest.raises(RuntimeError, match="MINIAPP_URL"):
         load_config()
+
+
+def test_missing_or_reused_internal_token_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("BOT_TOKEN", "TEST_BOT_TOKEN")
+    monkeypatch.setenv("MINIAPP_URL", "http://localhost:4173")
+    monkeypatch.setenv("API_BASE_URL", "http://localhost:8000")
+    monkeypatch.delenv("INTERNAL_API_TOKEN", raising=False)
+
+    with pytest.raises(RuntimeError, match="INTERNAL_API_TOKEN"):
+        load_config()
+
+    monkeypatch.setenv("INTERNAL_API_TOKEN", "TEST_BOT_TOKEN")
+    with pytest.raises(RuntimeError, match="INTERNAL_API_TOKEN"):
+        load_config()
+
+    for invalid in (" ", "é"):
+        monkeypatch.setenv("INTERNAL_API_TOKEN", invalid)
+        with pytest.raises(RuntimeError, match="INTERNAL_API_TOKEN"):
+            load_config()
