@@ -18,6 +18,8 @@ uv sync --locked --all-groups
 pnpm --dir apps/miniapp exec playwright install chromium
 ```
 
+Без `INTERNAL_API_TOKEN` бот не стартует, а внутренние запросы бота к API получают 401. Значение должно быть длинным случайным и не равным `BOT_TOKEN`; одно и то же значение задаётся для `api` и `bot`. Сгенерировать локально (32 случайных байта): `uv run python -c "import secrets; print(secrets.token_hex(32))"`. Не публикуйте значение и не коммитьте `.env`.
+
 Если CDN браузера недоступен, установите Chromium на хосте и укажите `executablePath` в локальном Playwright config; пропущенный browser runtime нельзя считать зелёным e2e.
 
 ## Полный Compose-контур
@@ -32,7 +34,7 @@ curl --fail http://localhost:8000/health/ready
 Сервисы:
 
 - `postgres` — PostgreSQL 16, durable volumes;
-- `redis` — Redis 7 AOF, locks/presence/pub-sub boundary;
+- `redis` — Redis 7 AOF; запущен в Compose, но игровые события через него пока не передаются (см. «Production API worker boundary» ниже);
 - `api` — Alembic upgrade + FastAPI на `API_PORT`;
 - `bot` — aiogram polling, требует свежий `BOT_TOKEN` и отдельный `INTERNAL_API_TOKEN`;
 - `miniapp` — статический SvelteKit build через nginx на `MINIAPP_PORT`.
