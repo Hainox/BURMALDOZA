@@ -1,5 +1,14 @@
 # Project Log
 
+## 2026-09-27 — CCode issue #11: wallet grants UI (meta/muse-spark-1.3-contributor, high)
+
+- От свежего `origin/main` (`01705de`, PR #14 принят) создана ветка `ccode/wallet-grants-ui`. Gate по issue #6 не пройден: PR #15 открыт и не слит.
+- `apps/miniapp/src/lib/components/WalletGrantControls.svelte` (новый): daily/relief кнопки только в live-режиме, свежий `crypto.randomUUID()` на каждый claim, блокировка кнопки на время pending, баланс только из `balance_after`, 409 как ожидаемый cooldown, остальные ошибки как retryable.
+- `apps/miniapp/src/routes/+page.svelte`: стартовая загрузка идёт одним `getWallet()` без параллельного `getCurrentUser()`; панель выдач показана только в live API mode; demo-выдача не имитируется.
+- `apps/miniapp/tests/e2e/wallet-grants.spec.ts` (новый): daily success + повторный тап, relief 409, live/demo различие.
+- Проверки: `pnpm miniapp:check` — 0/0; `pnpm miniapp:test` — 25 passed; `pnpm miniapp:build` — passed; `pnpm --dir apps/miniapp exec playwright test tests/e2e/wallet-grants.spec.ts --workers=1` — 3 passed (Chromium, Windows).
+- Открыто: PR из `ccode/wallet-grants-ui` в `main` после завершения issue #6; ручная проверка на реальном Telegram WebView не выполнялась.
+
 ## 2026-09-23 — Claude Pro в рабочем процессе
 
 - Claude Pro добавлен в процесс через отдельный Claude Code CLI: Codex отвечает за проектные решения и интеграцию, Claude Code — за изолированные небольшие задачи и независимый review, CCode сохраняет назначенную UI/motion handoff-роль. Один исполнитель на набор файлов; текущая Blackjack UI-задача #6 остаётся у CCode после gate PR #8.

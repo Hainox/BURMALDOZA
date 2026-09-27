@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added live Daily (+250 JG) and Relief (+300 JG) grant controls to the Mini App dashboard: one `getWallet()` bootstrap call, fresh idempotency key per claim, balance only from the confirmed `balance_after`, 409 shown as cooldown, and no grant simulation in demo mode.
 - First login through HTTP or WebSocket now handles concurrent requests without duplicate welcome grants or server errors; wallet bootstrap no longer creates a placeholder user.
 - Bot-to-API requests now require a separate `INTERNAL_API_TOKEN` in both services and use `X-Internal-API-Token`; deploy both services with the same newly provisioned internal token. The bot refuses startup without it, and the API rejects internal requests when it is unset or reused from `BOT_TOKEN`.
 - Expanded the Blackjack GFL Pages preview to switch between Deck A and Deck B, assigned RPK-16 to A♥ and AK-12 to K♥, and added 52 sourced Deck B portraits with M82A1 at 6♥ and PTRD at 7♥. Replaced the room concept with an abandoned-building police perimeter scene and updated its ambient sound direction.

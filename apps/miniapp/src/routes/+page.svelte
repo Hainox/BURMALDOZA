@@ -4,6 +4,8 @@
   import BalancePill from '$lib/components/BalancePill.svelte';
   import RoomCard from '$lib/components/RoomCard.svelte';
   import RoomShell from '$lib/components/RoomShell.svelte';
+  import WalletGrantControls from '$lib/components/WalletGrantControls.svelte';
+  import type { ApiLedgerResult } from '$lib/api/client';
   import { getTelegramWebApp } from '$lib/telegram/webapp';
   import BlackjackRoom from '$lib/rooms/BlackjackRoom.svelte';
   import PokerRoom from '$lib/rooms/PokerRoom.svelte';
@@ -313,6 +315,11 @@
     }
   }
 
+  function applyConfirmedGrant(confirmed: ApiLedgerResult) {
+    if (!Number.isInteger(confirmed.balance_after) || confirmed.balance_after < 0) return;
+    session.setBalance(confirmed.balance_after);
+  }
+
   function runAction(action: string, fields: Record<string, unknown> = {}) {
     if (liveApiEnabled && apiClient) {
       void runLiveAction(action, fields);
@@ -374,7 +381,7 @@
     if (liveApiEnabled) {
       apiClient = new ApiClient(PUBLIC_API_BASE_URL, webApp.initData);
       session.setConnection('connecting');
-      void Promise.all([apiClient.getCurrentUser(), apiClient.getWallet()]).then(([, wallet]) => {
+      void apiClient.getWallet().then((wallet) => {
         session.setBalance(wallet.balance, wallet.currency_code);
         session.setConnection('connected');
       }).catch((error) => {
@@ -440,6 +447,10 @@
       </aside>
       {#if apiError}
         <p class="api-error" role="alert">API: {apiError}</p>
+      {/if}
+
+      {#if liveApiEnabled && apiClient}
+        <WalletGrantControls apiClient={apiClient} live={liveApiEnabled} balance={session.balance} onConfirmed={applyConfirmedGrant} />
       {/if}
 
       <section class="rooms-section" aria-labelledby="rooms-title">
