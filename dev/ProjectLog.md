@@ -295,3 +295,15 @@
 - В `docs/Deploy-Production.md`, раздел 3, описательная строка про установку Docker заменена исполняемым блоком из официального apt-репозитория Docker: ключ в `/etc/apt/keyrings/docker.asc`, `docker-ce`, `docker-ce-cli`, `containerd.io`, `docker-buildx-plugin`, `docker-compose-plugin`, `systemctl enable --now docker`, `usermod -aG docker deploy` и проверка `docker compose version`. Добавлены пояснения: почему не подходят snap и Ubuntu-пакет `docker.io`, требование Compose 2.23.1+ из-за `configs.content`, необходимость нового SSH-сеанса после `usermod` и связь Docker с `ufw` (R1).
 - Проверки: `bash -n` для всех 16 Bash-блоков runbook — исполнимые блоки разбираются, единственный отказ у пред-существующего плейсхолдера `git checkout <SHA …>`, который намеренно не является валидным shell; `git diff --check` — passed. На сервер не заходили, `SSH`, production `.env` и деплой не трогали.
 - Изменены только `docs/Deploy-Production.md` и `dev/ProjectLog.md`.
+
+## 2026-09-27 — эксплуатационные замечания к runbook PR #26
+
+- Codex продолжил `codex/production-deploy` от базы `main` `01705de`, исходный head `7a34618`; назначенный маршрут — `gpt-6-sol / high`, фактические runtime model ID/effort отдельно не подтверждены. Изменения ограничены allowlist issue #23: `docs/Deploy-Production.md`, `ChangeLog.md` и этот журнал.
+
+- В Compose shell variables имеют приоритет над `--env-file`, поэтому runbook теперь останавливает preflight/startup/backup/restore/rollback, если shell экспортирует используемые production interpolation variables. Проверка печатает только имя переменной, значение не выводит.
+
+- Установка ночного backup cron теперь работает и при отсутствии crontab и не добавляет одну и ту же задачу повторно. В разделах 8–9 явно описано, какие SSH/Bash-переменные должны сохраняться между блоками; для сбоя переименования БД добавлено безопасное восстановление по фактическому состоянию имён.
+
+- Проверки: `bash -n` — 18 блоков runbook разобраны успешно после нормализации текстовых placeholders; `git diff --check` — passed. Последний опубликованный CI run `36296832893` на базовом head `7a34618` успешен, но ещё не включает эти локальные изменения; после обновления PR нужен новый CI. Новые контейнеры не запускались; сервер, `.env`, merge и deploy не затрагивались.
+
+- Осталось: новая CI проверка опубликованного diff; read-only review PR #26 и решение владельца. `docs/Launch-Checkpoint.md` не менять до отдельного шага после merge #26.

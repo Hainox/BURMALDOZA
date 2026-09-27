@@ -166,6 +166,12 @@ cut -d= -f1 .env         # проверка: только имена перем�
 ```bash
 set -euo pipefail
 cd /srv/burmaldoza
+for name in POSTGRES_DB POSTGRES_USER POSTGRES_PASSWORD BOT_TOKEN INTERNAL_API_TOKEN MINIAPP_URL PUBLIC_API_BASE_URL; do
+  if printenv "$name" >/dev/null; then
+    printf 'Exported %s overrides the server .env; unset it and rerun this block.\n' "$name" >&2
+    exit 1
+  fi
+done
 C=(docker compose -f /srv/burmaldoza/docker-compose.prod.yml --env-file /srv/burmaldoza/.env)
 git status --short && git log -1 --format='%h %s'      # чистое дерево, ожидаемый SHA
 docker compose version                                 # 2.23.1+
@@ -189,7 +195,10 @@ sudo ufw status verbose                                 # 22, 80, 443/tcp, 443/u
 df -h / && free -h
 ```
 
-Во всех блоках нужен Bash; при любой ошибке остановиться и исправить её до следующей команды.
+Во всех блоках нужен Bash; при любой ошибке остановиться и исправить её до следующей команды. Compose
+даёт экспортированным переменным оболочки приоритет перед `--env-file`; проверка выше останавливается,
+если в текущей сессии есть такие переменные, и выводит только их имена. Раздел 6 выполняйте в той же
+SSH/Bash-сессии, чтобы сохранился массив `C`.
 Вывод `config --format json` выше идёт прямо в валидатор, который печатает только результат.
 Не добавлять `tee`, shell tracing и вывод исходного JSON: в нём находятся секреты.
 
@@ -197,6 +206,14 @@ df -h / && free -h
 
 ```bash
 set -euo pipefail
+cd /srv/burmaldoza
+for name in POSTGRES_DB POSTGRES_USER POSTGRES_PASSWORD BOT_TOKEN INTERNAL_API_TOKEN MINIAPP_URL PUBLIC_API_BASE_URL; do
+  if printenv "$name" >/dev/null; then
+    printf 'Exported %s overrides the server .env; unset it and rerun this block.\n' "$name" >&2
+    exit 1
+  fi
+done
+C=(docker compose -f /srv/burmaldoza/docker-compose.prod.yml --env-file /srv/burmaldoza/.env)
 "${C[@]}" build --pull api bot miniapp
 "${C[@]}" pull postgres redis caddy
 "${C[@]}" up -d --no-build --pull never --wait --wait-timeout 180 postgres redis api miniapp caddy
@@ -267,6 +284,12 @@ sudo tee /usr/local/bin/burmaldoza-backup >/dev/null <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 umask 077
+for name in POSTGRES_DB POSTGRES_USER POSTGRES_PASSWORD BOT_TOKEN INTERNAL_API_TOKEN MINIAPP_URL PUBLIC_API_BASE_URL; do
+  if printenv "$name" >/dev/null; then
+    printf 'Exported %s overrides the server .env; unset it and rerun the backup.\n' "$name" >&2
+    exit 1
+  fi
+done
 exec 9>/var/backups/burmaldoza/.backup.lock
 flock -n 9 || exit 1
 cd /srv/burmaldoza
@@ -282,7 +305,9 @@ printf '%s\n' "$out"
 EOF
 sudo chmod 755 /usr/local/bin/burmaldoza-backup
 /usr/local/bin/burmaldoza-backup && ls -lh /var/backups/burmaldoza      # первый запуск вручную
-( crontab -l 2>/dev/null; echo '30 3 * * * /usr/local/bin/burmaldoza-backup' ) | crontab -
+if ! crontab -l 2>/dev/null | grep -Fqx '30 3 * * * /usr/local/bin/burmaldoza-backup'; then
+  ( crontab -l 2>/dev/null || true; printf '%s\n' '30 3 * * * /usr/local/bin/burmaldoza-backup' ) | crontab -
+fi
 ```
 
 Проверить `command -v age flock` перед установкой задания. Cron запускает `deploy`, а не root.
@@ -307,6 +332,12 @@ sudo chmod 755 /usr/local/bin/burmaldoza-backup
 ```bash
 set -euo pipefail
 # на сервере: пустая база для проверки
+for name in POSTGRES_DB POSTGRES_USER POSTGRES_PASSWORD BOT_TOKEN INTERNAL_API_TOKEN MINIAPP_URL PUBLIC_API_BASE_URL; do
+  if printenv "$name" >/dev/null; then
+    printf 'Exported %s overrides the server .env; unset it and rerun this block.\n' "$name" >&2
+    exit 1
+  fi
+done
 C=(docker compose -f /srv/burmaldoza/docker-compose.prod.yml --env-file /srv/burmaldoza/.env)
 restore_db="burmaldoza_restore_$(date -u +%Y%m%d%H%M%S)"
 "${C[@]}" exec -T postgres sh -c 'createdb -U "$POSTGRES_USER" "$1"' sh "$restore_db"
@@ -323,6 +354,9 @@ age -d -i burmaldoza-backup.key burmaldoza-<дата>.dump.age | ssh deploy@<с�
   "docker compose -f /srv/burmaldoza/docker-compose.prod.yml --env-file /srv/burmaldoza/.env exec -T postgres \
    sh -c 'pg_restore -U \"\$POSTGRES_USER\" -d \"$restore_db\" --no-owner --exit-on-error --single-transaction'"
 ```
+
+Оставьте серверную SSH/Bash-сессию из первого блока открытой, пока выполняете блок на ПК: следующий
+серверный блок использует сохранённые в ней `C` и `restore_db`.
 
 ```bash
 set -euo pipefail
@@ -355,9 +389,19 @@ SQL
 До обновления сохранить **реально запущенные образы всех шести сервисов**. Повторная сборка старого
 SHA не является точным откатом: базовые image tags могут уже указывать на другие версии.
 
+Выполняйте первый и следующие серверные блоки раздела 9 в одной SSH/Bash-сессии: последующие команды
+используют переменные `C` и `release_dir`, созданные в первом блоке. При разрыве сессии остановитесь и
+повторно пройдите нужный шаг по фактическому состоянию; не запускайте следующий блок вслепую.
+
 ```bash
 set -euo pipefail
 cd /srv/burmaldoza
+for name in POSTGRES_DB POSTGRES_USER POSTGRES_PASSWORD BOT_TOKEN INTERNAL_API_TOKEN MINIAPP_URL PUBLIC_API_BASE_URL; do
+  if printenv "$name" >/dev/null; then
+    printf 'Exported %s overrides the server .env; unset it and rerun this block.\n' "$name" >&2
+    exit 1
+  fi
+done
 C=(docker compose -f /srv/burmaldoza/docker-compose.prod.yml --env-file /srv/burmaldoza/.env)
 umask 077
 release="$(git rev-parse HEAD)-$(date -u +%Y%m%dT%H%M%SZ)"
@@ -459,9 +503,28 @@ SQL
 # Только после успеха: откат кода на сохранённые образы по блоку выше, затем проверки раздела 6.
 ```
 
-Переименование не является одной транзакцией: при ошибке оставить API/bot остановленными,
-проверить имена через `psql -lqt` и завершить переключение вручную. `burmaldoza_failed_<дата>`
-остаётся с запрещёнными подключениями и сохраняется до отдельного решения владельца.
+Переименование не является одной транзакцией. Если любой шаг завершился ошибкой, оставьте API/bot
+остановленными и **сначала** проверьте имена баз через `psql -lqt`; не запускайте весь блок повторно.
+Если исходная база всё ещё называется `$POSTGRES_DB`, но подключения запрещены, разрешите их снова:
+
+```bash
+"${C[@]}" exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d postgres -v ON_ERROR_STOP=1 -v live="$POSTGRES_DB"' <<'SQL'
+ALTER DATABASE :"live" ALLOW_CONNECTIONS true;
+SQL
+```
+
+Если исходная база уже переименована в `$failed_db`, а `$POSTGRES_DB` отсутствует, верните её под
+боевое имя и включите подключения:
+
+```bash
+"${C[@]}" exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d postgres -v ON_ERROR_STOP=1 -v live="$POSTGRES_DB" -v failed="$1"' sh "$failed_db" <<'SQL'
+ALTER DATABASE :"failed" RENAME TO :"live";
+ALTER DATABASE :"live" ALLOW_CONNECTIONS true;
+SQL
+```
+
+Выполните только тот сценарий, который соответствует результату проверки имён. После восстановления
+повторите проверки раздела 6; база `burmaldoza_failed_<дата>` сохраняется до отдельного решения владельца.
 `alembic downgrade` допускается только после проверки downgrade конкретной миграции в review.
 
 
