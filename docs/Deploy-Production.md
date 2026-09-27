@@ -70,9 +70,29 @@ fallocate -l 4G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /
 echo '/swapfile none swap sw 0 0' >> /etc/fstab
 ```
 
-Docker Engine и плагин Compose ставятся из официального репозитория Docker
-(<https://docs.docker.com/engine/install/ubuntu/>), затем `usermod -aG docker deploy`.
-Проверка: `docker compose version` — не ниже 2.23.1.
+Docker Engine и плагин Compose ставятся из официального apt-репозитория Docker. Snap и Ubuntu-пакет
+`docker.io` не подходят: в них нет современного Compose v2. Нужен Compose **2.23.1+** (раздел 1),
+поэтому версия проверяется сразу после установки.
+
+```bash
+set -euo pipefail
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+chmod 0644 /etc/apt/keyrings/docker.asc
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" > /etc/apt/sources.list.d/docker.list
+apt update
+apt -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+systemctl enable --now docker
+usermod -aG docker deploy
+docker compose version
+```
+
+Если версия ниже 2.23.1 — остановиться и обновить плагин Compose: `configs.content` из
+`docker-compose.prod.yml` на старых версиях не разбирается. Членство в группе `docker` применяется
+к новой сессии `deploy`, поэтому после `usermod` выйти из SSH-сессии и войти заново, прежде чем
+запускать `docker` без `sudo`. Официальные инструкции: <https://docs.docker.com/engine/install/ubuntu/>.
+Docker вставляет правила iptables в обход `ufw`, поэтому закрытость держится не на `ufw`, а на том,
+что в `docker-compose.prod.yml` порты публикует только Caddy (R1).
 
 После проверки входа `ssh deploy@<сервер>` по ключу: в `/etc/ssh/sshd_config` задать
 `PasswordAuthentication no` и `PermitRootLogin prohibit-password`, затем `systemctl reload ssh`.
