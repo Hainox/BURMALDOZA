@@ -10,8 +10,8 @@ class BotApiError(RuntimeError):
 
 
 class BotApiClient:
-    def __init__(self, api_base_url: str, bot_token: str, *, timeout: float = 5.0) -> None:
-        self._bot_token = bot_token
+    def __init__(self, api_base_url: str, internal_api_token: str, *, timeout: float = 5.0) -> None:
+        self._internal_api_token = internal_api_token
         self._client = httpx.AsyncClient(base_url=api_base_url.rstrip("/"), timeout=timeout)
 
     async def get_balance(self, telegram_user_id: int) -> dict[str, Any]:
@@ -25,7 +25,9 @@ class BotApiClient:
 
     async def _get(self, path: str) -> Any:
         try:
-            response = await self._client.get(path, headers={"X-Bot-Token": self._bot_token})
+            response = await self._client.get(
+                path, headers={"X-Internal-API-Token": self._internal_api_token}
+            )
             response.raise_for_status()
             return response.json()
         except (httpx.HTTPError, ValueError) as error:
