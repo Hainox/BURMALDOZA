@@ -15,9 +15,20 @@ from app.services.wallet_service import WalletService
 router = APIRouter(prefix="/api/v1/internal/bot", tags=["internal"])
 
 
-def _require_bot_token(request: Request, provided: str | None) -> None:
-    configured = get_app_settings(request).bot_token
-    if not configured or not provided or not hmac.compare_digest(provided, configured):
+def _require_internal_api_token(request: Request, provided: str | None) -> None:
+    app_settings = get_app_settings(request)
+    configured = app_settings.internal_api_token
+    if (
+        not configured
+        or not provided
+        or not configured.isascii()
+        or not provided.isascii()
+        or not configured.isprintable()
+        or not provided.isprintable()
+        or any(character.isspace() for character in configured)
+        or (app_settings.bot_token and configured == app_settings.bot_token)
+        or not hmac.compare_digest(provided, configured)
+    ):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="internal auth required")
 
 
@@ -25,10 +36,10 @@ def _require_bot_token(request: Request, provided: str | None) -> None:
 async def internal_wallet(
     telegram_user_id: int,
     request: Request,
-    x_bot_token: str | None = Header(default=None, alias="X-Bot-Token"),
+    x_internal_api_token: str | None = Header(default=None, alias="X-Internal-API-Token"),
     session: AsyncSession = Depends(get_session),
 ) -> WalletSnapshot:
-    _require_bot_token(request, x_bot_token)
+    _require_internal_api_token(request, x_internal_api_token)
     user = (
         await session.execute(select(User).where(User.telegram_user_id == telegram_user_id))
     ).scalar_one_or_none()
@@ -41,10 +52,10 @@ async def internal_wallet(
 @router.get("/top")
 async def internal_top(
     request: Request,
-    x_bot_token: str | None = Header(default=None, alias="X-Bot-Token"),
+    x_internal_api_token: str | None = Header(default=None, alias="X-Internal-API-Token"),
     session: AsyncSession = Depends(get_session),
 ) -> list[dict[str, int | str]]:
-    _require_bot_token(request, x_bot_token)
+    _require_internal_api_token(request, x_internal_api_token)
     rows = (
         await session.execute(
             select(User.display_name, Wallet.balance)
