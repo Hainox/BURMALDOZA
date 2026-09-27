@@ -7,7 +7,7 @@
 - Production Caddy возвращает 404 для `/api/v1/internal/*` до публичного API proxy. Бот обращается по точному адресу `http://api:8000` через отдельную internal-сеть `bot_api`; production-конфигурация бота разрешает HTTP только для этого адреса. Токенная защита внутренних маршрутов сохранена.
 - Runbook описывает внешний 404 и проверку `/balance` и `/top`; добавлены тесты разрешённого внутреннего URL и отклонения других HTTP URL.
 - После синхронизации: Ruff — passed; `uv run --locked pytest -q tests/unit/test_bot_config.py` — 12 passed; `docker compose -f docker-compose.prod.yml config --quiet` — passed с синтетическими значениями; `git diff --check` — passed. До синхронизации Caddy прошёл `caddy validate` и smoke-тест публичных/внутренних маршрутов, включая encoded slash/name и двойной slash. Изолированный контейнерный прогон подтвердил доступ бота к API по внутренней сети; тестовый wallet-запрос вернул ожидаемый 404 для несуществующего пользователя.
-- Открыто: публикация чернового PR и CI/review; реальные `/balance` и `/top` в Telegram, production DNS/TLS и сервер не проверялись. Merge, deploy и SSH не выполнялись.
+- Открыто: draft PR #33 опубликован; CI и review ожидаются. Реальные `/balance` и `/top` в Telegram, production DNS/TLS и сервер не проверялись. Merge, deploy и SSH не выполнялись.
 
 ## 2026-09-27 — CCode issue #11: wallet grants UI (meta/muse-spark-1.3-contributor, high)
 
