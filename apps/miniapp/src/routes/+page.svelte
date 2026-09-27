@@ -4,6 +4,8 @@
   import BalancePill from '$lib/components/BalancePill.svelte';
   import RoomCard from '$lib/components/RoomCard.svelte';
   import RoomShell from '$lib/components/RoomShell.svelte';
+  import WalletGrantControls from '$lib/components/WalletGrantControls.svelte';
+  import type { ApiLedgerResult } from '$lib/api/client';
   import { getTelegramWebApp } from '$lib/telegram/webapp';
   import BlackjackRoom from '$lib/rooms/BlackjackRoom.svelte';
   import PokerRoom from '$lib/rooms/PokerRoom.svelte';
@@ -81,6 +83,7 @@
   let liveApiEnabled = false;
   let apiLoading = false;
   let apiError: string | null = null;
+  let actionPending = false;
   let closeRoomStream: (() => void) | null = null;
 
   function clearTimers() {
@@ -143,6 +146,7 @@
     if (apiLoading) return;
     clearTimers();
     isRunning = false;
+    actionPending = false;
     selectedGame = gameType;
     demoFreeSpinsRemaining = 0;
     const definition = roomDefinitions.find((room) => room.gameType === gameType);
@@ -249,9 +253,10 @@
   }
 
   async function runLiveAction(action: string, fields: Record<string, unknown> = {}) {
-    if (!apiClient || !selectedGame || isRunning || !roomState.snapshot) return;
+    if (!apiClient || !selectedGame || isRunning || actionPending || !roomState.snapshot) return;
     clearTimers();
     isRunning = true;
+    actionPending = true;
     apiError = null;
     roomState.setResult(null);
     roomState.transition({ type: 'USER_INTENT' }, session.reducedMotion);
@@ -290,6 +295,7 @@
         clearTimers();
         roomState.reset();
         isRunning = false;
+        actionPending = false;
         return;
       }
       const resultDelay = selectedGame === 'slot'
@@ -302,15 +308,22 @@
         after(selectedGame === 'slot' ? SLOT_SETTLE_DURATION : 360, () => {
           roomState.transition({ type: 'SETTLE_COMPLETE' }, session.reducedMotion);
           isRunning = false;
+          actionPending = false;
         });
       });
     } catch (error) {
       clearTimers();
       isRunning = false;
+      actionPending = false;
       session.setConnection('offline');
       apiError = error instanceof Error ? error.message : 'Сервер не подтвердил действие';
       roomState.reset();
     }
+  }
+
+  function applyConfirmedGrant(confirmed: ApiLedgerResult) {
+    if (!Number.isInteger(confirmed.balance_after) || confirmed.balance_after < 0) return;
+    session.setBalance(confirmed.balance_after);
   }
 
   function runAction(action: string, fields: Record<string, unknown> = {}) {
@@ -325,6 +338,7 @@
     if (!roomState.snapshot) return;
     clearTimers();
     isRunning = false;
+    actionPending = false;
     roomState.setResult(null);
     session.setConnection('syncing');
 
@@ -358,6 +372,7 @@
     closeRoomStream?.();
     closeRoomStream = null;
     isRunning = false;
+    actionPending = false;
     roomState.reset();
     selectedGame = null;
     session.setConnection(liveApiEnabled ? 'connected' : 'demo');
@@ -374,7 +389,7 @@
     if (liveApiEnabled) {
       apiClient = new ApiClient(PUBLIC_API_BASE_URL, webApp.initData);
       session.setConnection('connecting');
-      void Promise.all([apiClient.getCurrentUser(), apiClient.getWallet()]).then(([, wallet]) => {
+      void apiClient.getWallet().then((wallet) => {
         session.setBalance(wallet.balance, wallet.currency_code);
         session.setConnection('connected');
       }).catch((error) => {
@@ -408,7 +423,15 @@
       {#if selectedGame === 'slot'}
         <SlotRoom motion={roomState.motion} result={roomState.result} onAction={runAction} resultSource={liveApiEnabled ? 'live' : 'demo'} />
       {:else if selectedGame === 'blackjack'}
-        <BlackjackRoom motion={roomState.motion} result={roomState.result} onAction={runAction} resultSource={liveApiEnabled ? 'live' : 'demo'} />
+        <BlackjackRoom
+          snapshot={roomState.snapshot}
+          motion={roomState.motion}
+          result={roomState.result}
+          pending={actionPending}
+          apiError={apiError}
+          onAction={runAction}
+          resultSource={liveApiEnabled ? 'live' : 'demo'}
+        />
       {:else}
         <PokerRoom motion={roomState.motion} result={roomState.result} onAction={runAction} resultSource={liveApiEnabled ? 'live' : 'demo'} />
       {/if}
@@ -440,6 +463,10 @@
       </aside>
       {#if apiError}
         <p class="api-error" role="alert">API: {apiError}</p>
+      {/if}
+
+      {#if liveApiEnabled && apiClient}
+        <WalletGrantControls apiClient={apiClient} live={liveApiEnabled} balance={session.balance} onConfirmed={applyConfirmedGrant} />
       {/if}
 
       <section class="rooms-section" aria-labelledby="rooms-title">

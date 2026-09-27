@@ -56,7 +56,10 @@ origin без пути (`https://hainox.github.io`), а для Pages `MINIAPP_UR
 **Что сделать:** в `_db_replay` сравнивать `operation.wallet_id` с текущим кошельком и
 отвечать ошибкой при несовпадении.
 
-### 5. Низкая — `_db_get_or_create_wallet` создаёт «фейкового» пользователя
+### 5. Низкая — `_db_get_or_create_wallet` создаёт «фейкового» пользователя — ✅ исправлено в PR #14
+
+После PR #14 кошелёк создаётся только для существующего `User` (`INSERT … SELECT … ON CONFLICT`),
+иначе — `WalletServiceError("user not found")`. Исходное описание:
 
 Если `users.id` не найден, создаётся `User(id=user_id, telegram_user_id=user_id)`. Явная вставка
 `id` не двигает PostgreSQL-sequence (будущий конфликт PK), а `telegram_user_id` может совпасть

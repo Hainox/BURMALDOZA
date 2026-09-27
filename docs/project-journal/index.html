@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <meta name="description" content="Локальный журнал разработки Бурмалдозы: этапы, публичные задачи, PR и очередь передач.">
+    <title>Журнал проекта · Бурмалдоза</title>
+    <link rel="stylesheet" href="./style.css">
+    <script defer src="./seed.js"></script>
+    <script defer src="./app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">К содержимому</a>
+    <div class="shell">
+      <aside class="sidebar" aria-label="Навигация журнала">
+        <div class="brand"><span class="brand-mark" aria-hidden="true">Б</span><span>Бурмалдоза<small>ЖУРНАЛ ПРОЕКТА</small></span></div>
+        <nav aria-label="Разделы"><a href="#overview">Обзор</a><a href="#roadmap">Этапы</a><a href="#activity">Issues и PR</a><a href="#handoff">Передачи</a></nav>
+        <div class="sidebar-note">Локальный рабочий обзор. Статусы синхронизируются только с публичным GitHub.</div>
+      </aside>
+      <main id="main">
+        <header class="topline"><span>ПРОЕКТ / СТАТУС</span><a href="https://github.com/Hainox/BURMALDOZA" target="_blank" rel="noopener noreferrer">Репозиторий ↗</a></header>
+        <section id="overview" class="intro" aria-labelledby="page-title">
+          <div><p class="eyebrow">Операционный журнал · локальная копия</p><h1 id="page-title">Что происходит<br>с Бурмалдозой</h1><p class="lede">Этапы сборки, открытые задачи и принятые изменения в одном месте. Состояние PR не означает готовность к выпуску.</p></div>
+          <div class="snapshot"><span class="snapshot-label">ИСТОЧНИК ДАННЫХ</span><strong id="source-label">Загрузка снимка…</strong><span id="source-time"></span><span id="source-detail" role="status" aria-live="polite"></span><button id="refresh" type="button">Обновить из GitHub <span aria-hidden="true">↗</span></button></div>
+        </section>
+        <section class="metrics" aria-label="Сводка"><div><span>Открытые задачи</span><strong id="metric-issues">—</strong></div><div><span>PR на рассмотрении</span><strong id="metric-prs">—</strong></div><div><span>Слитые PR</span><strong id="metric-merged">—</strong></div><div><span>Этапы после каркаса</span><strong>5–8</strong></div></section>
+        <section id="roadmap" class="section" aria-labelledby="roadmap-title"><div class="section-head"><div><p class="eyebrow">01 / План</p><h2 id="roadmap-title">Этапы разработки</h2></div><a href="../Development-Roadmap.md">Исходный roadmap ↗</a></div><p class="section-note">«Завершено» для этапов 1–3 относится к техническому каркасу. Production и ручная приёмка остаются впереди.</p><ol id="stage-list" class="stage-list"></ol></section>
+        <section id="activity" class="section" aria-labelledby="activity-title"><div class="section-head"><div><p class="eyebrow">02 / Публичный GitHub</p><h2 id="activity-title">Задачи и изменения</h2></div><span id="result-count" class="count" role="status" aria-live="polite"></span></div><div class="filters"><label class="search-label" for="search">Поиск по номеру и названию<input id="search" type="search" autocomplete="off" placeholder="Например, wallet или #16"></label><label for="type-filter">Тип<select id="type-filter"><option value="all">Все</option><option value="issue">Issues</option><option value="pr">Pull requests</option></select></label><label for="status-filter">Статус<select id="status-filter"><option value="all">Любой</option><option value="open">Открыт</option><option value="merged">Слит</option><option value="closed">Закрыт без merge</option></select></label><label for="agent-filter">Агент<select id="agent-filter"><option value="all">Все</option><option value="codex">Codex</option><option value="claude">Claude Code</option><option value="ccode">Command Code</option><option value="none">Без маршрута</option></select></label></div><div id="record-list" class="record-list"></div></section>
+        <section id="handoff" class="section" aria-labelledby="handoff-title"><div class="section-head"><div><p class="eyebrow">03 / Очередь</p><h2 id="handoff-title">Передачи агентам</h2></div><a href="../Command-Code-Workflow.md">Правила handoff ↗</a></div><p class="section-note">Промты собраны по связанным issue. Перед запуском нужно проверить текущий gate, базу ветки и модель в доступном интерфейсе.</p><div id="handoff-list" class="handoff-list"></div></section>
+        <footer><span>Бурмалдоза · локальная документация</span><span>GitHub API: публичные Issues и PR · без авторизации</span></footer>
+      </main>
+    </div>
+  </body>
+</html>
