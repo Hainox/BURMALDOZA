@@ -37,7 +37,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.telegram_auth import TelegramAuthError, verify_telegram_init_data
 from app.db.models import GameAction, GamePlayer, GameRoom
-from app.dependencies import CurrentUser, _upsert_user
+from app.dependencies import CurrentUser, upsert_user
 from app.services.event_bus import EventBus
 from app.services.wallet_service import MemoryWalletStore, SettlementResult, WalletService
 
@@ -404,7 +404,7 @@ class RoomService:
                 username=context.username,
             )
 
-        return await _upsert_user(self.session, context)
+        return await upsert_user(self.session, context)
 
     def _get_memory_room(self, room_id: UUID) -> _MemoryRoom:
         assert self.store is not None

@@ -268,3 +268,10 @@
 - В план деплоя (issue #23) и риски добавлены: отдельный `INTERNAL_API_TOKEN` для API и бота с одновременным обновлением обоих сервисов (R6) и явный `--workers 1` без `WEB_CONCURRENCY`, так как Uvicorn по этой переменной сам поднимает несколько воркеров (R5).
 - `docs/Code-Audit-2026-09-23.md`: после слияния #16 отмечено, что гонка создания кошелька исправлена PR #14, а отдельный внутренний токен — PR #17.
 - Проверка: `git diff --check` — passed. Изменение только документации; `ChangeLog.md` не обновлялся.
+
+## 2026-09-27 — cleanup Low-findings review #22 (issue #27)
+
+- Claude Code CLI через Claude Pro, `Sonnet 5` (`claude-sonnet-5`); effort — `high` по настройкам Claude Code, интерфейсом сессии не подтверждён. Ветка `claude/review-22-cleanup` от `main` `01705de`.
+- `_upsert_user` переименован в публичный `upsert_user` (`apps/api/app/dependencies.py`, `apps/api/app/services/room_service.py`); логика не менялась. Исторические записи журнала и аудита оставлены как были.
+- `docs/Local-Setup.md`: строка про Redis больше не обещает Pub/Sub; добавлено, что без `INTERNAL_API_TOKEN` бот не стартует, и как сгенерировать значение локально. `docker-compose.yml` намеренно не менялся (`:?` ломает `compose config` на `.env.example`); production-вариант — в #23 / PR #26.
+- Поведение и контракты не менялись; `ChangeLog.md` не обновлялся.

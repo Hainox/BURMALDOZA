@@ -36,7 +36,7 @@ async def _find_user_id(session: AsyncSession, telegram_user_id: int) -> int | N
     return await session.scalar(select(User.id).where(User.telegram_user_id == telegram_user_id))
 
 
-async def _upsert_user(session: AsyncSession, context: TelegramAuthContext) -> CurrentUser:
+async def upsert_user(session: AsyncSession, context: TelegramAuthContext) -> CurrentUser:
     async with session.begin():
         # Look up first: PostgreSQL draws users.id from the sequence before the conflict
         # check, so an INSERT on every request would burn one id per authentication.
@@ -81,7 +81,7 @@ async def authenticate_raw_init_data(
         now or datetime.now(UTC),
         app_settings.telegram_init_data_max_age_seconds,
     )
-    return await _upsert_user(session, context)
+    return await upsert_user(session, context)
 
 
 async def get_current_user(
