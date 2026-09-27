@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Internal bot API routes now return 404 through the public Caddy site. The bot reaches the API through the private `bot_api` Docker network; production configuration permits HTTP only to the fixed `http://api:8000` service address.
+- Added live Daily (+250 JG) and Relief (+300 JG) grant controls to the Mini App dashboard: one `getWallet()` bootstrap call, fresh idempotency key per claim, balance only from the confirmed `balance_after`, 409 shown as cooldown, and no grant simulation in demo mode.
 - Added the playable Blackjack GFL room UI: server-confirmed Deck A cards (RPK-16 at A♥, AK-12 at K♥), hidden hole-card back, 25–100 integer betting, legal-action buttons, error/retry and reconnect from the server snapshot, and reduced-motion support.
 - Hardened production runbook checks against exported shell variables shadowing `.env`; nightly backup scheduling now works on a fresh account and is idempotent. Added explicit recovery steps for a failed database-name switch during rollback.
 - Production Compose mounts the tracked slot ruleset read-only into API, preventing room-creation HTTP 500 in the built API image. The runbook preserves rollback images and restores backups into a separate database before switching, retaining the previous database.
