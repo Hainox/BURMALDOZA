@@ -253,10 +253,18 @@
 - Local verification: `uv run --locked ruff check .` passed; `uv run --locked pytest -q` returned 127 passed, 6 skipped, 2 existing deprecation warnings; `docker compose --env-file .env.example config --quiet` and `git diff --check` passed. Tests cover valid/wrong/absent/reused/non-ASCII tokens, old header rejection, bot configuration, and client header. PostgreSQL integration did not run locally because `TEST_DATABASE_URL` is absent; GitHub CI is required before merge.
 - Open: owner review and CI before merge/deployment; provision the real value outside repository and logs.
 
+## 2026-09-24 — граница масштабирования API (Codex PR C)
+
+- Проверено: `EventBus` хранит подписчиков в памяти процесса; `apps/api/Dockerfile` запускает Uvicorn без `--workers`. В `docs/Local-Setup.md` закреплён поддерживаемый production режим: один API worker и одна реплика до утверждения межпроцессной доставки событий.
+- Redis Pub/Sub для игровых событий не реализован. Если владелец запросит несколько worker-ов/реплик, нужен отдельный архитектурный проект с отказами, порядком/повторами доставки, восстановлением из PostgreSQL и двухпроцессными тестами; этот PR его не внедряет.
+- 32-битный `Integer` для баланса/ledger отмечен как отложенный риск. Миграция на `BigInteger` ждёт утверждённого владельцем порога и требований совместимости.
+- Проверки: `git diff --check` и `uv run --locked ruff check .` прошли; `uv run --locked pytest -q` — 115 passed, 6 skipped, 2 прежних deprecation warnings. PostgreSQL integration локально не запускалась (`TEST_DATABASE_URL` отсутствует), CI обязателен перед merge. Код и поведение не изменены; `ChangeLog.md` не требуется. Merge/deploy — только после решения владельца.
+
 ## 2026-09-27 — сверка чекпоинта запуска после слияния PR #14
 
 - Claude Code CLI через Claude Pro, `Opus 5.5` (`claude-opus-5-5`); effort интерфейсом сессии не показан, поэтому не указан. Ветка `claude/checkpoint-sync-after-14` от `main` `07a7a75`.
-- `docs/Launch-Checkpoint.md` приведён к `main` после слияния PR #14 и к review PR #14, #16, #17 (issue #22): атомарный первый вход перенесён в выполненное, R4 закрыт на сервере; из блокеров убрано слияние #14, добавлены слияние #17 и генерация `INTERNAL_API_TOKEN` владельцем.
+- `docs/Launch-Checkpoint.md` приведён к `main` после слияния PR #14, #17 и #16 и к review из issue #22: три PR перенесены в выполненное, R4 закрыт на сервере; из блокеров убраны слияния, добавлена генерация `INTERNAL_API_TOKEN` владельцем.
+- Слияния по разрешению владельца от 27.09.2026 (Claude Code): #17 — как был, head `29de36e` уже содержал `main` `07a7a75`, CI run `36272570353` зелёный (142 passed, PostgreSQL integration без пропусков), merge `bf2e36e`. #16 — в ветку влит `main` с сохранением обеих записей журнала (`b230330`), CI run `36283554507` зелёный (142 passed), merge `7d56b95`.
 - В план деплоя (issue #23) и риски добавлены: отдельный `INTERNAL_API_TOKEN` для API и бота с одновременным обновлением обоих сервисов (R6) и явный `--workers 1` без `WEB_CONCURRENCY`, так как Uvicorn по этой переменной сам поднимает несколько воркеров (R5).
-- `docs/Code-Audit-2026-09-23.md` (гонка кошелька всё ещё описана как открытая) не менялся: файл входит в открытый PR #16 Codex. Обновить после его слияния.
+- `docs/Code-Audit-2026-09-23.md`: после слияния #16 отмечено, что гонка создания кошелька исправлена PR #14, а отдельный внутренний токен — PR #17.
 - Проверка: `git diff --check` — passed. Изменение только документации; `ChangeLog.md` не обновлялся.
