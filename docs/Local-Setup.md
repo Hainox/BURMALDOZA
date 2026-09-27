@@ -11,7 +11,7 @@
 
 ```bash
 cp .env.example .env
-# Задайте POSTGRES_PASSWORD и свежий BOT_TOKEN.
+# Задайте POSTGRES_PASSWORD, свежий BOT_TOKEN и отдельный INTERNAL_API_TOKEN.
 # Не используйте токен, который был отправлен в чат или коммит.
 pnpm install --frozen-lockfile
 uv sync --locked --all-groups
@@ -34,7 +34,7 @@ curl --fail http://localhost:8000/health/ready
 - `postgres` — PostgreSQL 16, durable volumes;
 - `redis` — Redis 7 AOF, locks/presence/pub-sub boundary;
 - `api` — Alembic upgrade + FastAPI на `API_PORT`;
-- `bot` — aiogram polling, требует свежий `BOT_TOKEN`;
+- `bot` — aiogram polling, требует свежий `BOT_TOKEN` и отдельный `INTERNAL_API_TOKEN`;
 - `miniapp` — статический SvelteKit build через nginx на `MINIAPP_PORT`.
 
 Для live-режима Mini App передайте API endpoint на этапе сборки:
