@@ -1,5 +1,14 @@
 # Project Log
 
+## 2026-09-27 — CCode issue #11: wallet grants UI (meta/muse-spark-1.3-contributor, high)
+
+- От свежего `origin/main` (`01705de`, PR #14 принят) создана ветка `ccode/wallet-grants-ui`. Gate по issue #6 не пройден: PR #15 открыт и не слит.
+- `apps/miniapp/src/lib/components/WalletGrantControls.svelte` (новый): daily/relief кнопки только в live-режиме, свежий `crypto.randomUUID()` на каждый claim, блокировка кнопки на время pending, баланс только из `balance_after`, 409 как ожидаемый cooldown, остальные ошибки как retryable.
+- `apps/miniapp/src/routes/+page.svelte`: стартовая загрузка идёт одним `getWallet()` без параллельного `getCurrentUser()`; панель выдач показана только в live API mode; demo-выдача не имитируется.
+- `apps/miniapp/tests/e2e/wallet-grants.spec.ts` (новый): daily success + повторный тап, relief 409, live/demo различие.
+- Проверки: `pnpm miniapp:check` — 0/0; `pnpm miniapp:test` — 25 passed; `pnpm miniapp:build` — passed; `pnpm --dir apps/miniapp exec playwright test tests/e2e/wallet-grants.spec.ts --workers=1` — 3 passed (Chromium, Windows).
+- Открыто: PR из `ccode/wallet-grants-ui` в `main` после завершения issue #6; ручная проверка на реальном Telegram WebView не выполнялась.
+
 ## 2026-09-27 — локальный интерактивный журнал проекта (#21)
 
 - Повторная сверка 27.09.2026: `origin/main` `01705de935ee7f805dd829d6ddc1bde1b6846004`; встроенный снимок обновлён до 9 публичных issues и 20 PR. Он отражает слияние #16, #17 и #24, закрытие review #22 и открытые draft PR #25, #26, #28 вместе с PR #29. Очередь handoff приведена к этим состояниям: добавлено issue #27, указан текущий PR и его статус из снимка для каждой активной задачи, а устаревшие условия запуска убраны. При следующем обновлении страницы статусы вновь сверяются с GitHub API; редакционные зависимости требуют проверки в исходных issue перед передачей.
