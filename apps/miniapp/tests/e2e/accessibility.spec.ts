@@ -19,9 +19,11 @@ test.describe('Mini App shell', () => {
     await expect(page.getByTestId('slot-reel-track-0')).toHaveAttribute('data-track-length', '28');
     await expect(page.getByTestId('slot-machine')).toHaveAttribute('data-spin-duration', '2940');
     await page.getByTestId('slot-spin').click();
-    await expect(page.getByTestId('result-band')).toContainText('DEMO ROUND · БЕЗ СЕРВЕРНОГО ПОДТВЕРЖДЕНИЯ');
-    await expect(page.getByTestId('result-band')).not.toContainText('SERVER CONFIRMED');
-    await expect(page.getByTestId('result-band')).toContainText('Линия подтверждена');
+    const resultBand = page.getByTestId('result-band');
+    await expect(resultBand).toContainText('DEMO ROUND · БЕЗ СЕРВЕРНОГО ПОДТВЕРЖДЕНИЯ');
+    await expect(resultBand).not.toContainText('SERVER CONFIRMED');
+    await expect(resultBand).toContainText('Линия подтверждена');
+    await expect(resultBand).toContainText('Демо-исход: сервер не подтверждал этот результат.');
     await expect(page.getByTestId('confirmed-balance')).toHaveCount(0);
     await expect(page.getByTestId('slot-free-spins')).toContainText('5');
   });
@@ -45,6 +47,7 @@ test.describe('Mini App shell', () => {
     await expect(resultBand).toContainText('RESOLVING · DEMO RESULT', { timeout: 2_000 });
     await expect(resultBand).toContainText('DEMO ROUND · БЕЗ СЕРВЕРНОГО ПОДТВЕРЖДЕНИЯ', { timeout: 2_000 });
     await expect(resultBand).not.toContainText('SERVER CONFIRMED');
+    await expect(resultBand).toContainText('Демо-исход: сервер не подтверждал этот результат.');
     await expect(page.getByTestId('confirmed-balance')).toHaveCount(0);
   });
 
