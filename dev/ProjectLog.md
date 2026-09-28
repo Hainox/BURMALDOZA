@@ -1,5 +1,14 @@
 # Project Log
 
+## 2026-09-27 — изоляция внутренних API-маршрутов (#31)
+
+- Назначение issue #31: Codex / `gpt-6-sol` / `high`; точная модель и effort текущего runtime не отображаются, поэтому совпадение runtime с метаданными не подтверждено.
+- Ветка `codex/internal-api-isolation`: функциональный коммит `f371a94`, основанный на предыдущем `main`; перед передачей ветка локально обновлена merge с актуальным `origin/main` `d53af57`. Конфликты были только в append-only `ChangeLog.md` и `dev/ProjectLog.md`; записи обеих сторон сохранены.
+- Production Caddy возвращает 404 для `/api/v1/internal/*` до публичного API proxy. Бот обращается по точному адресу `http://api:8000` через отдельную internal-сеть `bot_api`; production-конфигурация бота разрешает HTTP только для этого адреса. Токенная защита внутренних маршрутов сохранена.
+- Runbook описывает внешний 404 и проверку `/balance` и `/top`; добавлены тесты разрешённого внутреннего URL и отклонения других HTTP URL.
+- После синхронизации: Ruff — passed; `uv run --locked pytest -q tests/unit/test_bot_config.py` — 12 passed; `docker compose -f docker-compose.prod.yml config --quiet` — passed с синтетическими значениями; `git diff --check` — passed. До синхронизации Caddy прошёл `caddy validate` и smoke-тест публичных/внутренних маршрутов, включая encoded slash/name и двойной slash. Изолированный контейнерный прогон подтвердил доступ бота к API по внутренней сети; тестовый wallet-запрос вернул ожидаемый 404 для несуществующего пользователя.
+- Открыто: draft PR #33 опубликован; CI и review ожидаются. Реальные `/balance` и `/top` в Telegram, production DNS/TLS и сервер не проверялись. Merge, deploy и SSH не выполнялись.
+
 ## 2026-09-27 — CCode issue #11: wallet grants UI (meta/muse-spark-1.3-contributor, high)
 
 - От свежего `origin/main` (`01705de`, PR #14 принят) создана ветка `ccode/wallet-grants-ui`. Gate по issue #6 не пройден: PR #15 открыт и не слит.
