@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Общая справка для всех ИИ-агентов проекта: Codex, Command Code (CCode) и Claude Code.
+Общая справка для всех ИИ-агентов проекта: Codex, Command Code (CCode), Claude Code и Google Antigravity (Gemini).
 Роли, handoff и правила квот — в [docs/Command-Code-Workflow.md](./docs/Command-Code-Workflow.md);
 правила Claude Code — в [CLAUDE.md](./CLAUDE.md). Этот файл их не заменяет и не противоречит им.
 
@@ -52,6 +52,7 @@ pnpm miniapp:e2e                       # Playwright; нужен Chromium той 
 | Codex | `codex/<задача>` | архитектура, domain/RNG/ledger/API, безопасность, интеграция, финальная проверка |
 | Command Code | `ccode/<задача>` | назначенные UI/motion handoff-задачи |
 | Claude Code | `claude/<задача>` | read-only review, документация, тесты, небольшие задачи с точным allowlist |
+| Google Antigravity (Gemini) | `antigravity/<задача>` | независимая browser/UI QA, ограниченное исследование и документация по отдельному issue; первая фаза — ручная передача владельцем |
 
 - Один implementer на набор файлов; перед началом — `git fetch` и открытые PR, чтобы не взять чужие файлы.
 - Domain, RNG, ledger, API-контракты, миграции и deployment — только по задаче с явным scope владельца
@@ -82,6 +83,10 @@ pnpm miniapp:e2e                       # Playwright; нужен Chromium той 
   модель/effort, базовая ветка и имя новой ветки, разрешённые файлы, критерии приёмки, обязательные
   проверки, зависимости («начать после #N»). В задании, которое вставляется прямо в клиент, пишите
   отдельные строки `Адресат:`, `Модель:`, `Effort:` — по ним штаб определяет получателя.
+- **Antigravity (Gemini), первая фаза** — отдельный issue с явным полем `Адресат: Google Antigravity (Gemini)`;
+  владелец вручную передаёт его текст клиенту и проверяет отчёт в комментарии того же issue. Локальный
+  poller и hooks Antigravity пока не подключены; не считать этот маршрут автоматическим и не добавлять
+  или менять локальные hooks/poller от имени агента.
 - **Отчёт** — комментарий в PR задачи; если PR нет — в issue задачи; если нет и issue — в закреплённое
   issue «Штаб: входящие» (метка `agent-report`). Каждый агент публикует отчёт сам через `gh` в конце
   задачи; пересылка через владельца — только если у агента нет доступа к GitHub.
