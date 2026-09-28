@@ -51,6 +51,28 @@ test.describe('Mini App shell', () => {
     await expect(page.getByTestId('confirmed-balance')).toHaveCount(0);
   });
 
+  test('demo Slot description does not claim the result came from a server', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/');
+    await page.getByTestId('room-card-slot').click();
+    await page.getByTestId('slot-spin').click();
+
+    const resultBand = page.getByTestId('result-band');
+    await expect(resultBand).toContainText('Линия подтверждена');
+    await expect(resultBand).not.toContainText('Исход пришёл с сервера');
+  });
+
+  test('Hold’em demo description does not imply a server-confirmed action', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/');
+    await page.getByTestId('room-card-holdem').click();
+    await page.getByRole('button', { name: 'CHECK' }).click();
+
+    const resultBand = page.getByTestId('result-band');
+    await expect(resultBand).toContainText('Рука подтверждена');
+    await expect(resultBand).not.toContainText('подтверждённого действия');
+  });
+
   test('plays a full reel cycle before revealing the confirmed grid', async ({ page }) => {
     await page.goto('/');
     await page.getByTestId('room-card-slot').click();
