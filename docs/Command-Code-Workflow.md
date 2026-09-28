@@ -10,6 +10,7 @@
 | Codex | Архитектура, планирование, сервер/domain/RNG/ledger/API, безопасность, интеграция и финальная проверка | Источник решений по контрактам и интегратор результата; критические изменения идут только по утверждённому BuildSpec. |
 | Claude Code через Claude Pro | Независимый read-only review готового diff; документация, тесты и небольшие самостоятельные изменения с точным allowlist | Запускать в отдельной ветке/worktree. Не делить одни файлы с Codex или CCode. Для текущей UI handoff-задачи #6 не заменяет CCode без отдельного решения. |
 | Command Code (CCode) | Основной назначенный исполнитель визуальных UI/motion handoff-задач | Работает по закреплённой модели и effort. Не меняет domain, RNG, ledger или API-контракты, если это отдельно не разрешено. |
+| Google Antigravity (Gemini) | Независимая browser/UI QA, ограниченное исследование и отдельные документационные задачи | Только по issue с точным scope; первая фаза — ручной handoff владельцем, без локальных hooks/poller и без автоматического merge/deploy. |
 
 ## Модели и effort для каждой задачи
 
@@ -24,6 +25,7 @@
 | Claude Code: обычная ограниченная реализация или review | `Sonnet 5` | `high` | Everyday-маршрут по picker владельца. В CLI используй поддерживаемый alias выбранной модели и явно зафиксируй его вместе с отображаемым именем и effort. |
 | Claude Code: короткая документационная задача | `Haiku 4.5` | `low` | Быстрый маршрут для узкого scope; для review с несколькими файлами выбрать `medium`, если он доступен выбранной модели. |
 | Command Code (CCode): утверждённые UI/motion handoff-задачи | `meta/muse-spark-1.3-contributor` | `high` | Передавать пару в каждой задаче и issue; не менять без обновления handoff. |
+| Antigravity: browser/UI QA и ограниченные coding-задачи | `Gemini 3.1 Pro`, если доступен в picker | `High`, если доступен | Перед handoff сверить picker и квоту; указать точное имя модели и effort из сессии. Не включать платные AI credits/overage без отдельного решения владельца. |
 
 Снимок выбора модели владельца на 24.09.2026 также содержит `Opus 5`, `Opus 4.8`, `Opus 4.7`, `Opus 4.6` и `Sonnet 4.6`. `Fable 5.1` и `Fable 5` помечены в интерфейсе как требующие usage credits; не выбирать их и не расходовать эти кредиты без отдельного решения владельца. Доступность моделей может зависеть от аккаунта и меняться — перед каждой сессией сверяй фактический picker.
 
@@ -187,3 +189,34 @@ Acceptance criteria:
 Справка Command Code: [модели](https://commandcode.ai/docs/reference/cli/models), [Pro](https://commandcode.ai/docs/plans/pro), [лимиты](https://commandcode.ai/docs/resources/pricing-limits), [Vision](https://commandcode.ai/docs/vision).
 
 Справка Anthropic: [установка Claude Code](https://code.claude.com/docs/en/getting-started), [Claude Code с планом Pro](https://support.claude.com/en/articles/11145838-use-claude-code-with-your-pro-or-max-plan), [проверка API-авторизации](https://support.claude.com/en/articles/12304248-manage-api-key-environment-variables-in-claude-code), [usage limits](https://support.claude.com/en/articles/9797557-usage-limit-best-practices), [проектные инструкции и transcripts](https://code.claude.com/docs/en/claude-directory).
+
+## Google Antigravity с Gemini
+
+Antigravity входит в командный workflow как четвёртый клиент. На первом этапе задания передаются вручную:
+владелец открывает конкретный issue в Antigravity и вставляет его инструкцию; результат возвращается
+комментарием в тот же issue. Локальный poller/hooks автоматически клиент не обслуживает. Расширять их
+может только владелец, после отдельной проверки маршрута и настроек.
+
+- Для сложной reasoning-задачи выбирай `Gemini 3.1 Pro / High`, если эта пара доступна в model picker;
+  иначе записывай точные значения, которые видны в текущей сессии. Не угадывай модель или effort.
+- Для task prompts и инструкций используй английский: на момент интеграции официальная документация
+  Antigravity указывает поддержку prompts/instructions на английском. Название issue и отчёт штабу
+  могут оставаться на русском.
+- Google AI планы дают разные, ограниченные квоты Antigravity; проверяй usage в клиенте перед длинной
+  сессией. Не включай AI credits, overage или автоматические доплаты без отдельного решения владельца.
+  Не записывай в публичный репозиторий личный тариф, срок подписки или данные аккаунта.
+- Открой только рабочую папку BURMALDOZA; не включай доступ за пределы проекта и не открывай `.env`,
+  credentials или другие секреты. Для Windows выбери `Request Review` или ограниченный `Proceed in Sandbox`;
+  не используй режим, который автоматически выполняет любые команды.
+- Используй отдельную ветку `antigravity/<задача>` и worktree для разрешённой реализации. Один implementer
+  на файл; чужие ветки не редактировать. Review-задачи выполняй read-only, в Plan Mode.
+- Не запускай GitHub Actions, Pages, merge, production deployment и серверные команды без отдельного
+  разрешения владельца. Browser Agent применяй для чтения и локальной UI QA.
+- Передавай только безопасный контекст. Не публикуй transcript, локальный путь владельца, secrets или
+  скриншоты с приватными данными. Отчёт — в PR/issue задачи, с моделью, effort, фактическими проверками,
+  рисками и следующим шагом.
+
+Ссылки: [Antigravity IDE](https://antigravity.google/docs/ide/overview/),
+[модели](https://antigravity.google/docs/models/),
+[настройки доступа](https://antigravity.google/docs/agent-settings/),
+[Google AI Pro и usage limits](https://support.google.com/googleone/answer/14534406?hl=en).
