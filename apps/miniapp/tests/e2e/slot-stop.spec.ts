@@ -34,10 +34,17 @@ test.describe('Slot v2 stop continuity', () => {
         (document.querySelector(`[data-testid="slot-reel-${index}"]`) as HTMLElement).getAttribute(
           'data-reel-phase'
         );
+      const readTrack = (index: number) =>
+        document.querySelector(`[data-testid="slot-reel-track-${index}"]`) as HTMLElement;
       const stamps: number[] = [];
       const started = performance.now();
-      const frames: Array<{ transforms: string[]; phases: Array<string | null> }> = [];
-      for (let guard = 0; guard < 400; guard++) {
+      const frames: Array<{
+        t: number;
+        transforms: string[];
+        offsets: number[];
+        phases: Array<string | null>;
+      }> = [];
+      for (let guard = 0; guard < 500; guard++) {
         let landed = 0;
         const phases: Array<string | null> = [];
         for (let index = 0; index < 3; index++) {
@@ -49,11 +56,10 @@ test.describe('Slot v2 stop continuity', () => {
           if (phase === 'landed') landed += 1;
         }
         frames.push({
-          transforms: [0, 1, 2].map(
-            (index) =>
-              getComputedStyle(
-                document.querySelector(`[data-testid="slot-reel-track-${index}"]`) as HTMLElement
-              ).transform
+          t: performance.now() - started,
+          transforms: [0, 1, 2].map((index) => getComputedStyle(readTrack(index)).transform),
+          offsets: [0, 1, 2].map((index) =>
+            Number.parseFloat(getComputedStyle(readTrack(index)).getPropertyValue('--reel-offset-rows'))
           ),
           phases
         });
@@ -64,12 +70,38 @@ test.describe('Slot v2 stop continuity', () => {
     });
     const { stamps: landedMs, frames } = spinTelemetry as {
       stamps: number[];
-      frames: Array<{ transforms: string[]; phases: Array<string | null> }>;
+      frames: Array<{
+        t: number;
+        transforms: string[];
+        offsets: number[];
+        phases: Array<string | null>;
+      }>;
     };
     expect(landedMs).toHaveLength(3);
     expect(landedMs[1]).toBeGreaterThanOrEqual(landedMs[0]);
     expect(landedMs[2]).toBeGreaterThanOrEqual(landedMs[1]);
     expect(landedMs[2] - landedMs[0]).toBeGreaterThanOrEqual(100);
+
+    // Regression for issue #1: all three reels used to share one eased travel and went still
+    // together at 2000 ms, so the center and right reel stood parked for 160/320 ms and were
+    // then jerked out of standstill by the landing phase. Every reel must keep travelling at
+    // its own cruising speed right up to its own stop start.
+    for (let reelIndex = 0; reelIndex < 3; reelIndex += 1) {
+      const landingIndex = frames.findIndex((frame) => frame.phases[reelIndex] === 'landing');
+      expect(landingIndex, `reel ${reelIndex} must pass through a landing phase`).toBeGreaterThan(0);
+      const beforeLanding = frames.slice(Math.max(0, landingIndex - 12), landingIndex);
+      expect(
+        beforeLanding.length,
+        `reel ${reelIndex} needs samples before its own stop start`
+      ).toBeGreaterThanOrEqual(3);
+      const first = beforeLanding[0];
+      const last = beforeLanding[beforeLanding.length - 1];
+      const span = Math.max(1, last.t - first.t);
+      const movedRows = Math.abs(last.offsets[reelIndex] - first.offsets[reelIndex]);
+      expect(Number.isFinite(movedRows), `reel ${reelIndex} offset must be a readable number`).toBe(true);
+      expect(movedRows / span, `reel ${reelIndex} stalled before its own stop start`).toBeGreaterThan(0.002);
+      expect(last.transforms[reelIndex]).not.toBe(first.transforms[reelIndex]);
+    }
 
     const firstLeftLanded = frames.findIndex((frame) => frame.phases[0] === 'landed');
     expect(firstLeftLanded).toBeGreaterThanOrEqual(0);

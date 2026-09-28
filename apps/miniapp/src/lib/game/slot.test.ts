@@ -3,6 +3,7 @@ import {
   SLOT_ACTION_ACCEPT_DELAY,
   SLOT_FINAL_OFFSET_ROWS,
   SLOT_LAUNCH_STAGGER,
+  SLOT_LANDING_DURATION,
   SLOT_LANDING_TAILS,
   SLOT_RAMP_DURATION,
   SLOT_SERVER_RESULT_PRELUDE,
@@ -67,6 +68,13 @@ describe('slot v2 motion contract', () => {
       const cruiseVelocity = getSlotReelVelocityRowsPerMs(reelIndex, landingStart - 64);
       expect(cruiseVelocity).toBeGreaterThan(0);
 
+      const expectedCruiseVelocity =
+        SLOT_FINAL_OFFSET_ROWS /
+        (SLOT_RAMP_DURATION / 2 +
+          (landingStart - getSlotLaunchDelay(reelIndex) - SLOT_RAMP_DURATION) +
+          SLOT_LANDING_DURATION / 3);
+      expect(cruiseVelocity).toBeCloseTo(expectedCruiseVelocity, 8);
+
       const velocityBefore = getSlotReelVelocityRowsPerMs(reelIndex, landingStart - 8);
       const velocityAfter = getSlotReelVelocityRowsPerMs(reelIndex, landingStart + 8);
       expect(Math.abs(velocityBefore - velocityAfter)).toBeLessThanOrEqual(0.15 * cruiseVelocity);
@@ -80,6 +88,10 @@ describe('slot v2 motion contract', () => {
 
       expect(getSlotReelVelocityRowsPerMs(reelIndex, landingStart)).toBeCloseTo(cruiseVelocity, 6);
       expect(getSlotReelOffsetRows(reelIndex, getSlotStopEnd(reelIndex))).toBe(-SLOT_FINAL_OFFSET_ROWS);
+      expect(getSlotReelOffsetRows(reelIndex, getSlotStopEnd(reelIndex) - 1)).toBeCloseTo(
+        -SLOT_FINAL_OFFSET_ROWS,
+        4
+      );
     }
   });
 
