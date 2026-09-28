@@ -1,0 +1,102 @@
+name: Deploy Pages Slot v2 preview
+
+on:
+  workflow_dispatch:
+    inputs:
+      preview_ref:
+        description: Git ref containing the Slot v2 preview source
+        required: true
+        type: string
+        default: main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out current Pages root
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          path: source-main
+          persist-credentials: false
+
+      - name: Check out Slot v2 preview source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.preview_ref }}
+          path: source-preview
+          persist-credentials: false
+
+      - name: Enable pnpm
+        run: corepack enable && corepack prepare pnpm@11.19.0 --activate
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: pnpm
+          cache-dependency-path: |
+            source-main/pnpm-lock.yaml
+            source-preview/pnpm-lock.yaml
+
+      - name: Install main dependencies
+        run: pnpm --dir source-main install --frozen-lockfile
+
+      - name: Install preview dependencies
+        run: pnpm --dir source-preview install --frozen-lockfile
+
+      - name: Build current Pages root
+        env:
+          BASE_PATH: /BURMALDOZA
+          PUBLIC_API_BASE_URL: ${{ vars.PUBLIC_API_BASE_URL }}
+        run: pnpm --dir source-main/apps/miniapp build
+
+      - name: Add interactive Blackjack Deck A/B preview
+        run: |
+          target="source-main/apps/miniapp/build/design/blackjack-deck-a"
+          mkdir -p "$target"
+          cp source-main/assets/design/blackjack-gfl/deck-a/preview.local.html "$target/index.html"
+          cp source-main/assets/design/blackjack-gfl/deck-a/sources.json "$target/sources.json"
+          cp source-main/assets/design/blackjack-gfl/deck-a/sources-deck-b.json "$target/sources-deck-b.json"
+          cp -R source-main/assets/design/blackjack-gfl/deck-a/web "$target/web"
+          mkdir -p "$(dirname "$target")/deck-b/portraits"
+          cp -R source-main/assets/design/blackjack-gfl/deck-b/portraits/. "$(dirname "$target")/deck-b/portraits/"
+
+      - name: Build Slot v2 preview without live API
+        env:
+          BASE_PATH: /BURMALDOZA/slot-v2
+          PUBLIC_API_BASE_URL: ""
+        run: pnpm --dir source-preview/apps/miniapp build
+
+      - name: Assemble Pages artifact
+        run: |
+          mkdir -p pages/slot-v2
+          cp -a source-main/apps/miniapp/build/. pages/
+          cp -a source-preview/apps/miniapp/build/. pages/slot-v2/
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: pages
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
