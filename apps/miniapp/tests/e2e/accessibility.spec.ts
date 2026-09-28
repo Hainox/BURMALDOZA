@@ -16,6 +16,10 @@ test.describe('Mini App shell', () => {
     await page.getByTestId('room-card-slot').click();
 
     await expect(page.getByTestId('room-shell')).toBeVisible();
+    const slotRoom = page.locator('.slot-room');
+    await expect(slotRoom).toContainText('Демо-прокрутка барабанов. Клиент показывает сетку и движение; сервер не подтверждает исход.');
+    await expect(slotRoom).not.toContainText('Сервер подтверждает сетку');
+    await expect(page.getByTestId('slot-status')).toContainText('READY · DEMO');
     await expect(page.getByTestId('slot-reel-track-0')).toHaveAttribute('data-track-length', '28');
     await expect(page.getByTestId('slot-machine')).toHaveAttribute('data-spin-duration', '2940');
     await page.getByTestId('slot-spin').click();
@@ -25,6 +29,11 @@ test.describe('Mini App shell', () => {
     await expect(resultBand).toContainText('Линия подтверждена');
     await expect(resultBand).toContainText('Демо-исход: сервер не подтверждал этот результат.');
     await expect(page.getByTestId('confirmed-balance')).toHaveCount(0);
+    await expect(page.getByTestId('slot-confirmed-grid')).toContainText('DEMO GRID · CLIENT RESULT');
+    await expect(page.getByTestId('slot-confirmed-grid')).not.toContainText('SERVER GRID CONFIRMED');
+    await expect(page.getByTestId('slot-free-spins')).toContainText('DEMO BONUS STATE · CLIENT RESULT');
+    await expect(page.getByTestId('slot-free-spins')).not.toContainText('SERVER CONFIRMED');
+    await expect(page.getByTestId('slot-status')).toContainText('SETTLED · DEMO GRID');
     await expect(page.getByTestId('slot-free-spins')).toContainText('5');
   });
 
@@ -42,6 +51,9 @@ test.describe('Mini App shell', () => {
   test('labels a Hold’em demo outcome as unconfirmed', async ({ page }) => {
     await page.goto('/');
     await page.getByTestId('room-card-holdem').click();
+    const pokerRoom = page.locator('.poker-room');
+    await expect(pokerRoom).toContainText('Демо-действия выполняются на клиенте; серверного подтверждения нет.');
+    await expect(pokerRoom).not.toContainText('только подтверждённые действия');
     await page.getByRole('button', { name: 'CHECK' }).click();
 
     const resultBand = page.getByTestId('result-band');

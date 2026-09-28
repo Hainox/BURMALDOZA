@@ -1,5 +1,12 @@
 # Project Log
 
+## 2026-09-29 — demo-copy в игровых комнатах (#37, PR #40)
+
+- По разрешению владельца расширен scope только на copy в `SlotRoom.svelte`, `BlackjackRoom.svelte` и `PokerRoom.svelte`: DEMO теперь прямо обозначает клиентское состояние без серверного подтверждения; live-формулировки сохранены. Баланс расчёта Blackjack в DEMO подписан `DEMO BALANCE`.
+- E2E дополнен проверками DEMO Slot/Blackjack/Hold’em и live Slot/Blackjack. Проверены mobile viewport 375×812 и reduced motion; мобильные демо-состояния отрисовались без горизонтального переполнения и обрезанных подписей.
+- Проверки: `pnpm miniapp:check` — 0 ошибок/предупреждений; `pnpm miniapp:test` — 25 passed; `pnpm miniapp:build` — passed; целевые Playwright E2E — 24 passed (Chromium, 375×812).
+- Осталось: отправить изменения в draft PR #40, дождаться CI и завершить merge/Pages публикацию после принятия PR.
+
 ## 2026-09-28 — честные метки демо-результата (#37)
 
 - `ResultBand.svelte` разделяет завершённость исхода и подтверждение сервера. Demo во время движения подписан `RESOLVING · DEMO RESULT`, после завершения — `DEMO ROUND · БЕЗ СЕРВЕРНОГО ПОДТВЕРЖДЕНИЯ`; выплата отображается как результат демо, а `confirmed-balance` остаётся только для live. Live-метка `SERVER CONFIRMED · LIVE` сохранена.

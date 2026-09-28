@@ -295,7 +295,12 @@ test.describe('Blackjack GFL room', () => {
     await stubLiveBlackjack(page);
     await page.goto('/');
     await page.getByTestId('room-card-blackjack').click();
-    await expect(page.getByTestId('blackjack-room')).toBeVisible();
+    const blackjackRoom = page.getByTestId('blackjack-room');
+    await expect(blackjackRoom).toBeVisible();
+    await expect(blackjackRoom).toContainText('Раздаёт только сервер.');
+    await expect(blackjackRoom).toContainText('Карты дилера покажет сервер');
+    await expect(blackjackRoom).toContainText('Ваши карты покажет сервер');
+    await expect(blackjackRoom).toContainText('Только серверный snapshot');
 
     await expect(page.getByTestId('blackjack-deal')).toBeEnabled();
     await expect(page.getByTestId('blackjack-actions')).toHaveCount(0);
@@ -404,7 +409,15 @@ test.describe('Blackjack GFL room', () => {
   test('plays a marked demo hand and never presents it as a server result', async ({ page }) => {
     await page.goto('/');
     await page.getByTestId('room-card-blackjack').click();
+    const blackjackRoom = page.getByTestId('blackjack-room');
     await expect(page.getByTestId('blackjack-demo-note')).toContainText('ДЕМО');
+    await expect(blackjackRoom).toContainText('Демо-раздачу и результат показывает клиент.');
+    await expect(blackjackRoom).toContainText('Карты дилера появятся после демо-раздачи');
+    await expect(blackjackRoom).toContainText('Ваши карты появятся после демо-раздачи');
+    await expect(blackjackRoom).toContainText('Демо-раунд без серверного подтверждения');
+    await expect(blackjackRoom).not.toContainText('Раздаёт только сервер.');
+    await expect(blackjackRoom).not.toContainText('покажет сервер');
+    await expect(blackjackRoom).not.toContainText('Только серверный snapshot');
 
     await page.getByTestId('blackjack-deal').click();
     await expect(page.getByTestId('blackjack-room')).toHaveAttribute('data-game-phase', 'player_turn');
@@ -417,6 +430,7 @@ test.describe('Blackjack GFL room', () => {
 
     await page.getByTestId('blackjack-stand').click();
     await expect(page.getByTestId('blackjack-settlement')).toContainText('DEMO ROUND');
+    await expect(page.getByTestId('blackjack-settlement').locator('.settle-balance')).toHaveText('DEMO BALANCE 1275 JG · NET +25');
     await expect(page.getByTestId('blackjack-settlement')).not.toContainText('SERVER SETTLEMENT');
     await expect(page.getByTestId('result-band')).toContainText('DEMO ROUND · БЕЗ СЕРВЕРНОГО ПОДТВЕРЖДЕНИЯ');
     await expect(page.getByTestId('result-band')).not.toContainText('SERVER CONFIRMED');

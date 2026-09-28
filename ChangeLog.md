@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Demo Slot, Blackjack and Hold’em copy now clearly identifies client-generated demo state; demo grid, bonus state and balance no longer imply server confirmation, while live wording remains unchanged.
 - Mini App result labels now distinguish a completed demo outcome from a server-confirmed live result. Demo Slot and Hold’em details no longer claim server confirmation; confirmed balances remain limited to live results.
 - Made the Blackjack demo table playable: a deterministic demo hand with HIT/STAND/DOUBLE, the dealer row revealed on stand, and an explicit marker that no server confirmed the round. A rejected live action (409 or a network failure) now re-reads the room automatically, so the next action sends the current `state_version` instead of repeating the stale one.
 - Internal bot API routes now return 404 through the public Caddy site. The bot reaches the API through the private `bot_api` Docker network; production configuration permits HTTP only to the fixed `http://api:8000` service address.

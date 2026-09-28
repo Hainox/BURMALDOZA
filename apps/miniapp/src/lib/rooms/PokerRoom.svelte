@@ -11,7 +11,7 @@
 </script>
 
 <div class="game-room poker-room">
-  <div class="room-intro"><div><span class="room-kicker">HEADS-UP · RGG SKELETON</span><h2>Hold’em</h2><p>Один pot, два места, только подтверждённые действия.</p></div><span class="bet-chip">100 JG</span></div>
+  <div class="room-intro"><div><span class="room-kicker">HEADS-UP · RGG SKELETON</span><h2>Hold’em</h2><p>{resultSource === 'live' ? 'Один pot, два места, только подтверждённые действия.' : 'Один pot, два места. Демо-действия выполняются на клиенте; серверного подтверждения нет.'}</p></div><span class="bet-chip">100 JG</span></div>
   <section class="poker-table" class:resolving={motion === 'resolving'} aria-label="Heads-up poker table">
     <div class="poker-rail"></div><div class="player opponent"><span class="avatar">♟</span><span><b>DEALER</b><small>stack 250</small></span><i>2 cards</i></div><div class="pot">POT <strong>100</strong> <small>JG</small></div>
     <div class="community-cards">{#each community as card, index}<span class:revealed={card !== '—'} style={`--card-delay: ${index * 100}ms`}>{card}</span>{/each}</div>
