@@ -1,5 +1,20 @@
 # Project Log
 
+## 2026-09-29 — demo-copy в игровых комнатах (#37, PR #40)
+
+- По разрешению владельца расширен scope только на copy в `SlotRoom.svelte`, `BlackjackRoom.svelte` и `PokerRoom.svelte`: DEMO теперь прямо обозначает клиентское состояние без серверного подтверждения; live-формулировки сохранены. Баланс расчёта Blackjack в DEMO подписан `DEMO BALANCE`.
+- E2E дополнен проверками DEMO Slot/Blackjack/Hold’em и live Slot/Blackjack. Проверены mobile viewport 375×812 и reduced motion; мобильные демо-состояния отрисовались без горизонтального переполнения и обрезанных подписей.
+- Проверки: `pnpm miniapp:check` — 0 ошибок/предупреждений; `pnpm miniapp:test` — 25 passed; `pnpm miniapp:build` — passed; целевые Playwright E2E — 24 passed (Chromium, 375×812).
+- Осталось: отправить изменения в draft PR #40, дождаться CI и завершить merge/Pages публикацию после принятия PR.
+
+## 2026-09-28 — честные метки демо-результата (#37)
+
+- `ResultBand.svelte` разделяет завершённость исхода и подтверждение сервера. Demo во время движения подписан `RESOLVING · DEMO RESULT`, после завершения — `DEMO ROUND · БЕЗ СЕРВЕРНОГО ПОДТВЕРЖДЕНИЯ`; выплата отображается как результат демо, а `confirmed-balance` остаётся только для live. Live-метка `SERVER CONFIRMED · LIVE` сохранена.
+- В двух demo `detail` Slot и Hold’em убраны утверждения о серверном результате/подтверждённом действии. Ожидающий demo-исход также получил отдельный текст.
+- Playwright покрывает промежуточное и завершённое состояние Slot, Blackjack и Hold’em; live Slot по-прежнему проверяет подтверждённые grid и balance. Красный Chromium run `36430637852` подтвердил регрессию до исправления: 6 проверок упали, 19 прошли.
+- Проверки после исправления: `pnpm miniapp:check` — 0 errors/0 warnings; `pnpm miniapp:test` — 25 passed; `pnpm miniapp:build` — passed; GitHub Actions Verify game platform run #145 — success (148 Python tests, 25 Playwright e2e, Docker build и Monte Carlo evidence прошли). Изменения ограничены UI, двумя demo-строками и проверками; расчёты, API, live-результаты и deploy не менялись.
+- Открыт draft PR #40 в `main`; merge и Pages-публикация не выполнялись.
+
 ## 2026-09-27 — изоляция внутренних API-маршрутов (#31)
 
 - Назначение issue #31: Codex / `gpt-6-sol` / `high`; точная модель и effort текущего runtime не отображаются, поэтому совпадение runtime с метаданными не подтверждено.

@@ -113,13 +113,15 @@
     return symbolIndex % reelBases[reelIndex].length;
   }
 
+  $: isLive = resultSource === 'live';
+
   function phaseLabel(phase: SlotPhase) {
     if (phase === 'spinning') return 'TRAVEL · 60 FPS';
     if (phase === 'stopping-left') return 'LANDING · LEFT REEL';
     if (phase === 'stopping-center') return 'LANDING · CENTER REEL';
     if (phase === 'stopping-right') return 'LANDING · RIGHT REEL';
-    if (phase === 'settled') return 'SETTLED · SERVER GRID';
-    return 'READY · SERVER-FIRST';
+    if (phase === 'settled') return isLive ? 'SETTLED · SERVER GRID' : 'SETTLED · DEMO GRID';
+    return isLive ? 'READY · SERVER-FIRST' : 'READY · DEMO';
   }
 
   onDestroy(cancelTicker);
@@ -130,7 +132,7 @@
     <div>
       <span class="room-kicker">THREE REELS · SEVEN ROWS</span>
       <h2>Однорукий бандит</h2>
-      <p>Полная прокрутка барабанов. Сервер подтверждает сетку, клиент показывает движение.</p>
+      <p>{isLive ? 'Полная прокрутка барабанов. Сервер подтверждает сетку, клиент показывает движение.' : 'Демо-прокрутка барабанов. Клиент показывает сетку и движение; сервер не подтверждает исход.'}</p>
     </div>
     <span class="bet-chip">10 JG</span>
   </div>
@@ -190,7 +192,7 @@
     <div class="payline" class:visible={showConfirmedGrid} data-testid="slot-payline" aria-hidden="true"></div>
     {#if showConfirmedGrid}
       <div class="confirmed-grid" data-testid="slot-confirmed-grid" aria-live="polite">
-        <span>SERVER GRID CONFIRMED</span>
+        <span>{isLive ? 'SERVER GRID CONFIRMED' : 'DEMO GRID · CLIENT RESULT'}</span>
         <strong>{slotOutcome?.winningLines?.length ?? slotOutcome?.winningRows.length ?? 0} PAYLINE{(slotOutcome?.winningLines?.length ?? slotOutcome?.winningRows.length ?? 0) === 1 ? '' : 'S'}</strong>
       </div>
     {/if}
@@ -211,7 +213,7 @@
   {#if slotOutcome && hasFreeSpins(slotOutcome) && showConfirmedGrid}
     <section class="free-spins-panel" data-testid="slot-free-spins" aria-label="Доступны бесплатные вращения">
       <div>
-        <span class="free-spins-kicker">BONUS STATE · SERVER CONFIRMED</span>
+        <span class="free-spins-kicker">{isLive ? 'BONUS STATE · SERVER CONFIRMED' : 'DEMO BONUS STATE · CLIENT RESULT'}</span>
         <strong>{slotOutcome.freeSpinsRemaining} FREE SPINS</strong>
       </div>
       <button class="free-spin-action" on:click={() => handleAction('free-spin')}>
@@ -222,7 +224,7 @@
 
   <button class="primary-action" on:click={() => handleAction('spin')} disabled={motion === 'resolving' || isSpinning} data-testid="slot-spin">
     <span class="action-icon" aria-hidden="true">↻</span>
-    {isSpinning ? 'Барабаны останавливаются…' : motion === 'resolving' ? 'Ждём сервер…' : 'Крутить за 10 JG'}
+    {isSpinning ? 'Барабаны останавливаются…' : motion === 'resolving' ? (isLive ? 'Ждём сервер…' : 'Готовим демо…') : 'Крутить за 10 JG'}
   </button>
   <ResultBand {result} {motion} source={resultSource} />
 </div>

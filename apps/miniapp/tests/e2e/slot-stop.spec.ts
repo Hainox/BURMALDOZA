@@ -318,12 +318,16 @@ test.describe('Slot v2 stop continuity', () => {
     await page.goto('/');
     await page.getByTestId('room-card-slot').click();
     await expect(page.getByTestId('room-shell')).toBeVisible();
+    await expect(page.locator('.slot-room')).toContainText('Полная прокрутка барабанов. Сервер подтверждает сетку, клиент показывает движение.');
+    await expect(page.getByTestId('slot-status')).toContainText('READY · SERVER-FIRST');
     await page.getByTestId('slot-spin').click();
     await expect(page.getByTestId('result-band')).toContainText('RESOLVING · SERVER RESULT');
     await expect(page.getByTestId('slot-machine')).toHaveAttribute('data-stopped-reels', '3', { timeout: 5_000 });
     await expect(page.getByTestId('result-band')).toContainText('SERVER CONFIRMED · LIVE');
     await expect(page.getByTestId('result-band')).toContainText('+20 JG');
     await expect(page.getByTestId('slot-confirmed-grid')).toBeVisible();
+    await expect(page.getByTestId('slot-confirmed-grid')).toContainText('SERVER GRID CONFIRMED');
+    await expect(page.getByTestId('slot-status')).toContainText('SETTLED · SERVER GRID');
     await expect(page.getByTestId('confirmed-balance')).toContainText('BALANCE 1010 JG');
 
     await page.getByTestId('resync-button').click();

@@ -175,7 +175,7 @@
     <div>
       <span class="room-kicker">GFL POST-COLLAPSE · SECTOR 09 PERIMETER</span>
       <h2>Blackjack</h2>
-      <p>Заброшенный корпус за полицейским периметром. Раздаёт только сервер.</p>
+      <p>{isDemo ? 'Заброшенный корпус за полицейским периметром. Демо-раздачу и результат показывает клиент.' : 'Заброшенный корпус за полицейским периметром. Раздаёт только сервер.'}</p>
     </div>
     <span class="bet-chip" data-testid="blackjack-wallet">
       {betShown !== null ? `${betShown} JG ставка` : `${BET_MIN}–${BET_MAX} JG`}
@@ -233,7 +233,7 @@
           </div>
         {/if}
         {#if dealerFaces.length === 0 && !holeShown}
-          <span class="ghost">Карты дилера покажет сервер</span>
+          <span class="ghost">{isDemo ? 'Карты дилера появятся после демо-раздачи' : 'Карты дилера покажет сервер'}</span>
         {/if}
       </div>
       <span class="total" data-testid="blackjack-dealer-total">
@@ -265,7 +265,7 @@
           </div>
         {/each}
         {#if playerFaces.length === 0}
-          <span class="ghost">Ваши карты покажет сервер</span>
+          <span class="ghost">{isDemo ? 'Ваши карты появятся после демо-раздачи' : 'Ваши карты покажет сервер'}</span>
         {/if}
       </div>
       <span class="total bright" data-testid="blackjack-player-total">
@@ -360,12 +360,12 @@
         </div>
         <span class="settle-amount">{outcome.grossPayout > 0 ? '+' : ''}{outcome.grossPayout} <small>JG</small></span>
       </div>
-      <span class="settle-balance">BALANCE {outcome.balanceAfter} JG · NET {outcome.netDelta > 0 ? '+' : ''}{outcome.netDelta}</span>
+      <span class="settle-balance">{isDemo ? 'DEMO BALANCE' : 'BALANCE'} {outcome.balanceAfter} JG · NET {outcome.netDelta > 0 ? '+' : ''}{outcome.netDelta}</span>
     </section>
   {/if}
 
   <ResultBand {result} {motion} source={resultSource} />
-  <p class="rules-line">Soft 17 — stand · Natural 3:2 · Split нет · Только серверный snapshot</p>
+  <p class="rules-line">{isDemo ? 'Soft 17 — stand · Natural 3:2 · Split нет · Демо-раунд без серверного подтверждения' : 'Soft 17 — stand · Natural 3:2 · Split нет · Только серверный snapshot'}</p>
 </div>
 
 <style>
