@@ -36,6 +36,7 @@ test.describe('Mini App shell', () => {
     const resultBand = page.getByTestId('result-band');
     await expect(resultBand).toContainText('RESOLVING · DEMO RESULT', { timeout: 2_000 });
     await expect(resultBand).not.toContainText('SERVER');
+    await expect(resultBand).toContainText('Демо-исход появится после завершения движения.');
   });
 
   test('labels a Hold’em demo outcome as unconfirmed', async ({ page }) => {

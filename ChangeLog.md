@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Mini App result labels now distinguish a completed demo outcome from a server-confirmed live result. Demo Slot and Hold’em details no longer claim server confirmation; confirmed balances remain limited to live results.
 - Made the Blackjack demo table playable: a deterministic demo hand with HIT/STAND/DOUBLE, the dealer row revealed on stand, and an explicit marker that no server confirmed the round. A rejected live action (409 or a network failure) now re-reads the room automatically, so the next action sends the current `state_version` instead of repeating the stale one.
 - Internal bot API routes now return 404 through the public Caddy site. The bot reaches the API through the private `bot_api` Docker network; production configuration permits HTTP only to the fixed `http://api:8000` service address.
 - Fixed the slot reel stop: each reel now accelerates with its 0/110/220 ms stagger, holds a steady cruising speed to its own stop start (2000/2160/2320 ms), then brakes from that same speed to the exact server-confirmed grid. The shared slowdown that froze all reels together mid-spin and the visible relaunch jerk of the center and right reels are gone.

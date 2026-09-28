@@ -70,7 +70,7 @@
 
   const demoPokerResult: RoomResult = {
     headline: 'Рука подтверждена',
-    detail: 'Pot рассчитан после подтверждённого действия.',
+    detail: 'Демо-исход: сервер не подтверждал этот результат.',
     amount: 75
   };
 
@@ -233,7 +233,7 @@
 
     return {
       headline: isFreeSpin ? 'Free Spin подтверждён' : 'Линия подтверждена',
-      detail: 'Исход пришёл с сервера; анимация только показала его.',
+      detail: 'Демо-исход: сервер не подтверждал этот результат.',
       amount: slotOutcome.payout,
       slotOutcome
     };
