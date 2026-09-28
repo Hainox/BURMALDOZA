@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   SLOT_ACTION_ACCEPT_DELAY,
+  SLOT_FINAL_OFFSET_ROWS,
   SLOT_LAUNCH_STAGGER,
+  SLOT_LANDING_DURATION,
   SLOT_LANDING_TAILS,
+  SLOT_RAMP_DURATION,
   SLOT_SERVER_RESULT_PRELUDE,
   SLOT_SPIN_DURATION,
   SLOT_SETTLE_DURATION,
@@ -12,8 +15,10 @@ import {
   getSlotPhase,
   getSlotReelOffsetRows,
   getSlotReelPhase,
+  getSlotReelVelocityRowsPerMs,
   getSlotLaunchDelay,
   getSlotStopDelay,
+  getSlotStopEnd,
   getSlotStopStart,
   hasFreeSpins,
   type SlotOutcome
@@ -57,17 +62,37 @@ describe('slot v2 motion contract', () => {
     expect(SLOT_SERVER_RESULT_PRELUDE).toBe(520);
   });
 
-  it('moves continuously into each landing and then holds the final offset', () => {
-    const beforeLanding = getSlotReelOffsetRows(0, SLOT_TRAVEL_DURATION - 1);
-    const landing = getSlotReelOffsetRows(0, SLOT_TRAVEL_DURATION + 160);
-    const settled = getSlotReelOffsetRows(0, SLOT_TOTAL_DURATION);
+  it('keeps velocity continuous across each stop-start without an early stall', () => {
+    for (let reelIndex = 0; reelIndex < 3; reelIndex += 1) {
+      const landingStart = getSlotStopStart(reelIndex);
+      const cruiseVelocity = getSlotReelVelocityRowsPerMs(reelIndex, landingStart - 64);
+      expect(cruiseVelocity).toBeGreaterThan(0);
 
-    expect(beforeLanding).toBeLessThan(0);
-    expect(landing).toBeLessThan(beforeLanding);
-    expect(settled).toBeLessThan(landing);
-    expect(getSlotReelPhase(0, SLOT_TOTAL_DURATION)).toBe('landed');
-    expect(getSlotReelPhase(1, SLOT_TRAVEL_DURATION)).toBe('travel');
-    expect(getSlotReelPhase(2, SLOT_TRAVEL_DURATION)).toBe('travel');
+      const expectedCruiseVelocity =
+        SLOT_FINAL_OFFSET_ROWS /
+        (SLOT_RAMP_DURATION / 2 +
+          (landingStart - getSlotLaunchDelay(reelIndex) - SLOT_RAMP_DURATION) +
+          SLOT_LANDING_DURATION / 3);
+      expect(cruiseVelocity).toBeCloseTo(expectedCruiseVelocity, 8);
+
+      const velocityBefore = getSlotReelVelocityRowsPerMs(reelIndex, landingStart - 8);
+      const velocityAfter = getSlotReelVelocityRowsPerMs(reelIndex, landingStart + 8);
+      expect(Math.abs(velocityBefore - velocityAfter)).toBeLessThanOrEqual(0.15 * cruiseVelocity);
+      expect(velocityAfter).toBeGreaterThanOrEqual(0.8 * cruiseVelocity);
+
+      for (let elapsedMs = getSlotLaunchDelay(reelIndex) + SLOT_RAMP_DURATION; elapsedMs < landingStart; elapsedMs += 16) {
+        expect(getSlotReelVelocityRowsPerMs(reelIndex, elapsedMs)).toBeGreaterThanOrEqual(
+          0.8 * cruiseVelocity
+        );
+      }
+
+      expect(getSlotReelVelocityRowsPerMs(reelIndex, landingStart)).toBeCloseTo(cruiseVelocity, 6);
+      expect(getSlotReelOffsetRows(reelIndex, getSlotStopEnd(reelIndex))).toBe(-SLOT_FINAL_OFFSET_ROWS);
+      expect(getSlotReelOffsetRows(reelIndex, getSlotStopEnd(reelIndex) - 1)).toBeCloseTo(
+        -SLOT_FINAL_OFFSET_ROWS,
+        4
+      );
+    }
   });
 
   it('collapses every reel to landed under reduced motion', () => {
