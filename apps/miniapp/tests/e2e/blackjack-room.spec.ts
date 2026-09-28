@@ -254,9 +254,22 @@ test.describe('Blackjack GFL room', () => {
     await page.getByTestId('room-card-blackjack').click();
     await expect(page.getByTestId('blackjack-room')).toBeVisible();
 
+    await page.getByTestId('blackjack-room').evaluate((element) => {
+      type RoomWithPhaseLog = HTMLElement & { __phaseLog?: string[]; __phaseObserver?: MutationObserver };
+      const target = element as RoomWithPhaseLog;
+      const log: string[] = [target.getAttribute('data-game-phase') ?? ''];
+      const observer = new MutationObserver(() => {
+        const phase = target.getAttribute('data-game-phase') ?? '';
+        if (log.at(-1) !== phase) log.push(phase);
+      });
+      observer.observe(target, { attributes: true, attributeFilter: ['data-game-phase'] });
+      target.__phaseObserver = observer;
+      target.__phaseLog = log;
+    });
+
     await page.getByTestId('blackjack-deal').click();
 
-    // The server settles A+K immediately: a player-turn phase never appears.
+    // The server settles A+K immediately: no player-turn phase may ever be rendered.
     await expect(page.getByTestId('blackjack-settlement')).toContainText('Натуральный блэкджек');
     await expect(page.getByTestId('blackjack-settlement')).toContainText('+62 JG');
     await expect(page.getByTestId('blackjack-settlement')).toContainText('BALANCE 1037 JG');
@@ -266,6 +279,15 @@ test.describe('Blackjack GFL room', () => {
     await expect(page.getByTestId('blackjack-actions')).toHaveCount(0);
     await expect(page.getByTestId('blackjack-player-cards')).toContainText('RPK-16');
     await expect(page.getByTestId('blackjack-player-cards')).toContainText('AK-12');
+
+    const phases = await page.getByTestId('blackjack-room').evaluate((element) => {
+      type RoomWithPhaseLog = HTMLElement & { __phaseLog?: string[]; __phaseObserver?: MutationObserver };
+      const target = element as RoomWithPhaseLog;
+      target.__phaseObserver?.disconnect();
+      return target.__phaseLog ?? [];
+    });
+    expect(phases).not.toContain('player_turn');
+    expect(phases).toContain('settled');
     expect(counters.actionCalls()).toBe(1);
   });
 
