@@ -418,6 +418,9 @@ test.describe('Blackjack GFL room', () => {
     await page.getByTestId('blackjack-stand').click();
     await expect(page.getByTestId('blackjack-settlement')).toContainText('DEMO ROUND');
     await expect(page.getByTestId('blackjack-settlement')).not.toContainText('SERVER SETTLEMENT');
+    await expect(page.getByTestId('result-band')).toContainText('RESOLVING · DEMO RESULT');
+    await expect(page.getByTestId('result-band')).toContainText('DEMO ROUND · БЕЗ СЕРВЕРНОГО ПОДТВЕРЖДЕНИЯ');
+    await expect(page.getByTestId('result-band')).not.toContainText('SERVER CONFIRMED');
     await expect(page.getByTestId('blackjack-dealer-total')).toContainText('total 12');
     await expect(page.getByTestId('blackjack-deal')).toBeVisible();
   });
