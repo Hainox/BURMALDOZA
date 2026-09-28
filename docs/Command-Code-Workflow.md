@@ -25,7 +25,7 @@
 | Claude Code: обычная ограниченная реализация или review | `Sonnet 5` | `high` | Everyday-маршрут по picker владельца. В CLI используй поддерживаемый alias выбранной модели и явно зафиксируй его вместе с отображаемым именем и effort. |
 | Claude Code: короткая документационная задача | `Haiku 4.5` | `low` | Быстрый маршрут для узкого scope; для review с несколькими файлами выбрать `medium`, если он доступен выбранной модели. |
 | Command Code (CCode): утверждённые UI/motion handoff-задачи | `meta/muse-spark-1.3-contributor` | `high` | Передавать пару в каждой задаче и issue; не менять без обновления handoff. |
-| Antigravity: browser/UI QA и ограниченные coding-задачи | `Gemini 3.1 Pro` / `High`, если доступны в picker | `High` | Перед handoff сверить picker и квоту; указать точное имя модели и effort из сессии. Не включать платные AI credits/overage без отдельного решения владельца. |
+| Antigravity: browser/UI QA и ограниченные coding-задачи | `Gemini 3.1 Pro`, если доступен в picker | `High`, если доступен | Перед handoff сверить picker и квоту; указать точное имя модели и effort из сессии. Не включать платные AI credits/overage без отдельного решения владельца. |
 
 Снимок выбора модели владельца на 24.09.2026 также содержит `Opus 5`, `Opus 4.8`, `Opus 4.7`, `Opus 4.6` и `Sonnet 4.6`. `Fable 5.1` и `Fable 5` помечены в интерфейсе как требующие usage credits; не выбирать их и не расходовать эти кредиты без отдельного решения владельца. Доступность моделей может зависеть от аккаунта и меняться — перед каждой сессией сверяй фактический picker.
 
@@ -189,7 +189,6 @@ Acceptance criteria:
 Справка Command Code: [модели](https://commandcode.ai/docs/reference/cli/models), [Pro](https://commandcode.ai/docs/plans/pro), [лимиты](https://commandcode.ai/docs/resources/pricing-limits), [Vision](https://commandcode.ai/docs/vision).
 
 Справка Anthropic: [установка Claude Code](https://code.claude.com/docs/en/getting-started), [Claude Code с планом Pro](https://support.claude.com/en/articles/11145838-use-claude-code-with-your-pro-or-max-plan), [проверка API-авторизации](https://support.claude.com/en/articles/12304248-manage-api-key-environment-variables-in-claude-code), [usage limits](https://support.claude.com/en/articles/9797557-usage-limit-best-practices), [проектные инструкции и transcripts](https://code.claude.com/docs/en/claude-directory).
-
 
 ## Google Antigravity с Gemini
 
