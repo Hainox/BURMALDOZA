@@ -25,7 +25,13 @@
     mapApiPublicStateResult
   } from '$lib/api/runtime';
   import { SessionState } from '$lib/state/session.svelte';
-  import { getResultBalance, RoomState, type GameType, type RoomResult } from '$lib/state/room.svelte';
+  import {
+    getResultBalance,
+    RoomState,
+    type BlackjackOutcome,
+    type GameType,
+    type RoomResult
+  } from '$lib/state/room.svelte';
 
   const PUBLIC_API_BASE_URL = import.meta.env.PUBLIC_API_BASE_URL ?? '';
 
@@ -62,10 +68,10 @@
     }
   ];
 
-  const demoResults: Record<GameType, RoomResult> = {
-    slot: { headline: 'Линия подтверждена', detail: 'Исход пришёл с сервера; анимация только показала его.', amount: 40 },
-    blackjack: { headline: 'Стол подтверждён', detail: 'Рука закрыта после серверной раздачи.', amount: 25 },
-    holdem: { headline: 'Рука подтверждена', detail: 'Pot рассчитан после подтверждённого действия.', amount: 75 }
+  const demoPokerResult: RoomResult = {
+    headline: 'Рука подтверждена',
+    detail: 'Pot рассчитан после подтверждённого действия.',
+    amount: 75
   };
 
   const demoSlotReels = [
@@ -73,6 +79,33 @@
     ['7', '♠', '✦', '✦', '◆', 'Q', '♣'],
     ['◆', '7', '♣', '✦', 'A', '♠', '♦']
   ];
+
+  const DEMO_BLACKJACK_RULESET = 'blackjack-demo-1';
+  const DEMO_BLACKJACK_PLAYER_CARDS = [
+    { rank: '10', suit: 'spades' },
+    { rank: '7', suit: 'hearts' }
+  ];
+  const DEMO_BLACKJACK_DEALER_CARDS = [{ rank: '9', suit: 'clubs' }];
+  const DEMO_BLACKJACK_DEALER_DRAW = { rank: '3', suit: 'diamonds' };
+  const DEMO_BLACKJACK_DRAWS = [
+    { rank: '3', suit: 'diamonds' },
+    { rank: '2', suit: 'clubs' }
+  ];
+
+  interface DemoBlackjackHand {
+    bet: number;
+    playerCards: Array<Record<string, unknown>>;
+    dealerCards: Array<Record<string, unknown>>;
+    holeHidden: boolean;
+    playerTotal: number;
+    dealerTotal: number | null;
+    phase: string;
+    legalActions: string[];
+    drawIndex: number;
+    outcome: BlackjackOutcome | null;
+  }
+
+  let demoBlackjack: DemoBlackjackHand | null = null;
 
   let selectedGame: GameType | null = null;
   let isRunning = false;
@@ -83,7 +116,6 @@
   let liveApiEnabled = false;
   let apiLoading = false;
   let apiError: string | null = null;
-  let actionPending = false;
   let closeRoomStream: (() => void) | null = null;
 
   function clearTimers() {
@@ -146,9 +178,9 @@
     if (apiLoading) return;
     clearTimers();
     isRunning = false;
-    actionPending = false;
     selectedGame = gameType;
     demoFreeSpinsRemaining = 0;
+    demoBlackjack = null;
     const definition = roomDefinitions.find((room) => room.gameType === gameType);
     if (!definition) return;
 
@@ -207,15 +239,180 @@
     };
   }
 
-  function runDemoAction(action: string) {
+  function blackjackTotal(cards: Array<Record<string, unknown>>): number {
+    let total = 0;
+    let aces = 0;
+    for (const card of cards) {
+      const rank = card.rank;
+      if (rank === 'A') {
+        aces += 1;
+        total += 11;
+      } else if (rank === 'K' || rank === 'Q' || rank === 'J' || rank === '10') {
+        total += 10;
+      } else {
+        total += Number(rank);
+      }
+    }
+    while (total > 21 && aces > 0) {
+      total -= 10;
+      aces -= 1;
+    }
+    return total;
+  }
+
+  function demoBlackjackPublicState(): Record<string, unknown> {
+    if (!demoBlackjack) return { demo: true };
+    return {
+      demo: true,
+      game_phase: demoBlackjack.phase,
+      bet: demoBlackjack.bet,
+      player_cards: demoBlackjack.playerCards,
+      dealer_cards: demoBlackjack.holeHidden
+        ? [...demoBlackjack.dealerCards, { hidden: true }]
+        : demoBlackjack.dealerCards,
+      dealer_hole_hidden: demoBlackjack.holeHidden,
+      player_total: demoBlackjack.playerTotal,
+      ...(demoBlackjack.dealerTotal === null ? {} : { dealer_total: demoBlackjack.dealerTotal }),
+      legal_actions: demoBlackjack.legalActions,
+      ruleset_version: DEMO_BLACKJACK_RULESET,
+      wallet_balance: session.balance
+    };
+  }
+
+  function syncDemoBlackjackSnapshot() {
+    if (!roomState.snapshot) return;
+    roomState.setSnapshot({ ...roomState.snapshot, publicState: demoBlackjackPublicState() });
+  }
+
+  function settleDemoBlackjack(playerBusted = false) {
+    if (!demoBlackjack) return;
+    const dealerCards = [...demoBlackjack.dealerCards, DEMO_BLACKJACK_DEALER_DRAW];
+    const dealerTotal = blackjackTotal(dealerCards);
+    const playerTotal = demoBlackjack.playerTotal;
+    const outcome: BlackjackOutcome['outcome'] = playerBusted
+      ? 'loss'
+      : playerTotal > dealerTotal
+        ? 'win'
+        : playerTotal === dealerTotal
+          ? 'push'
+          : 'loss';
+    const netDelta =
+      outcome === 'win' ? demoBlackjack.bet : outcome === 'push' ? 0 : -demoBlackjack.bet;
+
+    demoBlackjack = {
+      ...demoBlackjack,
+      dealerCards,
+      dealerTotal,
+      holeHidden: false,
+      phase: 'settled',
+      legalActions: ['deal'],
+      outcome: {
+        outcome,
+        playerTotal,
+        dealerTotal,
+        grossPayout: outcome === 'loss' ? 0 : demoBlackjack.bet + Math.max(0, netDelta),
+        netDelta,
+        balanceAfter: session.balance + netDelta,
+        rulesetVersion: DEMO_BLACKJACK_RULESET,
+        finalBet: demoBlackjack.bet
+      }
+    };
+  }
+
+  function runDemoBlackjackAction(action: string, fields: Record<string, unknown>) {
+    if (action === 'deal') {
+      const bet = typeof fields.bet === 'number' ? fields.bet : 25;
+      const playerCards = [...DEMO_BLACKJACK_PLAYER_CARDS];
+      demoBlackjack = {
+        bet,
+        playerCards,
+        dealerCards: [...DEMO_BLACKJACK_DEALER_CARDS],
+        holeHidden: true,
+        playerTotal: blackjackTotal(playerCards),
+        dealerTotal: null,
+        phase: 'player_turn',
+        legalActions: ['hit', 'stand', 'double'],
+        drawIndex: 0,
+        outcome: null
+      };
+      return;
+    }
+
+    if (!demoBlackjack || demoBlackjack.phase !== 'player_turn') return;
+
+    if (action === 'hit' || action === 'double') {
+      const draw = DEMO_BLACKJACK_DRAWS[demoBlackjack.drawIndex % DEMO_BLACKJACK_DRAWS.length];
+      const playerCards = [...demoBlackjack.playerCards, draw];
+      demoBlackjack = {
+        ...demoBlackjack,
+        bet: action === 'double' ? demoBlackjack.bet * 2 : demoBlackjack.bet,
+        playerCards,
+        playerTotal: blackjackTotal(playerCards),
+        drawIndex: demoBlackjack.drawIndex + 1
+      };
+      if (demoBlackjack.playerTotal > 21) {
+        settleDemoBlackjack(true);
+        return;
+      }
+      if (action === 'double') settleDemoBlackjack();
+      return;
+    }
+
+    if (action === 'stand') settleDemoBlackjack();
+  }
+
+  function demoBlackjackResult(): RoomResult | null {
+    const outcome = demoBlackjack?.outcome;
+    if (!outcome) return null;
+    const headlines = {
+      blackjack: 'Натуральный блэкджек',
+      win: 'Раунд выигран',
+      push: 'Возврат ставки',
+      loss: 'Раунд завершён'
+    } as const;
+    return {
+      headline: headlines[outcome.outcome],
+      detail: `${outcome.playerTotal} против ${outcome.dealerTotal}; демо-раунд, сервер не подтверждал.`,
+      amount: outcome.grossPayout,
+      blackjackOutcome: outcome
+    };
+  }
+
+  function runDemoAction(action: string, fields: Record<string, unknown> = {}) {
     if (!selectedGame || isRunning || !roomState.snapshot) return;
     clearTimers();
     isRunning = true;
     roomState.setResult(null);
     roomState.transition({ type: 'USER_INTENT' }, session.reducedMotion);
-    const confirmedResult = selectedGame === 'slot'
-      ? buildDemoSlotResult(action)
-      : demoResults[selectedGame as GameType];
+
+    if (selectedGame === 'blackjack') {
+      runDemoBlackjackAction(action, fields);
+      syncDemoBlackjackSnapshot();
+      const demoResult = demoBlackjackResult();
+
+      after(SLOT_ACTION_ACCEPT_DELAY, () => {
+        roomState.transition({ type: 'ACTION_ACCEPTED' }, session.reducedMotion);
+        if (!demoResult) {
+          clearTimers();
+          roomState.reset();
+          isRunning = false;
+          return;
+        }
+        roomState.setResult(demoResult);
+        after(360, () => {
+          roomState.transition({ type: 'RESULT_CONFIRMED' }, session.reducedMotion);
+          updateBalanceFromResult(demoResult);
+          syncDemoBlackjackSnapshot();
+          after(360, () => {
+            roomState.transition({ type: 'SETTLE_COMPLETE' }, session.reducedMotion);
+            isRunning = false;
+          });
+        });
+      });
+      return;
+    }
+
+    const confirmedResult = selectedGame === 'slot' ? buildDemoSlotResult(action) : demoPokerResult;
 
     after(SLOT_ACTION_ACCEPT_DELAY, () => {
       roomState.transition({ type: 'ACTION_ACCEPTED' }, session.reducedMotion);
@@ -252,11 +449,30 @@
       : {};
   }
 
+  async function reloadRoomSnapshot(roomId: string): Promise<boolean> {
+    if (!apiClient) return false;
+    try {
+      const snapshot = await apiClient.getRoom(roomId);
+      if (roomState.snapshot?.roomId !== roomId) return false;
+      roomState.setSnapshot(snapshot, true);
+      updateBalanceFromPublicState(snapshot.publicState);
+      const snapshotResult = mapApiPublicStateResult(snapshot.publicState, snapshot.gameType);
+      if (snapshotResult) {
+        roomState.restoreConfirmedResult(snapshotResult);
+        updateBalanceFromResult(snapshotResult);
+      }
+      session.setConnection('connected');
+      return true;
+    } catch {
+      session.setConnection('offline');
+      return false;
+    }
+  }
+
   async function runLiveAction(action: string, fields: Record<string, unknown> = {}) {
-    if (!apiClient || !selectedGame || isRunning || actionPending || !roomState.snapshot) return;
+    if (!apiClient || !selectedGame || isRunning || !roomState.snapshot) return;
     clearTimers();
     isRunning = true;
-    actionPending = true;
     apiError = null;
     roomState.setResult(null);
     roomState.transition({ type: 'USER_INTENT' }, session.reducedMotion);
@@ -295,7 +511,6 @@
         clearTimers();
         roomState.reset();
         isRunning = false;
-        actionPending = false;
         return;
       }
       const resultDelay = selectedGame === 'slot'
@@ -308,16 +523,15 @@
         after(selectedGame === 'slot' ? SLOT_SETTLE_DURATION : 360, () => {
           roomState.transition({ type: 'SETTLE_COMPLETE' }, session.reducedMotion);
           isRunning = false;
-          actionPending = false;
         });
       });
     } catch (error) {
       clearTimers();
-      isRunning = false;
-      actionPending = false;
-      session.setConnection('offline');
       apiError = error instanceof Error ? error.message : 'Сервер не подтвердил действие';
       roomState.reset();
+      // Stay busy until the room has been re-read, so a fresh tap cannot race the reload.
+      await reloadRoomSnapshot(roomAtStart.roomId);
+      isRunning = false;
     }
   }
 
@@ -331,33 +545,20 @@
       void runLiveAction(action, fields);
       return;
     }
-    runDemoAction(action);
+    runDemoAction(action, fields);
   }
 
-  function resync() {
+  async function resync() {
     if (!roomState.snapshot) return;
     clearTimers();
     isRunning = false;
-    actionPending = false;
     roomState.setResult(null);
+    apiError = null;
     session.setConnection('syncing');
 
     if (liveApiEnabled && apiClient) {
-      const roomId = roomState.snapshot.roomId;
-      void apiClient.getRoom(roomId).then((snapshot) => {
-        if (roomState.snapshot?.roomId !== roomId) return;
-        roomState.setSnapshot(snapshot, true);
-        updateBalanceFromPublicState(snapshot.publicState);
-        const snapshotResult = mapApiPublicStateResult(snapshot.publicState, snapshot.gameType);
-        if (snapshotResult) {
-          roomState.restoreConfirmedResult(snapshotResult);
-          updateBalanceFromResult(snapshotResult);
-        }
-        session.setConnection('connected');
-      }).catch((error) => {
-        session.setConnection('offline');
-        apiError = error instanceof Error ? error.message : 'Не удалось синхронизировать комнату';
-      });
+      const reloaded = await reloadRoomSnapshot(roomState.snapshot.roomId);
+      if (!reloaded) apiError = 'Не удалось синхронизировать комнату';
       return;
     }
 
@@ -372,7 +573,6 @@
     closeRoomStream?.();
     closeRoomStream = null;
     isRunning = false;
-    actionPending = false;
     roomState.reset();
     selectedGame = null;
     session.setConnection(liveApiEnabled ? 'connected' : 'demo');
@@ -427,7 +627,7 @@
           snapshot={roomState.snapshot}
           motion={roomState.motion}
           result={roomState.result}
-          pending={actionPending}
+          pending={isRunning}
           apiError={apiError}
           onAction={runAction}
           resultSource={liveApiEnabled ? 'live' : 'demo'}

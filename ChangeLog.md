@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Made the Blackjack demo table playable: a deterministic demo hand with HIT/STAND/DOUBLE, the dealer row revealed on stand, and an explicit marker that no server confirmed the round. A rejected live action (409 or a network failure) now re-reads the room automatically, so the next action sends the current `state_version` instead of repeating the stale one.
 - Internal bot API routes now return 404 through the public Caddy site. The bot reaches the API through the private `bot_api` Docker network; production configuration permits HTTP only to the fixed `http://api:8000` service address.
 - Fixed the slot reel stop: each reel now accelerates with its 0/110/220 ms stagger, holds a steady cruising speed to its own stop start (2000/2160/2320 ms), then brakes from that same speed to the exact server-confirmed grid. The shared slowdown that froze all reels together mid-spin and the visible relaunch jerk of the center and right reels are gone.
 - Added live Daily (+250 JG) and Relief (+300 JG) grant controls to the Mini App dashboard: one `getWallet()` bootstrap call, fresh idempotency key per claim, balance only from the confirmed `balance_after`, 409 shown as cooldown, and no grant simulation in demo mode.
