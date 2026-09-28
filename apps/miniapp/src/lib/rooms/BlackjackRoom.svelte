@@ -185,6 +185,12 @@
 
   <div class="perimeter-tape" aria-hidden="true"><span>ПОЛИЦЕЙСКОЕ ОЦЕПЛЕНИЕ · SECTOR 09</span></div>
 
+  {#if isDemo}
+    <p class="demo-note" data-testid="blackjack-demo-note" role="status">
+      ДЕМО · стол без сервера: карты и итог показывает клиент, серверного подтверждения нет.
+    </p>
+  {/if}
+
   <section class="felt-table" aria-label="Blackjack table">
     <div class="table-orbit orbit-one"></div>
     <div class="table-orbit orbit-two"></div>
@@ -298,7 +304,7 @@
         on:click={deal}
         disabled={!canSendDeal}
       >
-        {busy ? 'Ожидаем сервер…' : betValid ? `Раздать за ${bet} JG` : 'Выберите ставку'}
+        {busy ? (isDemo ? 'Раскладываем…' : 'Ожидаем сервер…') : betValid ? `Раздать за ${bet} JG` : 'Выберите ставку'}
       </button>
     </section>
   {/if}
@@ -325,18 +331,28 @@
 
   <div class="bj-status" data-testid="blackjack-status" aria-live="polite">
     <span>PHASE {gamePhase} · {ruleset} · v{stateVersion}</span>
-    <strong>{busy ? 'Ожидаем сервер…' : isConfirmed ? 'Сервер подтвердил' : canDeal ? 'Готов к раздаче' : 'Ход по серверу'}</strong>
+    <strong>
+      {busy
+        ? isDemo ? 'Ход демо-раунда' : 'Ожидаем сервер…'
+        : isConfirmed
+          ? isDemo ? 'Демо-раунд завершён' : 'Сервер подтвердил'
+          : canDeal
+            ? 'Готов к раздаче'
+            : isDemo ? 'Ваш ход' : 'Ход по серверу'}
+    </strong>
   </div>
 
   {#if apiError}
     <p class="bj-error" data-testid="blackjack-error" role="alert">
-      Сервер не подтвердил действие: {apiError} Повторите разрешённое действие — повтор получит новый ключ и не задвоит ставку.
+      Сервер не подтвердил действие: {apiError} Клиент перечитывает комнату — действуйте по актуальному снимку, а не повторяйте тот же тап.
     </p>
   {/if}
 
   {#if isConfirmed && outcome}
     <section class="settlement" data-testid="blackjack-settlement" aria-live="polite">
-      <span class="settle-kicker">SERVER SETTLEMENT · {outcome.rulesetVersion}</span>
+      <span class="settle-kicker">
+        {isDemo ? 'DEMO ROUND · БЕЗ СЕРВЕРНОГО ПОДТВЕРЖДЕНИЯ' : `SERVER SETTLEMENT · ${outcome.rulesetVersion}`}
+      </span>
       <div class="settle-row">
         <div>
           <strong>{OUTCOME_LABEL[outcome.outcome] ?? outcome.outcome}</strong>
@@ -407,6 +423,7 @@
   .action-grid .action-primary { border-color: rgb(231 187 112 / 55%); }
   .bj-status { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
   .bj-status strong { color: var(--brass-300); }
+  .demo-note { max-width: none; padding: 10px 12px; border: 1px dashed rgb(231 187 112 / 48%); border-radius: 12px; background: rgb(231 187 112 / 8%); color: var(--brass-300); font-size: 11px; font-weight: 800; line-height: 1.45; }
   .bj-error { max-width: none; padding: 11px 12px; border: 1px solid rgb(255 156 174 / 45%); border-radius: 12px; background: rgb(255 156 174 / 8%); color: #ffc2cd; font-size: 11px; line-height: 1.45; }
   .settlement { display: grid; gap: 8px; padding: 13px 15px; border: 1px solid rgb(142 228 182 / 38%); border-radius: var(--radius-md); background: linear-gradient(105deg, rgb(142 228 182 / 12%), rgb(231 187 112 / 8%)); }
   .settle-kicker { color: var(--success); font-size: 9px; font-weight: 800; letter-spacing: 0.15em; }
