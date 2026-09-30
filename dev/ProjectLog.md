@@ -418,3 +418,8 @@
 - Проверки: `pnpm miniapp:check` — 0 errors, 0 warnings; `pnpm miniapp:test` — 25 passed; `pnpm miniapp:build` — passed; `pnpm --dir apps/miniapp exec playwright test tests/e2e/blackjack-room.spec.ts` — 8 passed; `pnpm miniapp:e2e` — 21 passed (Chromium, Windows).
 - Ассеты из #6 (портреты Deck A, кредит MICA Team / SUNBORN, фон `room-police-perimeter.png`) не переносились: это требует отдельного решения владельца и расширения allowlist.
 - Ограничения: реальный Telegram WebView, iOS и Android не проверялись; серверный контракт 409 подтверждён только заглушкой e2e, а не живым API.
+
+## 2026-09-30 — право Claude Code сливать PR
+
+- Решение владельца Hainox: Claude Code может сливать PR в `main` без отдельного запроса при условиях из раздела «Merge силами Claude Code» в `AGENTS.md` (зелёный CI, без конфликтов и блокирующих замечаний, без обхода `needs-owner`, review другого агента для кода; для domain/RNG/ledger/API/миграций/production-конфигурации — review Codex). Deploy и серверные действия по-прежнему делает владелец.
+- Обновлены `AGENTS.md`, `CLAUDE.md` (раздел «Публикация») и шаг 6 в `docs/Command-Code-Workflow.md`.
