@@ -424,3 +424,13 @@
 - Решение владельца Hainox: Claude Code может сливать PR в `main` без отдельного запроса при условиях из раздела «Merge силами Claude Code» в `AGENTS.md` (зелёный CI, без конфликтов и блокирующих замечаний, без обхода `needs-owner`, review другого агента для кода; для domain/RNG/ledger/API/миграций/production-конфигурации — review Codex). Deploy и серверные действия по-прежнему делает владелец.
 - Обновлены `AGENTS.md`, `CLAUDE.md` (раздел «Публикация») и шаг 6 в `docs/Command-Code-Workflow.md`.
 - Поправка по review Codex (P1 в PR #46, пришёл до merge, но был пропущен при слиянии): squash не очищает опубликованные данные — исходные коммиты остаются видны в PR. Правило изменено: если в ветке оказался секрет или приватные данные, PR не сливается, ставится `needs-owner`, чистку истории и отзыв секрета решает владелец. Вывод для Claude: перед merge перечитывать review-комментарии на текущем head, а не только статус CI. Та же поправка — в риске R2 `docs/Launch-Checkpoint.md`.
+
+
+## 2026-10-03 — сверка штаба и запуск просмотра
+
+- Codex, фактические model/effort не отображаются. База `main` `e1be100`; ветка `codex/hq-status-2026-10-03`. Scope владельца: только BURMALDOZA, запуск просмотра и актуализация сводок.
+- По GitHub REST через подключённый GitHub: открытых PR нет; открыты только #41, #43 и постоянный штаб #19. CI базы — success (run 36710993820). Это не подтверждение production или ручной приёмки устройств.
+- Обновлены публичный снимок журнала и QA-очередь, Launch-Checkpoint, Development-Roadmap, Slot-V2-Status, инструкция просмотра. Исторические записи не переписывались.
+- Mini App Vite и журнал Vite запущены в текущем облачном окружении на 5173/5174, обе страницы HTTP 200. Подхват файлов Vite; GitHub в журнале обновляется кнопкой. На ПК владельца процессы не запускались; hooks/poller не менялись.
+- Проверки: `pnpm install --frozen-lockfile` — passed; `pnpm miniapp:check` — 0 errors / 0 warnings; `node docs/project-journal/test-offline.cjs` — passed; `node --check` для app.js/seed.js — passed; `git diff --check` — passed.
+- Ограничения: production, live API, Telegram WebView и browser/mobile QA #41/#43 не проверялись; игровые исходы DEMO не подтверждаются сервером.
