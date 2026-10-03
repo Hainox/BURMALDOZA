@@ -1,5 +1,9 @@
 # Бурмалдоза — роадмап разработки
 
+## Сверка 03.10.2026
+
+`main` — `e1be100`, CI успешен. Slot continuity (#18), Blackjack follow-up (#36), DEMO/LIVE labels (#40), internal API isolation (#33) и ручной Pages workflow (#39) слиты. Открыты QA #41 и #43; production и приёмка устройств не подтверждены. Актуальная очередь — [Launch-Checkpoint.md](./Launch-Checkpoint.md).
+
 ## Уже собранный foundation
 
 Технический каркас первого релиза проходит по ветке `codex/platform-foundation-spec` и включает:
