@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hold'em · Камуро-тё — превью направления</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700;900&family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07070c;
+    --ink: #0f0f18;
+    --panel: #151522;
+    --panel-2: #1c1b2b;
+    --line: rgb(255 255 255 / 8%);
+    --line-strong: rgb(255 255 255 / 16%);
+    --text: #f1ece4;
+    --muted: #9b95a6;
+    --neon: #ff2e88;
+    --neon-soft: rgb(255 46 136 / 14%);
+    --cyan: #3be8ff;
+    --gold: #e9b949;
+    --gold-soft: rgb(233 185 73 / 14%);
+    --lacquer: #6d0f1a;
+    --felt: #0e3b2e;
+    --display: 'Oswald', 'Arial Narrow', sans-serif;
+    --jp: 'Noto Serif JP', serif;
+    --body: 'Inter', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; min-height: 100vh; color: var(--text); font: 14px/1.5 var(--body);
+    background:
+      radial-gradient(800px 420px at 85% 0%, rgb(255 46 136 / 16%), transparent 65%),
+      radial-gradient(700px 380px at 0% 30%, rgb(59 232 255 / 8%), transparent 60%),
+      radial-gradient(900px 500px at 50% 120%, rgb(109 15 26 / 35%), transparent 60%),
+      var(--bg);
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 20px 16px 56px; }
+  .topline { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-bottom: 22px; }
+  .brand { display: flex; align-items: center; gap: 10px; font: 600 14px/1 var(--display); letter-spacing: .18em; text-transform: uppercase; }
+  .brand i { font: 900 18px/1 var(--jp); color: var(--neon); text-shadow: 0 0 10px var(--neon); font-style: normal; }
+  .tag { padding: 5px 10px; border: 1px solid var(--line-strong); border-radius: 999px; color: var(--muted); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+  h1 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; margin: 0 0 6px; font: 700 clamp(30px, 6vw, 52px)/1 var(--display); letter-spacing: .03em; text-transform: uppercase; }
+  h1 .kanji { font: 900 clamp(28px, 5vw, 46px)/1 var(--jp); color: var(--neon); text-shadow: 0 0 14px rgb(255 46 136 / 70%), 0 0 40px rgb(255 46 136 / 35%); }
+  .lede { max-width: 740px; margin: 0 0 26px; color: var(--muted); font-size: 15px; }
+  .layout { display: grid; grid-template-columns: minmax(0, 400px) minmax(0, 1fr); gap: 28px; align-items: start; }
+  @media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+
+  /* ---------- phone ---------- */
+  .phone { width: 100%; max-width: 400px; margin: 0 auto; padding: 14px; border: 1px solid var(--line-strong); border-radius: 28px; background: linear-gradient(180deg, #0e0d16, #08080d); box-shadow: 0 30px 80px rgb(0 0 0 / 60%), inset 0 1px 0 rgb(255 255 255 / 5%); }
+  .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px; border: 1px solid var(--line); border-radius: 12px; background: var(--ink); }
+  .tab { padding: 9px 0; border: 0; border-radius: 9px; background: transparent; color: var(--muted); font: 600 13px/1 var(--display); letter-spacing: .14em; text-transform: uppercase; cursor: pointer; }
+  .tab[aria-selected="true"] { background: var(--neon-soft); color: #fff; box-shadow: inset 0 0 0 1px rgb(255 46 136 / 45%); }
+  button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+  .view[hidden] { display: none; }
+
+  /* lobby */
+  .lobby { margin-top: 12px; }
+  .street { position: relative; height: 92px; margin-bottom: 12px; overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: linear-gradient(180deg, #120f1d, #0a0910); }
+  .street .sign { position: absolute; top: 10px; padding: 4px 6px; border-radius: 4px; font: 900 15px/1.05 var(--jp); writing-mode: vertical-rl; }
+  .street .s1 { left: 14px; color: var(--neon); border: 1px solid rgb(255 46 136 / 55%); text-shadow: 0 0 8px var(--neon); }
+  .street .s2 { left: 52px; color: var(--cyan); border: 1px solid rgb(59 232 255 / 45%); text-shadow: 0 0 8px var(--cyan); }
+  .street .s3 { right: 18px; color: var(--gold); border: 1px solid rgb(233 185 73 / 45%); text-shadow: 0 0 8px var(--gold); }
+  .street .title { position: absolute; left: 96px; right: 70px; top: 22px; }
+  .street .title b { display: block; font: 700 20px/1 var(--display); letter-spacing: .08em; text-transform: uppercase; }
+  .street .title small { color: var(--muted); font-size: 12px; }
+  .street .flicker { animation: flicker 4s infinite; }
+  @keyframes flicker { 0%, 92%, 100% { opacity: 1; } 93% { opacity: .35; } 95% { opacity: .9; } 96% { opacity: .4; } }
+  .mode { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .mode button { padding: 12px 10px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--panel); color: var(--text); text-align: left; cursor: pointer; }
+  .mode button b { display: block; font: 600 15px/1.1 var(--display); letter-spacing: .08em; text-transform: uppercase; }
+  .mode button small { color: var(--muted); font-size: 11px; }
+  .mode button[aria-pressed="true"] { border-color: var(--cyan); background: rgb(59 232 255 / 8%); }
+  .tables { display: grid; gap: 8px; }
+  .table-card { display: grid; grid-template-columns: 54px 1fr auto; gap: 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 14px; background: linear-gradient(100deg, var(--panel-2), var(--panel)); color: var(--text); text-align: left; cursor: pointer; }
+  .table-card:hover { border-color: rgb(255 46 136 / 45%); }
+  .table-card .rank { display: grid; place-items: center; width: 54px; height: 54px; border-radius: 12px; background: #0b0a12; font: 900 22px/1 var(--jp); }
+  .table-card b { display: block; font: 600 16px/1.1 var(--display); letter-spacing: .06em; text-transform: uppercase; }
+  .table-card small { color: var(--muted); font-size: 12px; }
+  .table-card .buyin { font: 700 20px/1 var(--display); color: var(--gold); text-align: right; }
+  .table-card .buyin small { display: block; margin-top: 3px; color: var(--muted); font: 500 10px/1 var(--body); text-transform: uppercase; letter-spacing: .06em; }
+  .searching { display: none; margin-top: 10px; padding: 10px 12px; border: 1px dashed rgb(59 232 255 / 50%); border-radius: 12px; color: var(--cyan); font-size: 13px; text-align: center; }
+  .searching.on { display: block; }
+
+  /* table */
+  .felt { position: relative; margin-top: 12px; padding: 14px 12px; border-radius: 22px; background:
+      radial-gradient(ellipse at 50% 45%, rgb(255 255 255 / 6%), transparent 60%),
+      radial-gradient(ellipse at 50% 50%, #12473a, var(--felt) 70%);
+    box-shadow: inset 0 0 0 6px #2a0a10, inset 0 0 0 8px rgb(233 185 73 / 45%), inset 0 0 40px rgb(0 0 0 / 60%); }
+  .seat { display: grid; grid-template-columns: 56px 1fr auto; gap: 10px; align-items: center; }
+  .seat.me { margin-top: 14px; }
+  .avatar { position: relative; width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: #0b0a12; }
+  .avatar svg.portrait { width: 48px; height: 48px; border-radius: 50%; }
+  .avatar svg.ring { position: absolute; inset: -4px; width: 64px; height: 64px; transform: rotate(-90deg); }
+  .ring circle { fill: none; stroke-width: 3; }
+  .ring .track { stroke: rgb(255 255 255 / 10%); }
+  .ring .prog { stroke: var(--cyan); stroke-linecap: round; stroke-dasharray: 188.5; transition: stroke-dashoffset 1s linear; }
+  .ring .prog.hot { stroke: var(--neon); }
+  .who b { display: block; font: 600 15px/1.1 var(--display); letter-spacing: .06em; text-transform: uppercase; }
+  .who small { color: var(--muted); font-size: 11px; }
+  .stack { font: 700 16px/1 var(--display); color: var(--gold); text-align: right; }
+  .stack small { display: block; margin-top: 3px; color: var(--muted); font: 500 10px/1 var(--body); text-transform: uppercase; }
+  .hand { display: flex; gap: 6px; justify-content: center; margin-top: 8px; }
+  .board-wrap { margin: 14px 0 4px; text-align: center; }
+  .pot { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 10px; padding: 5px 12px; border-radius: 999px; background: rgb(0 0 0 / 45%); font: 600 13px/1 var(--display); letter-spacing: .12em; text-transform: uppercase; }
+  .pot b { color: var(--gold); font-size: 16px; }
+  .board { display: flex; gap: 6px; justify-content: center; }
+  .card { position: relative; width: 50px; height: 70px; border-radius: 7px; perspective: 600px; flex: none; }
+  .card .inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .5s cubic-bezier(.2,.8,.2,1); }
+  .card.up .inner { transform: rotateY(180deg); }
+  .card .face, .card .back { position: absolute; inset: 0; border-radius: 7px; backface-visibility: hidden; }
+  .card .back { overflow: hidden; border: 1px solid rgb(233 185 73 / 60%); background: #1a0610; }
+  .card .back svg { width: 100%; height: 100%; }
+  .card .face { transform: rotateY(180deg); display: grid; grid-template-rows: auto 1fr; padding: 4px 5px; background: linear-gradient(160deg, #fbf6ec, #e9e1d1); color: #15131c; box-shadow: 0 4px 10px rgb(0 0 0 / 35%); }
+  .card .face .r { font: 700 16px/1 var(--display); }
+  .card .face .s { align-self: center; justify-self: center; font-size: 24px; line-height: 1; }
+  .card .face.red { color: #c3124f; }
+  .card.empty { border: 1px dashed rgb(255 255 255 / 18%); }
+  .card.win .face { box-shadow: 0 0 0 2px var(--gold), 0 0 16px rgb(233 185 73 / 70%); }
+  .log { min-height: 40px; margin-top: 12px; padding: 9px 12px; border-left: 3px solid var(--neon); border-radius: 0 10px 10px 0; background: var(--neon-soft); font-size: 13px; }
+  .log small { display: block; color: var(--muted); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+  .menu { display: grid; gap: 6px; margin-top: 12px; }
+  .menu button { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 11px 16px 11px 22px; border: 0; color: var(--text); text-align: left; cursor: pointer;
+    background: linear-gradient(90deg, rgb(255 255 255 / 9%), rgb(255 255 255 / 2%)); font: 600 15px/1 var(--display); letter-spacing: .14em; text-transform: uppercase;
+    clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%); }
+  .menu button::before { content: ''; position: absolute; left: 10px; top: 50%; width: 6px; height: 6px; margin-top: -3px; background: var(--muted); transform: rotate(45deg); }
+  .menu button.primary { background: linear-gradient(90deg, rgb(255 46 136 / 45%), rgb(255 46 136 / 10%)); }
+  .menu button.primary::before { background: var(--neon); box-shadow: 0 0 8px var(--neon); }
+  .menu button small { color: var(--muted); font: 500 11px/1 var(--body); letter-spacing: .04em; text-transform: none; }
+  .menu button:disabled { opacity: .35; cursor: default; }
+  .stamp { position: absolute; left: 50%; top: 44%; z-index: 5; display: grid; place-items: center; width: 120px; height: 120px; margin: -60px 0 0 -60px; border: 4px solid var(--neon); border-radius: 50%; color: var(--neon); font: 900 64px/1 var(--jp);
+    text-shadow: 0 0 18px var(--neon); background: rgb(7 7 12 / 70%); transform: scale(.4) rotate(-14deg); opacity: 0; pointer-events: none; }
+  .stamp.on { animation: stamp .45s cubic-bezier(.2,1.6,.4,1) forwards; }
+  .stamp small { position: absolute; bottom: 16px; font: 600 11px/1 var(--display); letter-spacing: .2em; color: var(--text); text-shadow: none; }
+  @keyframes stamp { to { transform: scale(1) rotate(-14deg); opacity: 1; } }
+  .note { margin: 10px 2px 0; color: var(--muted); font-size: 11px; text-align: center; }
+
+  /* docs side */
+  .doc { padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: rgb(21 21 34 / 82%); }
+  .doc + .doc { margin-top: 16px; }
+  .doc h2 { margin: 0 0 12px; font: 600 18px/1 var(--display); letter-spacing: .14em; text-transform: uppercase; }
+  .doc h2 em { color: var(--neon); font-style: normal; }
+  .doc p { margin: 0 0 10px; color: var(--muted); }
+  .bots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  @media (max-width: 560px) { .bots { grid-template-columns: minmax(0, 1fr); } }
+  .bot { padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel-2); }
+  .bot svg { width: 64px; height: 64px; border-radius: 50%; background: #0b0a12; }
+  .bot b { display: block; margin-top: 8px; font: 600 15px/1.1 var(--display); letter-spacing: .06em; text-transform: uppercase; }
+  .bot small { color: var(--muted); font-size: 12px; }
+  .bot .lvl { display: inline-block; margin-top: 6px; padding: 2px 8px; border-radius: 6px; background: var(--gold-soft); color: var(--gold); font: 600 12px/1.4 var(--display); letter-spacing: .06em; }
+  .backs { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+  .backs .big { width: 110px; height: 154px; border-radius: 10px; overflow: hidden; border: 1px solid rgb(233 185 73 / 60%); box-shadow: 0 12px 30px rgb(0 0 0 / 45%); }
+  .backs .big svg { width: 100%; height: 100%; }
+  .backs .faces { display: flex; gap: 8px; }
+  .story { counter-reset: s; display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+  .story li { position: relative; padding: 10px 12px 10px 46px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel-2); }
+  .story li::before { counter-increment: s; content: counter(s, decimal-leading-zero); position: absolute; left: 12px; top: 10px; color: var(--neon); font: 600 16px/1.2 var(--display); }
+  .story b { font: 600 14px/1.2 var(--display); letter-spacing: .1em; text-transform: uppercase; }
+  .story span { display: block; color: var(--muted); font-size: 13px; }
+  .swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+  .sw { display: flex; align-items: center; gap: 8px; padding: 6px 10px 6px 6px; border: 1px solid var(--line); border-radius: 999px; font-size: 12px; color: var(--muted); }
+  .sw i { width: 20px; height: 20px; border-radius: 50%; }
+  .rights { border-color: rgb(233 185 73 / 25%); }
+  .rights ul { margin: 0; padding-left: 18px; }
+  .rights li { margin-bottom: 6px; color: var(--muted); }
+  .q { margin-top: 10px; padding: 10px 12px; border-left: 3px solid var(--neon); background: var(--neon-soft); border-radius: 0 10px 10px 0; font-size: 13px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <pattern id="seigaiha" width="20" height="10" patternUnits="userSpaceOnUse">
+      <rect width="20" height="10" fill="#1a0610"/>
+      <g fill="none" stroke="#e9b949" stroke-opacity=".55" stroke-width="1">
+        <circle cx="10" cy="10" r="9"/><circle cx="10" cy="10" r="6"/><circle cx="10" cy="10" r="3"/>
+        <circle cx="0" cy="5" r="9"/><circle cx="20" cy="5" r="9"/>
+      </g>
+    </pattern>
+    <symbol id="back" viewBox="0 0 110 154">
+      <rect width="110" height="154" fill="url(#seigaiha)"/>
+      <rect x="6" y="6" width="98" height="142" rx="6" fill="none" stroke="#e9b949" stroke-width="1.5"/>
+      <circle cx="55" cy="77" r="30" fill="#6d0f1a" stroke="#e9b949" stroke-width="2"/>
+      <path d="M38 88c6-18 22-26 34-20-8 1-12 6-12 11 6-6 14-6 18 0-8-2-12 3-12 8 0 7-10 12-18 6 6 0 8-3 8-6-6 4-14 4-18 1z" fill="#e9b949"/>
+      <text x="55" y="40" text-anchor="middle" font-family="Noto Serif JP, serif" font-weight="900" font-size="14" fill="#e9b949">賭</text>
+      <text x="55" y="126" text-anchor="middle" font-family="Oswald, sans-serif" font-size="9" letter-spacing="2" fill="#e9b949">BURMALDOZA</text>
+    </symbol>
+    <symbol id="p-chinpira" viewBox="0 0 64 64">
+      <rect width="64" height="64" fill="#140f1c"/>
+      <path d="M10 64c2-14 12-20 22-20s20 6 22 20z" fill="#7a1430"/>
+      <path d="M24 46l8 10 8-10" fill="#f1ece4"/>
+      <circle cx="32" cy="28" r="12" fill="#d8b9a0"/>
+      <path d="M20 26c0-10 6-15 13-15 8 0 12 6 12 12-4-4-9-5-14-3-4 2-8 3-11 6z" fill="#e9b949"/>
+      <rect x="25" y="27" width="14" height="4" rx="2" fill="#15131c"/>
+    </symbol>
+    <symbol id="p-waka" viewBox="0 0 64 64">
+      <rect width="64" height="64" fill="#0e1420"/>
+      <path d="M8 64c2-15 13-21 24-21s22 6 24 21z" fill="#22283a"/>
+      <path d="M26 44l6 12 6-12" fill="#b0122c"/>
+      <circle cx="32" cy="27" r="12" fill="#cfae93"/>
+      <path d="M20 24c1-9 7-13 12-13 7 0 12 4 12 12-5-3-15-3-24 1z" fill="#1a1a1a"/>
+      <path d="M26 33h12" stroke="#5a3a2a" stroke-width="1.5"/>
+      <path d="M44 50c4 2 6 6 7 12" stroke="#3be8ff" stroke-width="2" fill="none" opacity=".7"/>
+    </symbol>
+    <symbol id="p-oyabun" viewBox="0 0 64 64">
+      <rect width="64" height="64" fill="#1a0a0a"/>
+      <path d="M6 64c3-16 14-22 26-22s23 6 26 22z" fill="#f1ece4"/>
+      <path d="M14 64c2-8 6-12 10-14l-2 14zM50 64c-2-8-6-12-10-14l2 14z" fill="#6d0f1a"/>
+      <path d="M22 52c4 3 8 4 10 4s6-1 10-4" stroke="#6d0f1a" stroke-width="2" fill="none"/>
+      <circle cx="32" cy="27" r="12" fill="#c9a688"/>
+      <path d="M20 25c0-8 5-13 12-13s12 5 12 13c-3-5-8-6-12-6s-9 1-12 6z" fill="#9b9b9b"/>
+      <path d="M25 36c4 3 10 3 14 0" stroke="#9b9b9b" stroke-width="3" fill="none"/>
+    </symbol>
+    <symbol id="p-me" viewBox="0 0 64 64">
+      <rect width="64" height="64" fill="#101826"/>
+      <path d="M8 64c2-15 13-21 24-21s22 6 24 21z" fill="#2b3f66"/>
+      <path d="M28 44h8l-4 14z" fill="#e9b949"/>
+      <circle cx="32" cy="27" r="12" fill="#d3b296"/>
+      <path d="M19 26c0-10 7-15 14-15 6 0 12 4 12 12-6-4-16-5-26 3z" fill="#2a1f1a"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <div class="topline">
+    <div class="brand"><i>神</i>Бурмалдоза · Hold'em</div>
+    <span class="tag">Фанатский концепт · превью направления · #62</span>
+  </div>
+  <h1>Камуро-тё <span class="kanji">賭場</span></h1>
+  <p class="lede">Heads-up Hold’em в духе игр RGG Studio: ночной квартал развлечений, неон с вертикальными иероглифами, задняя комната клуба с лакированным красным столом и золотой окантовкой. Действия — наклонное меню, как в боевых меню серии; итог раздачи — печать-иероглиф. Всё нарисовано с нуля, без официальных материалов.</p>
+
+  <div class="layout">
+    <section class="phone" aria-label="Макет комнаты на телефоне">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" aria-selected="true" aria-controls="lobby" id="t-lobby">Столы</button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="table" id="t-table">Раздача</button>
+      </div>
+
+      <div class="view lobby" id="lobby" role="tabpanel" aria-labelledby="t-lobby">
+        <div class="street" aria-hidden="true">
+          <span class="sign s1 flicker">麻雀</span>
+          <span class="sign s2">賭場</span>
+          <span class="sign s3 flicker">神室</span>
+          <div class="title"><b>Задняя комната</b><small>Клуб в переулке, после закрытия</small></div>
+        </div>
+        <div class="mode" role="group" aria-label="Режим">
+          <button type="button" data-mode="bot" aria-pressed="true"><b>Против бота</b><small>Сразу, без ожидания</small></button>
+          <button type="button" data-mode="live" aria-pressed="false"><b>Живой игрок</b><small>Поиск до 60 с · ход 20 с</small></button>
+        </div>
+        <div class="tables">
+          <button class="table-card" type="button" data-table="0"><span class="rank" style="color:#ff2e88">若</span><span><b>Стол чинпиры</b><small>Блайнды 5 / 10</small></span><span class="buyin">100<small>JG вход</small></span></button>
+          <button class="table-card" type="button" data-table="1"><span class="rank" style="color:#3be8ff">頭</span><span><b>Стол вакагасиры</b><small>Блайнды 25 / 50</small></span><span class="buyin">500<small>JG вход</small></span></button>
+          <button class="table-card" type="button" data-table="2"><span class="rank" style="color:#e9b949">親</span><span><b>Стол оябуна</b><small>Блайнды 50 / 100</small></span><span class="buyin">1 000<small>JG вход</small></span></button>
+        </div>
+        <div class="searching" id="searching" role="status">Ищем соперника за столом… 60 с. Не нашёлся — вход не списывается.</div>
+        <p class="note">Блайнды 5 % / 10 % входа — предложение из PR #61, ждёт утверждения.</p>
+      </div>
+
+      <div class="view" id="table" role="tabpanel" aria-labelledby="t-table" hidden>
+        <div class="felt" id="felt">
+          <div class="stamp" id="stamp" aria-hidden="true">勝<small>ПОБЕДА</small></div>
+          <div class="seat">
+            <div class="avatar"><svg class="ring" viewBox="0 0 64 64" aria-hidden="true"><circle class="track" cx="32" cy="32" r="30"/><circle class="prog" id="oppRing" cx="32" cy="32" r="30" style="stroke-dashoffset:0"/></svg><svg class="portrait" id="oppPortrait"><use href="#p-waka"/></svg></div>
+            <div class="who"><b id="oppName">Рю «Вакагасира»</b><small id="oppKind">Бот · стол 500</small></div>
+            <div class="stack"><span id="oppStack">450</span><small>стек</small></div>
+          </div>
+          <div class="hand" id="oppHand"></div>
+
+          <div class="board-wrap">
+            <div class="pot">Банк <b id="pot">75</b></div>
+            <div class="board" id="board"></div>
+          </div>
+
+          <div class="hand" id="myHand"></div>
+          <div class="seat me">
+            <div class="avatar"><svg class="ring" viewBox="0 0 64 64" aria-hidden="true"><circle class="track" cx="32" cy="32" r="30"/><circle class="prog" id="myRing" cx="32" cy="32" r="30" style="stroke-dashoffset:188.5"/></svg><svg class="portrait"><use href="#p-me"/></svg></div>
+            <div class="who"><b>Вы</b><small id="myTurn">Ваш ход · 20 с</small></div>
+            <div class="stack"><span id="myStack">475</span><small>стек</small></div>
+          </div>
+        </div>
+
+        <div class="log" id="log" role="status" aria-live="polite"><small>Префлоп</small>Блайнды 25 / 50. Ваш ход.</div>
+
+        <div class="menu" role="group" aria-label="Действия">
+          <button type="button" class="primary" id="next">Колл <small>50</small></button>
+          <button type="button" disabled>Рейз <small>мин. 100</small></button>
+          <button type="button" disabled>Чек</button>
+          <button type="button" id="fold">Сбросить</button>
+        </div>
+        <p class="note">Сценарий раздачи заранее записан для показа движения. В игре карты, ходы бота и итог определяет только сервер.</p>
+      </div>
+    </section>
+
+    <div>
+      <section class="doc">
+        <h2>Соперники-боты <em>· по столам</em></h2>
+        <p>У каждого стола свой бот с характером — от уличного задиры до главы семьи. Оригинальные персонажи «по мотивам», не герои серии.</p>
+        <div class="bots">
+          <div class="bot"><svg><use href="#p-chinpira"/></svg><b>Кэнта «Чинпира»</b><small>Шумный, блефует часто и неумело.</small><br><span class="lvl">Стол 100</span></div>
+          <div class="bot"><svg><use href="#p-waka"/></svg><b>Рю «Вакагасира»</b><small>Холодный счёт, ставит по силе руки.</small><br><span class="lvl">Стол 500</span></div>
+          <div class="bot"><svg><use href="#p-oyabun"/></svg><b>Гэндзо «Оябун»</b><small>Терпеливый, редкие и крупные рейзы.</small><br><span class="lvl">Стол 1 000</span></div>
+        </div>
+        <p style="margin-top:12px">Характер — это только подача (реплики, анимации). Решения бота принимает сервер и видит лишь свои карты и борд.</p>
+      </section>
+
+      <section class="doc">
+        <h2>Колода <em>· рубашка 賭</em></h2>
+        <div class="backs">
+          <div class="big"><svg viewBox="0 0 110 154"><use href="#back"/></svg></div>
+          <div class="faces" id="faceSamples"></div>
+        </div>
+        <p style="margin-top:12px">Рубашка: волны сэйгайха, лакированный красный круг с золотым драконьим мотивом и знак 賭 («ставка»). Лица карт — светлая бумага; червы и бубны — малиновые, пики и трефы — тушь.</p>
+      </section>
+
+      <section class="doc">
+        <h2>Движение <em>· storyboard</em></h2>
+        <ol class="story">
+          <li><b>Вход за стол</b><span>Неоновая вывеска мигает, стол выезжает снизу. Вход списан только после подтверждения сервера.</span></li>
+          <li><b>Раздача</b><span>Карты летят по одной из центра; свои открываются переворотом, карты соперника остаются рубашкой.</span></li>
+          <li><b>Ход</b><span>Кольцо таймера вокруг портрета: 20 с у живого соперника, последние 5 с — малиновое. Против бота у игрока таймера нет.</span></li>
+          <li><b>Улицы</b><span>Флоп — три карты веером, тёрн и ривер — по одной, с паузой. Банк пересчитывается только из подтверждённого события.</span></li>
+          <li><b>Шоудаун</b><span>Карты соперника переворачиваются только на шоудауне; при сбросе — никогда. Выигрышные пять карт подсвечены золотом.</span></li>
+          <li><b>Печать</b><span>Итог — печать 勝 (победа), 負 (поражение) или 分 (ничья) с объяснением комбинации.</span></li>
+        </ol>
+        <p style="margin-top:10px">Reduced motion: без полётов и печати-удара — карты появляются на местах, итог показан текстом.</p>
+      </section>
+
+      <section class="doc">
+        <h2>Палитра</h2>
+        <div class="swatches">
+          <span class="sw"><i style="background:#07070c;border:1px solid #333"></i>Ночь #07070C</span>
+          <span class="sw"><i style="background:#ff2e88"></i>Неон #FF2E88</span>
+          <span class="sw"><i style="background:#3be8ff"></i>Циан #3BE8FF</span>
+          <span class="sw"><i style="background:#e9b949"></i>Золото #E9B949</span>
+          <span class="sw"><i style="background:#6d0f1a"></i>Лак #6D0F1A</span>
+          <span class="sw"><i style="background:#0e3b2e"></i>Сукно #0E3B2E</span>
+        </div>
+        <p style="margin-top:12px">Шрифты: Oswald для меню и цифр, Noto Serif JP для иероглифов, Inter для текста.</p>
+      </section>
+
+      <section class="doc rights">
+        <h2>Права и решения</h2>
+        <ul>
+          <li>Серии Yakuza / Like a Dragon и Judgment — игры SEGA / RGG Studio. Здесь нет их логотипов, артов, героев, моделей и скриншотов: только атмосфера квартала и собственные иллюстрации. Названия персонажей — оригинальные.</li>
+          <li>Портреты героев серии или официальные материалы — только отдельным решением владельца, с атрибуцией в <code>sources.json</code>, как у GFL в Blackjack.</li>
+        </ul>
+        <div class="q">Нужно решение владельца: оставляем оригинальных соперников «по мотивам» или добираем героев серии (тогда вопрос прав, как у GFL)?</div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const RED = new Set(['♥', '♦']);
+  const cardEl = (card, up = false) => {
+    const el = document.createElement('div');
+    el.className = 'card' + (up ? ' up' : '');
+    if (!card) { el.classList.add('empty'); return el; }
+    const [r, s] = card;
+    el.innerHTML = `<div class="inner"><div class="back"><svg viewBox="0 0 110 154"><use href="#back"/></svg></div><div class="face${RED.has(s) ? ' red' : ''}"><span class="r">${r}</span><span class="s">${s}</span></div></div>`;
+    el.setAttribute('aria-label', up ? `${r}${s}` : 'Карта рубашкой');
+    return el;
+  };
+
+  // tabs
+  const tabs = [$('t-lobby'), $('t-table')];
+  const show = (i) => tabs.forEach((t, j) => {
+    t.setAttribute('aria-selected', String(i === j));
+    $(t.getAttribute('aria-controls')).hidden = i !== j;
+  });
+  tabs.forEach((t, i) => t.addEventListener('click', () => show(i)));
+
+  // lobby
+  let mode = 'bot';
+  document.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => {
+    mode = b.dataset.mode;
+    document.querySelectorAll('[data-mode]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    $('searching').classList.remove('on');
+  }));
+  const BOTS = [['p-chinpira', 'Кэнта «Чинпира»', 100], ['p-waka', 'Рю «Вакагасира»', 500], ['p-oyabun', 'Гэндзо «Оябун»', 1000]];
+  document.querySelectorAll('[data-table]').forEach((b) => b.addEventListener('click', () => {
+    const [sym, name, buyin] = BOTS[Number(b.dataset.table)];
+    $('oppPortrait').innerHTML = `<use href="#${sym}"/>`;
+    $('oppName').textContent = mode === 'bot' ? name : 'Игрок @сосед';
+    $('oppKind').textContent = `${mode === 'bot' ? 'Бот' : 'Живой соперник'} · стол ${buyin.toLocaleString('ru-RU')}`;
+    if (mode === 'live') {
+      $('searching').classList.add('on');
+      setTimeout(() => { $('searching').classList.remove('on'); show(1); reset(); }, 1600);
+    } else { show(1); reset(); }
+  }));
+
+  // scripted hand: stack 500, blinds 25/50
+  const ME = [['A', '♠'], ['K', '♠']];
+  const OPP = [['Q', '♥'], ['Q', '♣']];
+  const BOARD = [['K', '♥'], ['7', '♠'], ['2', '♦'], ['J', '♠'], ['10', '♠']];
+  const STEPS = [
+    { street: 'Флоп', show: 3, pot: 100, me: 450, opp: 450, log: 'Вы уравняли 50. Флоп: K♥ 7♠ 2♦. Соперник ставит 50.', btn: 'Колл', amt: '50' },
+    { street: 'Тёрн', show: 4, pot: 200, me: 400, opp: 400, log: 'Тёрн: J♠. Соперник ставит 100 — у вас дро на флеш.', btn: 'Колл', amt: '100' },
+    { street: 'Ривер', show: 5, pot: 400, me: 300, opp: 300, log: 'Ривер: 10♠. Флеш собран. Соперник чекает.', btn: 'Ставка', amt: '200' },
+    { street: 'Шоудаун', show: 5, pot: 800, me: 100, opp: 100, log: 'Соперник уравнял. Шоудаун: Q♥ Q♣ против вашего флеша.', btn: 'Забрать банк', amt: '800', showdown: true },
+    { street: 'Итог', show: 5, pot: 0, me: 900, opp: 100, log: 'Победа: флеш до туза (A♠ K♠ J♠ 10♠ 7♠). +400 JG к входу.', btn: 'Новая раздача', amt: '', done: true }
+  ];
+  let step = -1, timer = null, left = 20;
+
+  function ring(id, frac, hot) {
+    const p = $(id);
+    p.style.strokeDashoffset = String(188.5 * (1 - frac));
+    p.classList.toggle('hot', !!hot);
+  }
+  function startTimer() {
+    clearInterval(timer);
+    left = 20;
+    ring('myRing', 1);
+    $('myTurn').textContent = 'Ваш ход · 20 с';
+    timer = setInterval(() => {
+      left = Math.max(0, left - 1);
+      ring('myRing', left / 20, left <= 5);
+      $('myTurn').textContent = left > 0 ? `Ваш ход · ${left} с` : 'Время вышло · авто-чек/сброс';
+      if (left === 0) clearInterval(timer);
+    }, 1000);
+  }
+  function render(boardCount, showOpp, winning) {
+    $('board').replaceChildren(...BOARD.map((c, i) => {
+      const el = cardEl(i < boardCount ? c : null, true);
+      if (winning && i !== 0 && i !== 2) el.classList.add('win');
+      return el;
+    }));
+    $('oppHand').replaceChildren(...OPP.map((c) => cardEl(c, showOpp)));
+    $('myHand').replaceChildren(...ME.map((c) => {
+      const el = cardEl(c, true);
+      if (winning) el.classList.add('win');
+      return el;
+    }));
+  }
+  function reset() {
+    step = -1;
+    $('stamp').classList.remove('on');
+    $('pot').textContent = '75';
+    $('myStack').textContent = '475';
+    $('oppStack').textContent = '450';
+    $('log').innerHTML = '<small>Префлоп</small>Блайнды 25 / 50. Ваш ход.';
+    $('next').innerHTML = 'Колл <small>50</small>';
+    ring('oppRing', 0);
+    render(0, false, false);
+    // deal animation: flip own cards after a beat
+    $('myHand').querySelectorAll('.card').forEach((c) => c.classList.remove('up'));
+    setTimeout(() => $('myHand').querySelectorAll('.card').forEach((c, i) => setTimeout(() => c.classList.add('up'), i * 180)), 250);
+    startTimer();
+  }
+  $('next').addEventListener('click', () => {
+    if (step >= STEPS.length - 1) { reset(); return; }
+    step++;
+    const s = STEPS[step];
+    render(s.show, !!(s.showdown || s.done), !!s.done);
+    $('pot').textContent = s.pot.toLocaleString('ru-RU');
+    $('myStack').textContent = s.me.toLocaleString('ru-RU');
+    $('oppStack').textContent = s.opp.toLocaleString('ru-RU');
+    $('log').innerHTML = `<small>${s.street}</small>${s.log}`;
+    $('next').innerHTML = `${s.btn}${s.amt ? ` <small>${s.amt}</small>` : ''}`;
+    if (s.done) { clearInterval(timer); $('myTurn').textContent = 'Раздача завершена'; ring('myRing', 0); $('stamp').classList.add('on'); }
+    else startTimer();
+  });
+  $('fold').addEventListener('click', () => {
+    clearInterval(timer);
+    $('log').innerHTML = '<small>Сброс</small>Вы сбросили карты. Карты соперника не открываются.';
+    $('stamp').innerHTML = '負<small>СБРОС</small>';
+    $('stamp').classList.remove('on'); void $('stamp').offsetWidth; $('stamp').classList.add('on');
+    setTimeout(() => { $('stamp').innerHTML = '勝<small>ПОБЕДА</small>'; reset(); }, 2200);
+  });
+
+  // samples
+  $('faceSamples').replaceChildren(...[['A', '♠'], ['K', '♥'], ['10', '♦'], ['7', '♣']].map((c) => cardEl(c, true)));
+  render(0, false, false);
+})();
+</script>
+</body>
+</html>

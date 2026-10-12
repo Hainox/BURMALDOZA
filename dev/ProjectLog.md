@@ -470,3 +470,11 @@
 - Новый `docs/Manual-QA-Checklist.md` для этапа 5: бот, первый вход, Daily/Relief, Slot, Blackjack, Hold'em как известное ограничение (#53), сеть и повторные нажатия, экран и reduced motion, шаблон issue. Тексты ожидаемых результатов сверены с `apps/miniapp` и `apps/bot` в `main`; новых требований нет.
 - Ссылки на чеклист добавлены в этап 5 `docs/Development-Roadmap.md` и в условия публичного запуска `docs/Launch-Checkpoint.md`.
 - Проверки: `git diff --check` — passed.
+
+## 2026-10-13 — превью направлений Slot и Hold'em (#62)
+
+- Claude Code (claude-opus-5-5, effort не отображается); дизайн-задача Command Code, переданная владельцем на время недоступности CCode. Ветка `claude/design-slot-holdem`.
+- Решение владельца: у каждой комнаты своя вселенная — Blackjack: Girls' Frontline (уже есть), Slot: Rainbow Six Siege, Hold'em: игры RGG Studio.
+- Добавлены интерактивные превью `assets/design/slot-r6/preview.html` и `assets/design/holdem-rgg/preview.html` с README; раздел «Темы комнат» в `docs/Design-Concept.md`. Всё нарисовано с нуля, без официальных материалов Ubisoft и SEGA / RGG Studio. Mini App, правила и сервер не менялись.
+- Проверки: локальный Playwright Chromium, 390×844 и 1280×900 — ошибок консоли нет, горизонтальной прокрутки нет, спин и записанная раздача проходят до итога; `git diff --check` — passed.
+- Осталось: утверждение направлений владельцем и решение о портретах/официальных материалах; затем встраивание в комнаты и публикация на Pages отдельными задачами.

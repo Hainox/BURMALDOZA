@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Slot · Siege — превью направления</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0d10;
+    --panel: #14181d;
+    --panel-2: #1b2027;
+    --concrete: #262d36;
+    --line: rgb(255 255 255 / 8%);
+    --line-strong: rgb(255 255 255 / 16%);
+    --text: #e8ecf0;
+    --muted: #8b97a4;
+    --atk: #ff7a1a;
+    --atk-soft: rgb(255 122 26 / 14%);
+    --def: #2f9bff;
+    --def-soft: rgb(47 155 255 / 14%);
+    --hazard: #ffd23f;
+    --ok: #3ddc84;
+    --cell: 46px;
+    --radius: 10px;
+    --display: 'Rajdhani', 'Arial Narrow', sans-serif;
+    --body: 'Inter', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; min-height: 100vh; color: var(--text); font: 14px/1.5 var(--body);
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgb(255 122 26 / 9%), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgb(47 155 255 / 8%), transparent 60%),
+      repeating-linear-gradient(0deg, rgb(255 255 255 / 1.6%) 0 1px, transparent 1px 32px),
+      repeating-linear-gradient(90deg, rgb(255 255 255 / 1.6%) 0 1px, transparent 1px 32px),
+      var(--bg);
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 20px 16px 56px; }
+  .topline { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-bottom: 22px; }
+  .brand { display: flex; align-items: center; gap: 10px; font: 700 15px/1 var(--display); letter-spacing: .16em; text-transform: uppercase; }
+  .brand i { width: 10px; height: 10px; background: var(--atk); transform: rotate(45deg); box-shadow: 0 0 12px var(--atk); }
+  .tag { padding: 5px 10px; border: 1px solid var(--line-strong); border-radius: 999px; color: var(--muted); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+  h1 { margin: 0 0 6px; font: 700 clamp(30px, 6vw, 52px)/1 var(--display); letter-spacing: .02em; text-transform: uppercase; }
+  h1 span { color: var(--atk); }
+  .lede { max-width: 720px; margin: 0 0 26px; color: var(--muted); font-size: 15px; }
+  .layout { display: grid; grid-template-columns: minmax(0, 400px) minmax(0, 1fr); gap: 28px; align-items: start; }
+  @media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+
+  /* ---------- phone / room ---------- */
+  .phone { position: relative; width: 100%; max-width: 400px; margin: 0 auto; padding: 14px; border: 1px solid var(--line-strong); border-radius: 28px; background: linear-gradient(180deg, #11151a, #0c0f13); box-shadow: 0 30px 80px rgb(0 0 0 / 55%), inset 0 1px 0 rgb(255 255 255 / 5%); }
+  .hud { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+  .side { font: 700 12px/1 var(--display); letter-spacing: .14em; text-transform: uppercase; }
+  .side.atk { color: var(--atk); }
+  .side small { display: block; margin-top: 4px; color: var(--muted); font: 500 10px/1 var(--body); letter-spacing: .06em; }
+  .timer { padding: 6px 10px; border-radius: 8px; background: #0a0c0f; font: 700 20px/1 var(--display); letter-spacing: .06em; font-variant-numeric: tabular-nums; }
+  .bal { justify-self: end; text-align: right; font: 700 15px/1 var(--display); }
+  .bal small { display: block; margin-top: 4px; color: var(--muted); font: 500 10px/1 var(--body); letter-spacing: .06em; text-transform: uppercase; }
+
+  .stage { position: relative; margin-top: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 18px; background:
+      linear-gradient(180deg, rgb(255 255 255 / 3%), transparent 40%),
+      repeating-linear-gradient(135deg, rgb(255 255 255 / 2%) 0 2px, transparent 2px 10px), var(--panel-2); overflow: hidden; }
+  .stage-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .stage-head b { font: 700 13px/1 var(--display); letter-spacing: .16em; text-transform: uppercase; }
+  .stage-head span { color: var(--muted); font-size: 11px; }
+  .reels { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .reel { position: relative; height: calc(var(--cell) * 7); overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: linear-gradient(180deg, #0b0e12 0%, #12161b 20%, #12161b 80%, #0b0e12 100%); }
+  .reel::before, .reel::after { content: ''; position: absolute; left: 0; right: 0; height: 26px; z-index: 2; pointer-events: none; }
+  .reel::before { top: 0; background: linear-gradient(#0b0e12, transparent); }
+  .reel::after { bottom: 0; background: linear-gradient(transparent, #0b0e12); }
+  .strip { will-change: transform; }
+  .cell { display: grid; place-items: center; height: var(--cell); border-bottom: 1px dashed rgb(255 255 255 / 4%); }
+  .cell svg { width: 34px; height: 34px; }
+  .cell.hit { background: radial-gradient(circle at 50% 50%, rgb(255 210 63 / 22%), transparent 70%); }
+  .cell.hit svg { filter: drop-shadow(0 0 8px rgb(255 210 63 / 70%)); }
+  .reel.stopped { border-color: rgb(255 122 26 / 40%); }
+  .reel.stopped .stopmark { opacity: 1; }
+  .stopmark { position: absolute; top: 6px; right: 6px; z-index: 3; width: 7px; height: 7px; border-radius: 50%; background: var(--atk); box-shadow: 0 0 8px var(--atk); opacity: 0; transition: opacity .2s; }
+  .lines { position: absolute; inset: 0; z-index: 4; pointer-events: none; width: 100%; height: 100%; }
+  .lines polyline { fill: none; stroke: var(--hazard); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 600; stroke-dashoffset: 600; filter: drop-shadow(0 0 6px rgb(255 210 63 / 80%)); }
+  .lines polyline.on { animation: laser .55s ease-out forwards; }
+  @keyframes laser { to { stroke-dashoffset: 0; } }
+  .rowmark { position: absolute; left: -2px; z-index: 3; width: 4px; height: var(--cell); border-radius: 2px; background: var(--def); opacity: .45; }
+
+  .result { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; margin-top: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); min-height: 58px; }
+  .result .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+  .result[data-phase="resolving"] .dot { background: var(--def); box-shadow: 0 0 10px var(--def); animation: blink .6s steps(2) infinite; }
+  .result[data-phase="win"] .dot { background: var(--hazard); box-shadow: 0 0 10px var(--hazard); }
+  .result[data-phase="loss"] .dot { background: #e5484d; }
+  @keyframes blink { 50% { opacity: .2; } }
+  .result b { display: block; font: 700 14px/1.1 var(--display); letter-spacing: .14em; text-transform: uppercase; }
+  .result small { color: var(--muted); font-size: 11px; }
+  .result .amount { font: 700 22px/1 var(--display); font-variant-numeric: tabular-nums; }
+  .result[data-phase="win"] .amount { color: var(--hazard); }
+
+  .controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .bet { padding: 10px 0; border: 1px solid var(--line-strong); border-radius: 10px; background: transparent; color: var(--text); font: 600 14px/1 var(--display); letter-spacing: .08em; cursor: pointer; }
+  .bet[aria-pressed="true"] { border-color: var(--atk); background: var(--atk-soft); color: #fff; }
+  .spin { grid-column: 1 / -1; position: relative; padding: 16px; border: 0; border-radius: 14px; color: #140a02; cursor: pointer;
+    background: linear-gradient(180deg, #ff9a45, var(--atk)); font: 700 18px/1 var(--display); letter-spacing: .2em; text-transform: uppercase;
+    clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px); }
+  .spin:disabled { filter: grayscale(.7) brightness(.7); cursor: progress; }
+  .spin small { display: block; margin-top: 4px; font: 600 11px/1 var(--body); letter-spacing: .06em; opacity: .8; }
+  button:focus-visible { outline: 2px solid var(--hazard); outline-offset: 3px; }
+  .overtime { display: none; margin-top: 10px; padding: 10px 12px; border: 1px dashed var(--hazard); border-radius: 12px; color: var(--hazard); font: 700 13px/1.2 var(--display); letter-spacing: .14em; text-align: center; text-transform: uppercase; }
+  .overtime.on { display: block; animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 4px rgb(255 210 63 / 12%); } }
+  .note { margin: 10px 2px 0; color: var(--muted); font-size: 11px; text-align: center; }
+
+  /* ---------- docs side ---------- */
+  .card { padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: rgb(20 24 29 / 82%); backdrop-filter: blur(4px); }
+  .card + .card { margin-top: 16px; }
+  .card h2 { margin: 0 0 12px; font: 700 18px/1 var(--display); letter-spacing: .12em; text-transform: uppercase; }
+  .card h2 em { color: var(--atk); font-style: normal; }
+  .card p { margin: 0 0 10px; color: var(--muted); }
+  .legend { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  @media (max-width: 520px) { .legend { grid-template-columns: minmax(0, 1fr); } }
+  .sym { display: grid; grid-template-columns: 52px 1fr; gap: 12px; align-items: center; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel-2); }
+  .sym .ico { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 10px; background: #0d1014; }
+  .sym .ico svg { width: 40px; height: 40px; }
+  .sym b { display: block; font: 700 15px/1.1 var(--display); letter-spacing: .06em; }
+  .sym small { color: var(--muted); font-size: 12px; }
+  .sym .pay { display: inline-block; margin-top: 4px; padding: 2px 7px; border-radius: 6px; background: var(--atk-soft); color: var(--atk); font: 700 12px/1.4 var(--display); letter-spacing: .06em; }
+  .sym.wild .pay { background: rgb(255 210 63 / 14%); color: var(--hazard); }
+  .paylines { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .pl { padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel-2); text-align: center; }
+  .pl svg { width: 100%; max-width: 90px; height: auto; }
+  .pl small { display: block; margin-top: 6px; color: var(--muted); font-size: 11px; }
+  .story { counter-reset: s; display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+  .story li { position: relative; padding: 10px 12px 10px 46px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel-2); }
+  .story li::before { counter-increment: s; content: counter(s, decimal-leading-zero); position: absolute; left: 12px; top: 10px; color: var(--atk); font: 700 16px/1.2 var(--display); }
+  .story b { font: 700 14px/1.2 var(--display); letter-spacing: .1em; text-transform: uppercase; }
+  .story span { display: block; color: var(--muted); font-size: 13px; }
+  .swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+  .sw { display: flex; align-items: center; gap: 8px; padding: 6px 10px 6px 6px; border: 1px solid var(--line); border-radius: 999px; font-size: 12px; color: var(--muted); }
+  .sw i { width: 20px; height: 20px; border-radius: 50%; }
+  .rights { border-color: rgb(255 210 63 / 25%); }
+  .rights li { margin-bottom: 6px; color: var(--muted); }
+  .rights ul { margin: 0; padding-left: 18px; }
+  .q { margin-top: 10px; padding: 10px 12px; border-left: 3px solid var(--atk); background: var(--atk-soft); border-radius: 0 10px 10px 0; color: var(--text); font-size: 13px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topline">
+    <div class="brand"><i></i>Бурмалдоза · Slot</div>
+    <span class="tag">Фанатский концепт · превью направления · #62</span>
+  </div>
+  <h1>Siege <span>3×7</span></h1>
+  <p class="lede">Комната слота в стилистике Rainbow Six Siege: тактический HUD, бетон и строительная разметка, оранжевый цвет атаки и синий защиты. Три барабана — три точки пролома; остановка слева направо читается как штурм по команде. Все иконки нарисованы с нуля, без официальных материалов.</p>
+
+  <div class="layout">
+    <section class="phone" aria-label="Макет комнаты на телефоне">
+      <div class="hud">
+        <div class="side atk">Атака<small>Раунд 3 · Пролом</small></div>
+        <div class="timer" id="timer" aria-label="Таймер раунда">0:45</div>
+        <div class="bal"><span id="balance">1 000</span> JG<small>Баланс · превью</small></div>
+      </div>
+
+      <div class="stage">
+        <div class="stage-head"><b>Точки пролома</b><span>3 линии · wild = жетон</span></div>
+        <div class="reels" id="reels">
+          <svg class="lines" id="lines" viewBox="0 0 300 322" preserveAspectRatio="none" aria-hidden="true">
+            <polyline data-line="0" points="50,161 150,161 250,161"/>
+            <polyline data-line="1" points="50,115 150,161 250,207"/>
+            <polyline data-line="2" points="50,207 150,161 250,115"/>
+          </svg>
+        </div>
+        <div class="overtime" id="overtime" role="status">Овертайм · 5 Free Spins</div>
+      </div>
+
+      <div class="result" id="result" data-phase="idle" role="status" aria-live="polite">
+        <span class="dot" aria-hidden="true"></span>
+        <span><b id="resultTitle">Подготовка</b><small id="resultText">Выберите ставку и начните пролом</small></span>
+        <span class="amount" id="resultAmount"></span>
+      </div>
+
+      <div class="controls" role="group" aria-label="Ставка">
+        <button class="bet" type="button" data-bet="10" aria-pressed="false">10</button>
+        <button class="bet" type="button" data-bet="25" aria-pressed="true">25</button>
+        <button class="bet" type="button" data-bet="100" aria-pressed="false">100</button>
+        <button class="spin" type="button" id="spin">Пролом<small id="spinBet">ставка 25 JG</small></button>
+      </div>
+      <p class="note">Превью оформления: сетка выпадает в браузере для показа движения. В игре исход и баланс подтверждает только сервер.</p>
+    </section>
+
+    <div>
+      <section class="card">
+        <h2>Символы <em>· 4 из движка</em></h2>
+        <p>Символы <code>A / B / C / W</code> из <code>slot_skeleton.json</code> получают образы снаряжения. Выплаты — текущий skeleton ruleset за три в линию.</p>
+        <div class="legend" id="legend"></div>
+      </section>
+
+      <section class="card">
+        <h2>Линии <em>· лазер дрона</em></h2>
+        <p>Выигрышная линия прорисовывается лучом сканирования только после остановки всех трёх барабанов.</p>
+        <div class="paylines">
+          <div class="pl"><svg viewBox="0 0 90 70"><g fill="#262d36"><rect x="5" y="5" width="24" height="60" rx="4"/><rect x="33" y="5" width="24" height="60" rx="4"/><rect x="61" y="5" width="24" height="60" rx="4"/></g><polyline points="17,35 45,35 73,35" fill="none" stroke="#ffd23f" stroke-width="3" stroke-linecap="round"/></svg><small>Центр · ряд 4</small></div>
+          <div class="pl"><svg viewBox="0 0 90 70"><g fill="#262d36"><rect x="5" y="5" width="24" height="60" rx="4"/><rect x="33" y="5" width="24" height="60" rx="4"/><rect x="61" y="5" width="24" height="60" rx="4"/></g><polyline points="17,26 45,35 73,44" fill="none" stroke="#ffd23f" stroke-width="3" stroke-linecap="round"/></svg><small>Ряды 3 → 4 → 5</small></div>
+          <div class="pl"><svg viewBox="0 0 90 70"><g fill="#262d36"><rect x="5" y="5" width="24" height="60" rx="4"/><rect x="33" y="5" width="24" height="60" rx="4"/><rect x="61" y="5" width="24" height="60" rx="4"/></g><polyline points="17,44 45,35 73,26" fill="none" stroke="#ffd23f" stroke-width="3" stroke-linecap="round"/></svg><small>Ряды 5 → 4 → 3</small></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Движение <em>· storyboard</em></h2>
+        <ol class="story">
+          <li><b>Подготовка</b><span>HUD спокоен, таймер раунда идёт, барабаны стоят. Кнопка «Пролом» активна.</span></li>
+          <li><b>Команда</b><span>Нажатие отправляет intent на сервер; кнопка блокируется, у результата мигает синий «ждём подтверждение».</span></li>
+          <li><b>Штурм</b><span>Барабаны разгоняются вниз с размытием, как камера дрона на скорости. Ничего не «подсказывает» исход.</span></li>
+          <li><b>Пролом по очереди</b><span>Остановка слева → центр → справа с инерцией и коротким толчком; оранжевая метка на каждом остановленном барабане.</span></li>
+          <li><b>Раунд</b><span>После третьей остановки — лазер по выигрышным линиям, подсветка символов, сумма. Проигрыш — короткая красная метка без драмы.</span></li>
+          <li><b>Овертайм</b><span>Free Spins подаются как овертайм: жёлтая разметка, счётчик, каждое вращение подтверждается отдельно.</span></li>
+        </ol>
+        <p style="margin-top:10px">Reduced motion: без прокрутки и мигания — барабаны сразу показывают подтверждённую сетку, линия и сумма остаются.</p>
+      </section>
+
+      <section class="card">
+        <h2>Палитра</h2>
+        <div class="swatches">
+          <span class="sw"><i style="background:#0b0d10;border:1px solid #333"></i>Ночь #0B0D10</span>
+          <span class="sw"><i style="background:#262d36"></i>Бетон #262D36</span>
+          <span class="sw"><i style="background:#ff7a1a"></i>Атака #FF7A1A</span>
+          <span class="sw"><i style="background:#2f9bff"></i>Защита #2F9BFF</span>
+          <span class="sw"><i style="background:#ffd23f"></i>Разметка #FFD23F</span>
+        </div>
+        <p style="margin-top:12px">Шрифты: Rajdhani для HUD и заголовков, Inter для текста. Углы кнопок срезаны, как у пластин брони.</p>
+      </section>
+
+      <section class="card rights">
+        <h2>Права и решения</h2>
+        <ul>
+          <li>Rainbow Six Siege — игра и товарный знак Ubisoft. Здесь нет логотипов, артов, иконок оперативников, скриншотов и названий карт из игры: только общая стилистика и собственные иконки.</li>
+          <li>Портреты оперативников или официальные материалы — только отдельным решением владельца, с атрибуцией в <code>sources.json</code>, как у GFL в Blackjack.</li>
+        </ul>
+        <div class="q">Нужно решение владельца: оставляем собственные иконки снаряжения или добираем портреты оперативников (тогда вопрос прав, как у GFL)?</div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const ICONS = {
+    A: `<svg viewBox="0 0 40 40" aria-hidden="true"><rect x="7" y="15" width="26" height="12" rx="6" fill="#3a4654" stroke="#8b97a4" stroke-width="1.5"/><circle cx="11" cy="29" r="5" fill="#1b2027" stroke="#8b97a4" stroke-width="2"/><circle cx="29" cy="29" r="5" fill="#1b2027" stroke="#8b97a4" stroke-width="2"/><circle cx="20" cy="21" r="3.4" fill="#2f9bff"/><circle cx="20" cy="21" r="1.4" fill="#d9eeff"/><path d="M20 15v-5" stroke="#8b97a4" stroke-width="1.5"/><circle cx="20" cy="9" r="1.5" fill="#2f9bff"/></svg>`,
+    B: `<svg viewBox="0 0 40 40" aria-hidden="true"><defs><pattern id="hz" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="3" height="6" fill="#ffd23f"/><rect x="3" width="3" height="6" fill="#1b1b1b"/></pattern></defs><rect x="6" y="8" width="28" height="24" rx="3" fill="#2a1a0e" stroke="#ff7a1a" stroke-width="2"/><rect x="6" y="8" width="28" height="6" fill="url(#hz)"/><rect x="12" y="18" width="16" height="9" rx="2" fill="#ff7a1a"/><circle cx="31" cy="29" r="2" fill="#ff3b3b"/></svg>`,
+    C: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 7h24v17c0 6-6 10-12 12-6-2-12-6-12-12z" fill="#13283d" stroke="#2f9bff" stroke-width="2"/><rect x="13" y="13" width="14" height="3.5" rx="1.5" fill="#2f9bff"/><path d="M12 22h16M14 27h12" stroke="#2f9bff" stroke-opacity=".5" stroke-width="1.5"/></svg>`,
+    W: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3l14 8v18l-14 8-14-8V11z" fill="#2b2410" stroke="#ffd23f" stroke-width="2"/><path d="M12 15l8 6 8-6M12 22l8 6 8-6" fill="none" stroke="#ffd23f" stroke-width="2.4" stroke-linejoin="round"/></svg>`
+  };
+  const LEGEND = [
+    ['A', 'Дрон', 'Разведка. Самый частый символ.', '×1 за три'],
+    ['B', 'Заряд пролома', 'Взрыв стены. Средний символ.', '×2 за три'],
+    ['C', 'Щит', 'Укрытие защиты. Редкий символ.', '×3 за три'],
+    ['W', 'Жетон оперативника', 'Wild: заменяет любой символ.', '×5 за три жетона']
+  ];
+  const STRIP = ['A','A','A','B','B','C','C','W','A','B'];
+  const PAYLINES = [[3,3,3],[2,3,4],[4,3,2]];
+  const PAY = { A: 1, B: 2, C: 3, W: 5 };
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const legend = document.getElementById('legend');
+  legend.innerHTML = LEGEND.map(([k, n, d, p]) =>
+    `<div class="sym${k === 'W' ? ' wild' : ''}"><span class="ico">${ICONS[k]}</span><span><b>${n} <small>· ${k}</small></b><small>${d}</small><br><span class="pay">${p}</span></span></div>`).join('');
+
+  const reelsEl = document.getElementById('reels');
+  const lines = document.getElementById('lines');
+  const reels = [];
+  const rand = (n) => Math.floor(Math.random() * n);
+  const column = () => Array.from({ length: 7 }, () => STRIP[rand(STRIP.length)]);
+  const cellHtml = (s) => `<div class="cell" data-s="${s}">${ICONS[s]}</div>`;
+
+  for (let i = 0; i < 3; i++) {
+    const reel = document.createElement('div');
+    reel.className = 'reel';
+    reel.innerHTML = `<span class="stopmark"></span><div class="strip">${column().map(cellHtml).join('')}</div>`;
+    reelsEl.insertBefore(reel, lines);
+    reels.push(reel);
+  }
+
+  let bet = 25, balance = 1000, busy = false, freeSpins = 0;
+  const fmt = (n) => n.toLocaleString('ru-RU');
+  const $ = (id) => document.getElementById(id);
+  document.querySelectorAll('.bet').forEach((b) => b.addEventListener('click', () => {
+    if (busy) return;
+    bet = Number(b.dataset.bet);
+    document.querySelectorAll('.bet').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    $('spinBet').textContent = `ставка ${bet} JG`;
+  }));
+
+  function setResult(phase, title, text, amount = '') {
+    $('result').dataset.phase = phase;
+    $('resultTitle').textContent = title;
+    $('resultText').textContent = text;
+    $('resultAmount').textContent = amount;
+  }
+
+  function spinReel(reel, finalCol, duration) {
+    const strip = reel.querySelector('.strip');
+    const cell = strip.querySelector('.cell').offsetHeight;
+    const filler = Array.from({ length: 18 + rand(6) }, () => STRIP[rand(STRIP.length)]);
+    const current = [...strip.querySelectorAll('.cell')].map((c) => c.dataset.s);
+    const all = [...finalCol, ...filler, ...current];
+    strip.innerHTML = all.map(cellHtml).join('');
+    const distance = (all.length - 7) * cell;
+    reel.classList.remove('stopped');
+    if (reduce) {
+      strip.innerHTML = finalCol.map(cellHtml).join('');
+      reel.classList.add('stopped');
+      return Promise.resolve();
+    }
+    const anim = strip.animate([
+      { transform: `translateY(-${distance}px)`, filter: 'blur(0)' },
+      { transform: `translateY(-${distance * 0.55}px)`, filter: 'blur(1.4px)', offset: 0.35 },
+      { transform: 'translateY(6px)', filter: 'blur(0)', offset: 0.92 },
+      { transform: 'translateY(0)' }
+    ], { duration, easing: 'cubic-bezier(.25,.05,.2,1)' });
+    return anim.finished.then(() => {
+      strip.innerHTML = finalCol.map(cellHtml).join('');
+      reel.classList.add('stopped');
+    });
+  }
+
+  function evaluate(grid) {
+    const wins = [];
+    PAYLINES.forEach((rows, idx) => {
+      const syms = rows.map((r, c) => grid[c][r]);
+      const base = syms.find((s) => s !== 'W') || 'W';
+      if (syms.every((s) => s === base || s === 'W')) wins.push({ idx, rows, pay: PAY[base] * bet });
+    });
+    return wins;
+  }
+
+  async function spin() {
+    if (busy) return;
+    busy = true;
+    $('spin').disabled = true;
+    lines.querySelectorAll('polyline').forEach((p) => p.classList.remove('on'));
+    reelsEl.querySelectorAll('.cell.hit').forEach((c) => c.classList.remove('hit'));
+    const paid = freeSpins > 0;
+    if (paid) { freeSpins--; } else { balance -= bet; $('balance').textContent = fmt(balance); }
+    setResult('resolving', 'Ждём подтверждение', paid ? `Овертайм: осталось ${freeSpins}` : `Списано ${bet} JG`);
+    const grid = [column(), column(), column()];
+    await Promise.all(reels.map((r, i) => spinReel(r, grid[i], 900 + i * 420)));
+    const wins = evaluate(grid);
+    const total = wins.reduce((s, w) => s + w.pay, 0);
+    wins.forEach((w) => {
+      lines.querySelector(`[data-line="${w.idx}"]`).classList.add('on');
+      w.rows.forEach((r, c) => reels[c].querySelectorAll('.cell')[r].classList.add('hit'));
+    });
+    if (total > 0) {
+      balance += total; $('balance').textContent = fmt(balance);
+      setResult('win', 'Раунд выигран', `${wins.length} ${wins.length === 1 ? 'линия' : 'линии'} · превью`, `+${fmt(total)}`);
+    } else {
+      setResult('loss', 'Раунд проигран', 'Линий нет · превью', '0');
+    }
+    if (!paid && grid.every((col) => col[3] === 'W')) {
+      freeSpins = 5;
+    } else if (!paid && Math.random() < 0.12) {
+      freeSpins = 5; // показ овертайма в превью
+    }
+    $('overtime').classList.toggle('on', freeSpins > 0);
+    $('overtime').textContent = freeSpins > 0 ? `Овертайм · осталось ${freeSpins} Free Spins` : '';
+    $('spin').firstChild.textContent = freeSpins > 0 ? 'Овертайм' : 'Пролом';
+    busy = false;
+    $('spin').disabled = false;
+  }
+  $('spin').addEventListener('click', spin);
+
+  let t = 45;
+  setInterval(() => { t = t <= 0 ? 45 : t - 1; $('timer').textContent = `0:${String(t).padStart(2, '0')}`; }, 1000);
+})();
+</script>
+</body>
+</html>
