@@ -58,6 +58,8 @@ Python 3.12 + uv, Node 24 + pnpm, Docker Compose с PostgreSQL 16/Redis 7, Alemb
 
 Проверить iOS, Android и Telegram Desktop на 390×844 и широком экране: safe areas, keyboard/focus, reduced motion, slow network, reconnect, повтор tap, stale state, отрицательный баланс, accessibility и отсутствие fake settlement.
 
+Пошаговый чеклист для владельца — [Manual-QA-Checklist.md](./Manual-QA-Checklist.md).
+
 Запустить PostgreSQL integration tests и Playwright на машине/CI с Docker и browser runtime; не считать пропущенный runtime зелёным тестом.
 
 ### Этап 6 — Тематическое наполнение

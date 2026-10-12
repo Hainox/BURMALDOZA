@@ -128,7 +128,7 @@ Hold’em остаётся domain/demo skeleton; серверный игрово
   E2E (`pnpm verify`, `pnpm test:py`, `pnpm lint:py`, `pnpm miniapp:e2e`).
 
 ### Публичный запуск (по `dev/BuildSpec.md` и `docs/Development-Roadmap.md`)
-- Ручной QA iOS, Android и Telegram Desktop на staging.
+- Ручной QA iOS, Android и Telegram Desktop на staging — по [Manual-QA-Checklist.md](./Manual-QA-Checklist.md).
 - Утверждённые RTP и лимиты, финальные ассеты; целевой чат, владельцы, модераторы, FAQ и поддержка.
 - Юридическая проверка и security review.
 - Опубликованы `/help`, правила и контакт поддержки; первые 48 часов ведётся журнал инцидентов.
