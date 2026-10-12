@@ -32,9 +32,8 @@ bot ──HTTP по внутренней сети bot_api──▶ api; bot ─�
 - Сертификаты Let's Encrypt Caddy получает сам. `www.burmaldoza.ru`, `burmaldoza.online` и
   `www.burmaldoza.online` постоянно перенаправляются на `https://burmaldoza.ru`.
 - Конфигурация Caddy встроена в compose-файл (`configs.content`), поэтому нужен Docker Compose **2.23.1+**.
-- API читает правила слота из `/app/tests/fixtures/slot_skeleton.json`. Production Compose
-  монтирует этот отслеживаемый Git-файл read-only через `configs`; он должен присутствовать в
-  checkout выбранного SHA. Сам API-образ его не содержит: без mount создание комнаты даёт 500.
+- Правила слота (`slot_skeleton.json`) лежат в пакете `burmaldoza_domain/games/` и входят в
+  API-образ вместе с `packages/`; отдельный mount не нужен.
 
 ## 2. Что должно быть готово до начала (владелец)
 
