@@ -463,3 +463,12 @@
 - Регрессия очереди добавлена в существующий `test-offline.cjs`: на старом состоянии падает (две карточки вместо сообщения), после исправления проходит. Offline/cache regression и `node --check` app.js/seed.js/test-offline.cjs — passed; `git diff --check` — passed. Read-only code-reviewer и JS reviewer по skill code-review-and-quality не нашли блокеров; это внутренние проверки Codex, не отчёт внешнего Antigravity.
 - Локальный Chrome через отдельный HTTP preview: snapshot показывает #19/#48, фильтр PR/open/Codex/#48 находит один PR, обновление получает GitHub API и сохраняет кэш, очередь явно пуста. Реальный offline fallback проверен автоматизированной регрессией; viewport/reduced-motion вручную не проверялись в этой сессии. Точный сценарий дальнейшего ручного QA — в README.
 - CI исходного `c763a3f` — success (run 38306834046); на новом head нужен свежий Verify. Ветка не синхронизировалась merge/rebase, GitHub подтверждал mergeable. Чужие изменения, hooks/poller, сервер, merge и deploy не затрагивались. Готовность production/Telegram/реальных устройств не заявляется.
+
+## 2026-10-13 — правки после review PR #48 (#55)
+
+- Claude Code (claude-opus-5-5, effort не отображается), ветка `claude/journal-followups-48` от `main` `5785e30`. Закрыты четыре некритичных замечания из review PR #48.
+- Журнал: сообщение пустой очереди больше не ссылается на конкретный PR, а направляет к открытым issues с метками `to:*` и штабу #19; `test-offline.cjs` проверяет, что в сообщении нет номера PR (на прежнем тексте проверка падает).
+- `docs/Launch-Checkpoint.md`: актуальная очередь — задачи #51–#57 по исполнителям, PR #48 слит, локальный узел штаба включён.
+- `docs/project-journal/README.md`: dev-серверы по умолчанию только на localhost; `--host 0.0.0.0` — только для облачного контейнера.
+- `ChangeLog.md`: убрана пустая строка внутри списка `## Unreleased`.
+- Проверки: `node docs/project-journal/test-offline.cjs` — passed; `node --check` app.js и test-offline.cjs — passed; `git diff --check` — passed.

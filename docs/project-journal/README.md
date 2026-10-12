@@ -13,9 +13,11 @@
 Из корня репозитория после `pnpm install --frozen-lockfile` запустите в двух терминалах:
 
 ```bash
-pnpm miniapp:dev --host 0.0.0.0 --port 5173 --strictPort
-pnpm --dir apps/miniapp exec vite ../../docs/project-journal --host 0.0.0.0 --port 5174 --strictPort
+pnpm miniapp:dev --port 5173 --strictPort
+pnpm --dir apps/miniapp exec vite ../../docs/project-journal --port 5174 --strictPort
 ```
+
+Без `--host` серверы доступны только на этом компьютере. На ПК владельца так и запускайте: dev-сервер Vite не рассчитан на доступ из локальной сети. Флаг `--host 0.0.0.0` добавляйте только в облачном контейнере, где среда сама пробрасывает порт.
 
 Во второй команде путь отсчитывается от `apps/miniapp`.
 Mini App — `http://localhost:5173/`, журнал — `http://localhost:5174/` на машине, где работают процессы. Vite подхватывает изменения файлов. Обновление GitHub — кнопкой в журнале; автоматического фонового опроса GitHub эта страница не выполняет. Игровое приложение вне Telegram без API остаётся DEMO.
