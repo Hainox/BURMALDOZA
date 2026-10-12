@@ -9,17 +9,14 @@
     ['0', 'Product lock и доступы', 'pending', 'Ожидает решений по чату, ролям, доступам, доменам и поддержке.'],
     ['1', 'Foundation и окружение', 'done', 'Технический каркас собран; это не production-развёртывание.'],
     ['2', 'Domain rules и Monte Carlo', 'done', 'Skeleton трёх игр и офлайн-симуляции собраны; финальные RTP и лимиты ещё не утверждены.'],
-    ['3', 'Ledger, Telegram auth и API', 'done', 'Foundation и исправления в main; открытых PR на 03.10.2026 нет. Серверная приёмка не подтверждена.'],
-    ['4', 'Mini App и motion', 'partial', 'Slot motion, Blackjack DEMO/resync и честные подписи в main; QA #43 и проверка на устройствах остаются.'],
+    ['3', 'Ledger, Telegram auth и API', 'done', 'Foundation и исправления в main; серверная приёмка не подтверждена.'],
+    ['4', 'Mini App и motion', 'partial', 'Slot motion, Blackjack DEMO/resync и честные подписи в main; отчёт Chromium/mock QA #43 принят. Приёмка реальных устройств остаётся.'],
     ['5', 'Manual QA и закрытая приёмка', 'pending', 'Ожидает проверок на iOS, Android и Telegram Desktop.'],
     ['6', 'Тематическое наполнение', 'pending', 'После приёмки каркаса и согласования прав на материалы.'],
     ['7', 'Закрытая beta', 'pending', 'После QA, готовности поддержки, резервирования и мониторинга.'],
     ['8', 'Public launch', 'pending', 'После beta и отдельного решения владельца.']
   ];
-  const handoffs = [
-    { number: 43, pr: 40, title: 'Мобильный QA DEMO/LIVE', recipient: 'Command Code (CCode)', model: 'meta/muse-spark-1.3-contributor', effort: 'high', dependency: 'PR #40 слит. Открыто read-only QA issue #43; сверить исходный head и актуальный main.', scope: 'По issue #43 проверь DEMO Slot/Blackjack/Hold’em и live Slot/Blackjack на 375×812 и при reduced motion. Не менять файлы и серверное состояние; использовать demo/mock path. Отчёт pass/fail с браузером, viewport и findings разместить в issue #43.' },
-    { number: 41, pr: 39, title: 'Antigravity: QA Pages workflow', recipient: 'Google Antigravity (Gemini)', model: 'Gemini 3.1 Pro / High if available; otherwise exact picker model', effort: 'High if available; record actual picker effort', dependency: 'PR #39 слит. Открыто read-only pilot issue #41. Передача владельцем вручную; автоматическая маршрутизация не подключена.', scope: 'Review issue #41 and PR #39 as an owner preparing a manual Pages preview. Check trigger, refs, BASE_PATH, preservation of root and Blackjack preview, phone URL and rollback instructions. Do not run workflow, deploy, merge or edit files. Report pass/fail and concrete findings in issue #41; state browser limitations.' }
-  ];
+  const handoffs = [];
   const $ = (id) => document.getElementById(id);
   const formatTime = (value) => value ? new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Moscow' }).format(new Date(value)) + ' МСК' : 'дата неизвестна';
   const node = (tag, className, content) => {
@@ -178,6 +175,9 @@
       card.append(body, actions);
       list.append(card);
     });
+    if (!list.children.length) {
+      list.append(node('p', 'section-note', 'Нет открытых передач. Текущая работа Codex — PR #48; новые назначения сверяйте в штабе #19.'));
+    }
   }
 
   async function fetchPages(path, signal) {

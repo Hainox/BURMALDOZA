@@ -1,8 +1,8 @@
 # Бурмалдоза — роадмап разработки
 
-## Сверка 12.10.2026
+## Сверка 13.10.2026
 
-`main` — `d715ca3`, CI успешен (run 38261015713). Slot continuity (#18), Blackjack follow-up (#36), DEMO/LIVE labels (#40), internal API isolation (#33) и ручной Pages workflow (#39) слиты. QA #41–#43 закрыты: статический Pages review, review DEMO/LIVE copy и принятый отчёт Chromium QA с LIVE mock. Открыт draft PR #48: документационные доработки Codex, read-only review Antigravity. Production и приёмка реальных устройств не подтверждены. Актуальная очередь — [Launch-Checkpoint.md](./Launch-Checkpoint.md).
+`main` — `d715ca3`, CI успешен (run 38261015713). Slot continuity (#18), Blackjack follow-up (#36), DEMO/LIVE labels (#40), internal API isolation (#33) и ручной Pages workflow (#39) слиты. QA #41–#43 закрыты: статический Pages review, review DEMO/LIVE copy и принятый отчёт Chromium QA с LIVE mock. Открыт draft PR #48: весь PR, исправления и финальная проверка переданы Codex владельцем 13.10.2026. Production и приёмка реальных устройств не подтверждены. Актуальная очередь — [Launch-Checkpoint.md](./Launch-Checkpoint.md).
 
 ## Уже собранный foundation
 
