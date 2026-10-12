@@ -1,6 +1,50 @@
 [
   {
-    "symbol": "A",
+    "symbol": "D1",
+    "operator": "Rook",
+    "side": "defense",
+    "file": "portraits/Rook.png",
+    "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/1aFTx0BJYAKAnS1vyNA7w6/b4fc6421d382c677aa0197f84131eaa5/r6-operators-list-rook.png",
+    "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+    "bytes": 89835,
+    "sha256": "ef8bc3076018d499bb19d12f2e8ac3d20b4c248bc58dd45257abd6eb75bbbe74",
+    "rights_note": "Copyright Ubisoft Entertainment; original operator-list portrait from the official Rainbow Six Siege operators page. The project owner approves this non-commercial fan design preview with attribution; no general reuse license is asserted."
+  },
+  {
+    "symbol": "D2",
+    "operator": "Bandit",
+    "side": "defense",
+    "file": "portraits/Bandit.png",
+    "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/2cFHG0Xk93uoGrm5nTjDPE/2211339df9b36c1b0d9873e480d03fad/r6-operators-list-bandit.png",
+    "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+    "bytes": 100385,
+    "sha256": "b0e0d7f3e7a4d10a13d7891545e9084a484724f252fc9dc9d79d7f4b70f1b3f2",
+    "rights_note": "Copyright Ubisoft Entertainment; original operator-list portrait from the official Rainbow Six Siege operators page. The project owner approves this non-commercial fan design preview with attribution; no general reuse license is asserted."
+  },
+  {
+    "symbol": "D3",
+    "operator": "Jager",
+    "side": "defense",
+    "file": "portraits/Jager.png",
+    "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/4kMW2lcoewGifRWbvQVjKy/8f974b5d26db81dc823ea602e31d6273/r6-operators-list-jager.png",
+    "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+    "bytes": 97295,
+    "sha256": "2a4273bef317fa10fbfae8624e8de8f48d1bebc15fe2109f772922b6cdb27058",
+    "rights_note": "Copyright Ubisoft Entertainment; original operator-list portrait from the official Rainbow Six Siege operators page. The project owner approves this non-commercial fan design preview with attribution; no general reuse license is asserted."
+  },
+  {
+    "symbol": "D4",
+    "operator": "Smoke",
+    "side": "defense",
+    "file": "portraits/Smoke.png",
+    "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/2Tm9rzdq6j9cpdW9qjnnrw/10d42d14755002e1056d1a940841482c/r6-operators-list-smoke.png",
+    "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+    "bytes": 96793,
+    "sha256": "2aea67db92cfbfad9e93254bf42bc8b0ea6a871611d6ff7f6442a5c178860d2d",
+    "rights_note": "Copyright Ubisoft Entertainment; original operator-list portrait from the official Rainbow Six Siege operators page. The project owner approves this non-commercial fan design preview with attribution; no general reuse license is asserted."
+  },
+  {
+    "symbol": "A1",
     "operator": "Twitch",
     "side": "attack",
     "file": "portraits/Twitch.png",
@@ -11,7 +55,7 @@
     "rights_note": "Copyright Ubisoft Entertainment; original operator-list portrait from the official Rainbow Six Siege operators page. The project owner approves this non-commercial fan design preview with attribution; no general reuse license is asserted."
   },
   {
-    "symbol": "B",
+    "symbol": "A2",
     "operator": "Thermite",
     "side": "attack",
     "file": "portraits/Thermite.png",
@@ -22,7 +66,7 @@
     "rights_note": "Copyright Ubisoft Entertainment; original operator-list portrait from the official Rainbow Six Siege operators page. The project owner approves this non-commercial fan design preview with attribution; no general reuse license is asserted."
   },
   {
-    "symbol": "C",
+    "symbol": "A3",
     "operator": "Montagne",
     "side": "attack",
     "file": "portraits/Montagne.png",
