@@ -463,3 +463,10 @@
 - Регрессия очереди добавлена в существующий `test-offline.cjs`: на старом состоянии падает (две карточки вместо сообщения), после исправления проходит. Offline/cache regression и `node --check` app.js/seed.js/test-offline.cjs — passed; `git diff --check` — passed. Read-only code-reviewer и JS reviewer по skill code-review-and-quality не нашли блокеров; это внутренние проверки Codex, не отчёт внешнего Antigravity.
 - Локальный Chrome через отдельный HTTP preview: snapshot показывает #19/#48, фильтр PR/open/Codex/#48 находит один PR, обновление получает GitHub API и сохраняет кэш, очередь явно пуста. Реальный offline fallback проверен автоматизированной регрессией; viewport/reduced-motion вручную не проверялись в этой сессии. Точный сценарий дальнейшего ручного QA — в README.
 - CI исходного `c763a3f` — success (run 38306834046); на новом head нужен свежий Verify. Ветка не синхронизировалась merge/rebase, GitHub подтверждал mergeable. Чужие изменения, hooks/poller, сервер, merge и deploy не затрагивались. Готовность production/Telegram/реальных устройств не заявляется.
+
+## 2026-10-13 — чеклист ручной приёмки (#56)
+
+- Claude Code (claude-opus-5-5, effort не отображается), ветка `claude/manual-qa-checklist` от `main` `5785e30`.
+- Новый `docs/Manual-QA-Checklist.md` для этапа 5: бот, первый вход, Daily/Relief, Slot, Blackjack, Hold'em как известное ограничение (#53), сеть и повторные нажатия, экран и reduced motion, шаблон issue. Тексты ожидаемых результатов сверены с `apps/miniapp` и `apps/bot` в `main`; новых требований нет.
+- Ссылки на чеклист добавлены в этап 5 `docs/Development-Roadmap.md` и в условия публичного запуска `docs/Launch-Checkpoint.md`.
+- Проверки: `git diff --check` — passed.
