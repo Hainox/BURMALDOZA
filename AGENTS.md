@@ -8,6 +8,20 @@
 FastAPI (источник подтверждённого состояния), PostgreSQL + Redis. Валюта Jokergem — без реальных денег.
 Документация и коммуникация с владельцем — на русском; владелец не программист, объяснять простыми словами.
 
+## Unwritten
+- Publishing: a push to `main` touching `apps/miniapp/**`, the Blackjack deck assets, `package.json` or `pnpm-lock.yaml` redeploys the public GitHub Pages demo (`deploy-pages.yml`), so such a merge is a release; with the `PUBLIC_API_BASE_URL` repo variable empty, Pages intentionally builds the DEMO client. The Slot v2 preview workflow is manual-only. Server deploy follows `docs/Deploy-Production.md` and is done by the owner (see «Совместная работа»).
+- Gotchas: production Compose mounts `tests/fixtures/slot_skeleton.json` read-only into the API as the live slot ruleset and the API image does not contain it, so moving or renaming that "fixture" breaks room creation with HTTP 500. CI additionally runs `docker compose build api bot miniapp` and `pnpm miniapp:e2e`, which `pnpm verify` does not.
+- Conventions: commit subjects are conventional commits with an optional scope (`fix(miniapp):`, `test(blackjack):`, `ci:`); `ChangeLog.md` bullets go under `## Unreleased` and are written in English, unlike the Russian docs.
+- Why: the API runs as exactly one process (`--workers 1`, one replica) because `EventBus` is in-process memory; a second worker or replica silently loses live room events. Jokergem balances are plain integers and the name is provisional, so a rename needs no migration.
+- Off-limits: `reports/monte-carlo/*.json` are outputs of the seeded `python -m devtools.monte_carlo.*` commands in `README.md`; regenerate them, never edit by hand. Штаб hooks belong to the owner (see «Штаб»).
+
+## Pointers
+- **Writing** or reviewing code: apply `CODING_STANDARDS.md`; project config and linters win where they disagree.
+- **Security**-sensitive change (auth, permissions, untrusted input, secrets): read `docs/agents/security.md` first.
+- **Committing** or opening a PR: follow `docs/agents/git.md`; the branch, merge and report rules in «Совместная работа» and «Штаб» below take precedence.
+- **Risky** change (spans modules, migrates data, alters a public API): propose a phased plan and get approval before editing.
+- **Done** means you ran the project's own check commands and they are green, or you named the ones you could not run.
+
 ## Источники истины
 
 Перед существенной работой: `dev/Vision.md` → `dev/BuildSpec.md` → `dev/ProjectLog.md` →
