@@ -437,3 +437,29 @@
 - Решение владельца Hainox: Claude Code может сливать PR в `main` без отдельного запроса при условиях из раздела «Merge силами Claude Code» в `AGENTS.md` (зелёный CI, без конфликтов и блокирующих замечаний, без обхода `needs-owner`, review другого агента для кода; для domain/RNG/ledger/API/миграций/production-конфигурации — review Codex). Deploy и серверные действия по-прежнему делает владелец.
 - Обновлены `AGENTS.md`, `CLAUDE.md` (раздел «Публикация») и шаг 6 в `docs/Command-Code-Workflow.md`.
 - Поправка по review Codex (P1 в PR #46, пришёл до merge, но был пропущен при слиянии): squash не очищает опубликованные данные — исходные коммиты остаются видны в PR. Правило изменено: если в ветке оказался секрет или приватные данные, PR не сливается, ставится `needs-owner`, чистку истории и отзыв секрета решает владелец. Вывод для Claude: перед merge перечитывать review-комментарии на текущем head, а не только статус CI. Та же поправка — в риске R2 `docs/Launch-Checkpoint.md`.
+
+
+## 2026-10-03 — сверка штаба и запуск просмотра
+
+- Codex, фактические model/effort не отображаются. База `main` `e1be100`; ветка `codex/hq-status-2026-10-03`. Scope владельца: только BURMALDOZA, запуск просмотра и актуализация сводок.
+- По GitHub REST через подключённый GitHub: открытых PR нет; открыты только #41, #43 и постоянный штаб #19. CI базы — success (run 36710993820). Это не подтверждение production или ручной приёмки устройств.
+- Обновлены публичный снимок журнала и QA-очередь, Launch-Checkpoint, Development-Roadmap, Slot-V2-Status, инструкция просмотра. Исторические записи не переписывались.
+- Mini App Vite и журнал Vite запущены в текущем облачном окружении на 5173/5174, обе страницы HTTP 200. Подхват файлов Vite; GitHub в журнале обновляется кнопкой. На ПК владельца процессы не запускались; hooks/poller не менялись.
+- Проверки: `pnpm install --frozen-lockfile` — passed; `pnpm miniapp:check` — 0 errors / 0 warnings; `node docs/project-journal/test-offline.cjs` — passed; `node --check` для app.js/seed.js — passed; `git diff --check` — passed.
+- Ограничения: production, live API, Telegram WebView и browser/mobile QA #41/#43 не проверялись; игровые исходы DEMO не подтверждаются сервером.
+
+## 2026-10-12 — продолжение документационной задачи PR #48
+
+- По текущему назначению в PR #48 Codex продолжил `codex/hq-status-2026-10-03` от head `5140eb5` в изолированном worktree. Границы переданы через штаб #19: только Launch-Checkpoint, Development-Roadmap, Slot-V2-Status и этот журнал; Antigravity — read-only review, Claude Code/CCode новых задач не имеют. Подтверждения получения handoff и нового review пока нет. Точный runtime-вариант модели и effort не отображаются.
+- GitHub сверён 12.10.2026: `main` `d715ca393071d83eed41a0b70d6bbead31d09a4c`; verify run 38261015713 success. PR #39/#40/#45 merged, #41/#42/#43 closed; открыты только постоянный штаб #19 и draft PR #48. Старые записи остаются историческими снимками.
+- Три сводки больше не выдают закрытые QA за активную очередь. Разделены статический review #41, review copy #42 и принятый отчёт Chromium/mock QA #43; Low из #42 сохранён как замечание сопровождения, без нового продуктового scope. Встроенный снимок журнала от 03.10.2026 не обновлялся; актуальные GitHub данные доступны через существующую кнопку обновления.
+- Проверки: `git diff --check` — passed; `node docs/project-journal/test-offline.cjs` и `node --check docs/project-journal/app.js`, `node --check docs/project-journal/seed.js` — passed после явного выбора worktree (первый запуск относительных путей попал в домашнюю папку и дал MODULE_NOT_FOUND). Продуктовый код в этом продолжении не менялся; серверные и browser E2E заново не запускались.
+- Ограничения: реальный Telegram WebView, iOS/Android и production не проверялись. Чужие незакоммиченные файлы не затрагивались; hooks/poller, workflows, merge и deployment не запускались. Осталось: независимый review всего PR #48, повторная проверка совместимости нового head со свежим main и решение владельца; draft сохранён.
+
+## 2026-10-13 — Codex принимает весь PR #48 и завершает журнал
+
+- Прямое назначение владельца «Бери на себя #48»: Codex принимает всю задачу, ожидание Antigravity снимается; метка PR `to:antigravity` удалена, `to:codex` сохранена. Маршрут опубликован в штабе #19. Точная модель/effort runtime не отображаются; внешний клиент Antigravity не запускался.
+- Исправлены оставшиеся расхождения в журнале: встроенный снимок обновлён с живого GitHub (50 записей, `main` `d715ca3`, открыты #19/#48); закрытые передачи #41/#43 убраны, пустая очередь показана явно. README содержит актуальный ручной сценарий; три сводки закрепляют назначение Codex. ChangeLog обновлён только для видимого поведения локального журнала.
+- Регрессия очереди добавлена в существующий `test-offline.cjs`: на старом состоянии падает (две карточки вместо сообщения), после исправления проходит. Offline/cache regression и `node --check` app.js/seed.js/test-offline.cjs — passed; `git diff --check` — passed. Read-only code-reviewer и JS reviewer по skill code-review-and-quality не нашли блокеров; это внутренние проверки Codex, не отчёт внешнего Antigravity.
+- Локальный Chrome через отдельный HTTP preview: snapshot показывает #19/#48, фильтр PR/open/Codex/#48 находит один PR, обновление получает GitHub API и сохраняет кэш, очередь явно пуста. Реальный offline fallback проверен автоматизированной регрессией; viewport/reduced-motion вручную не проверялись в этой сессии. Точный сценарий дальнейшего ручного QA — в README.
+- CI исходного `c763a3f` — success (run 38306834046); на новом head нужен свежий Verify. Ветка не синхронизировалась merge/rebase, GitHub подтверждал mergeable. Чужие изменения, hooks/poller, сервер, merge и deploy не затрагивались. Готовность production/Telegram/реальных устройств не заявляется.

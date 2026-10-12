@@ -57,6 +57,9 @@ const context = {
 
 vm.runInNewContext(fs.readFileSync(path.join(directory, 'app.js'), 'utf8'), context);
 
+assert.equal(elements.get('handoff-list').children.length, 1);
+assert.match(elements.get('handoff-list').children[0].textContent, /Нет открытых передач/);
+
 (async () => {
   const refresh = elements.get('refresh').listeners.click;
   await refresh();

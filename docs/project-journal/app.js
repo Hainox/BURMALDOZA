@@ -9,21 +9,14 @@
     ['0', 'Product lock и доступы', 'pending', 'Ожидает решений по чату, ролям, доступам, доменам и поддержке.'],
     ['1', 'Foundation и окружение', 'done', 'Технический каркас собран; это не production-развёртывание.'],
     ['2', 'Domain rules и Monte Carlo', 'done', 'Skeleton трёх игр и офлайн-симуляции собраны; финальные RTP и лимиты ещё не утверждены.'],
-    ['3', 'Ledger, Telegram auth и API', 'done', 'Foundation собран. Отдельные границы запуска и открытые PR требуют решения.'],
-    ['4', 'Mini App и motion', 'partial', 'Foundation собран; production wiring, игровые UI и проверка на устройствах остаются.'],
+    ['3', 'Ledger, Telegram auth и API', 'done', 'Foundation и исправления в main; серверная приёмка не подтверждена.'],
+    ['4', 'Mini App и motion', 'partial', 'Slot motion, Blackjack DEMO/resync и честные подписи в main; отчёт Chromium/mock QA #43 принят. Приёмка реальных устройств остаётся.'],
     ['5', 'Manual QA и закрытая приёмка', 'pending', 'Ожидает проверок на iOS, Android и Telegram Desktop.'],
     ['6', 'Тематическое наполнение', 'pending', 'После приёмки каркаса и согласования прав на материалы.'],
     ['7', 'Закрытая beta', 'pending', 'После QA, готовности поддержки, резервирования и мониторинга.'],
     ['8', 'Public launch', 'pending', 'После beta и отдельного решения владельца.']
   ];
-  const handoffs = [
-    { number: 21, pr: 25, title: 'Локальный журнал проекта', recipient: 'Codex', model: 'gpt-6-sol', effort: 'high', dependency: 'Продолжать через PR #25; проверить diff и локальный браузерный сценарий в существующей ветке.', scope: 'Проверь реализацию автономного журнала по критериям issue #21: roadmap, публичные Issues/PR, поиск, фильтры, кэш, ручной сценарий и границы файлов. Зафиксируй результаты проверки и риски; не публикуй сайт и не меняй Mini App/API/domain.' },
-    { number: 23, pr: 26, title: 'Production Compose и runbook', recipient: 'Codex', model: 'gpt-6-astra', effort: 'xhigh', dependency: 'PR #14, #16 и #17 слиты; review #22 завершён. Проверить PR #26 и решение владельца. Деплой не входит в задачу.', scope: 'Проверь существующий PR #26 против allowlist и критериев issue #23. Caddy публикует только 80/443; API работает одним process/worker/replica до смены EventBus. Проверь Compose, health, backup/rollback. Не заходи на сервер, не выполняй merge или deploy.' },
-    { number: 27, pr: 28, title: 'Cleanup findings из review #22', recipient: 'Claude Code через Claude Pro', model: 'Sonnet 5', effort: 'high', dependency: 'Продолжать через PR #28; сверить пересечение dev/ProjectLog.md с другими PR.', scope: 'Закрой только low findings issue #27: публичный upsert_user и точные формулировки Redis/token в Local-Setup. Не меняй docker-compose.yml и исторический аудит. Проверь ruff, pytest, git diff --check и allowlist; результат оставь в PR #28.' },
-    { number: 6, pr: 15, title: 'Blackjack room UI и motion', recipient: 'Command Code', model: 'meta/muse-spark-1.3-contributor', effort: 'high', dependency: 'Дизайн checkpoint PR #8 слит; продолжать через PR #15 после сверки его состояния.', scope: 'По issue #6 доведи визуальный Blackjack UI по серверному snapshot: подтверждённые legal actions, скрытая карта без раскрытия, результат и баланс только после ответа сервера. Сохрани клавиатуру, mobile и reduced motion. Работай только в allowlist issue; приложи check/test/build/Playwright.' },
-    { number: 11, pr: 29, title: 'Wallet grants в Mini App', recipient: 'Command Code', model: 'meta/muse-spark-1.3-contributor', effort: 'high', dependency: 'PR #10 и #14 слиты. PR #29 и Blackjack PR #15 затрагивают +page.svelte; согласовать последовательность интеграции.', scope: 'Проверь реализацию live Daily/Relief controls в PR #29: последовательный first-login bootstrap, idempotency UUID и баланс только из подтверждённого ответа. Demo не должен имитировать выдачу. Работай только в allowlist issue #11; приложи check/test/build/Playwright.' },
-    { number: 1, pr: 18, title: 'Непрерывная остановка Slot', recipient: 'Command Code', model: 'meta/muse-spark-1.3-contributor', effort: 'high', dependency: 'Продолжать через PR #18; issue #2 дублирует #1. Сверить существующую ветку и review.', scope: 'По issue #1 проверь непрерывное торможение трёх барабанов без snap, порядок stop и совпадение финальной сетки с подтверждённым SlotOutcome. Сохрани reduced motion и приложи Playwright timing regression. Не меняй domain/RNG/ledger/API.' }
-  ];
+  const handoffs = [];
   const $ = (id) => document.getElementById(id);
   const formatTime = (value) => value ? new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Moscow' }).format(new Date(value)) + ' МСК' : 'дата неизвестна';
   const node = (tag, className, content) => {
@@ -182,6 +175,9 @@
       card.append(body, actions);
       list.append(card);
     });
+    if (!list.children.length) {
+      list.append(node('p', 'section-note', 'Нет открытых передач. Текущая работа Codex — PR #48; новые назначения сверяйте в штабе #19.'));
+    }
   }
 
   async function fetchPages(path, signal) {
