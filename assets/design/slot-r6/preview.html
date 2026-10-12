@@ -23,7 +23,7 @@
     --def-soft: rgb(47 155 255 / 14%);
     --hazard: #ffd23f;
     --ok: #3ddc84;
-    --cell: 46px;
+    --cell: 56px;
     --radius: 10px;
     --display: 'Rajdhani', 'Arial Narrow', sans-serif;
     --body: 'Inter', system-ui, sans-serif;
@@ -73,9 +73,14 @@
   .reel::after { bottom: 0; background: linear-gradient(transparent, #0b0e12); }
   .strip { will-change: transform; }
   .cell { display: grid; place-items: center; height: var(--cell); border-bottom: 1px dashed rgb(255 255 255 / 4%); }
-  .cell svg { width: 34px; height: 34px; }
-  .cell.hit { background: radial-gradient(circle at 50% 50%, rgb(255 210 63 / 22%), transparent 70%); }
-  .cell.hit svg { filter: drop-shadow(0 0 8px rgb(255 210 63 / 70%)); }
+  .cell { padding: 3px 4px; }
+  .op { position: relative; width: 100%; height: 100%; overflow: hidden; border-radius: 7px; border: 1px solid var(--tier); background:
+      linear-gradient(90deg, color-mix(in srgb, var(--tier) 26%, transparent), transparent 70%), #0e1216; }
+  .op img { position: absolute; left: 50%; top: -8%; width: 92%; transform: translateX(-36%); pointer-events: none; }
+  .op .badge { position: absolute; left: 3px; bottom: 3px; width: 20px; height: 20px; padding: 1px; border-radius: 5px; background: rgb(11 13 16 / 85%); }
+  .op .badge svg { width: 100%; height: 100%; }
+  .op-A { --tier: #8b97a4; } .op-B { --tier: #ff7a1a; } .op-C { --tier: #2f9bff; } .op-W { --tier: #ffd23f; }
+  .cell.hit .op { box-shadow: 0 0 0 2px var(--hazard), 0 0 14px rgb(255 210 63 / 65%); }
   .reel.stopped { border-color: rgb(255 122 26 / 40%); }
   .reel.stopped .stopmark { opacity: 1; }
   .stopmark { position: absolute; top: 6px; right: 6px; z-index: 3; width: 7px; height: 7px; border-radius: 50%; background: var(--atk); box-shadow: 0 0 8px var(--atk); opacity: 0; transition: opacity .2s; }
@@ -119,8 +124,8 @@
   .legend { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   @media (max-width: 520px) { .legend { grid-template-columns: minmax(0, 1fr); } }
   .sym { display: grid; grid-template-columns: 52px 1fr; gap: 12px; align-items: center; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel-2); }
-  .sym .ico { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 10px; background: #0d1014; }
-  .sym .ico svg { width: 40px; height: 40px; }
+  .sym .ico { width: 52px; height: 64px; }
+  .sym .ico .op img { width: 120%; top: -6%; transform: translateX(-42%); }
   .sym b { display: block; font: 700 15px/1.1 var(--display); letter-spacing: .06em; }
   .sym small { color: var(--muted); font-size: 12px; }
   .sym .pay { display: inline-block; margin-top: 4px; padding: 2px 7px; border-radius: 6px; background: var(--atk-soft); color: var(--atk); font: 700 12px/1.4 var(--display); letter-spacing: .06em; }
@@ -154,7 +159,7 @@
     <span class="tag">Фанатский концепт · превью направления · #62</span>
   </div>
   <h1>Siege <span>3×7</span></h1>
-  <p class="lede">Комната слота в стилистике Rainbow Six Siege: тактический HUD, бетон и строительная разметка, оранжевый цвет атаки и синий защиты. Три барабана — три точки пролома; остановка слева направо читается как штурм по команде. Все иконки нарисованы с нуля, без официальных материалов.</p>
+  <p class="lede">Комната слота в стилистике Rainbow Six Siege: тактический HUD, бетон и строительная разметка, оранжевый цвет атаки и синий защиты. Три барабана — три точки пролома; остановка слева направо читается как штурм по команде. Символы — оперативники: портреты из официального списка оперативников Ubisoft, с атрибуцией в sources.json.</p>
 
   <div class="layout">
     <section class="phone" aria-label="Макет комнаты на телефоне">
@@ -167,10 +172,10 @@
       <div class="stage">
         <div class="stage-head"><b>Точки пролома</b><span>3 линии · wild = жетон</span></div>
         <div class="reels" id="reels">
-          <svg class="lines" id="lines" viewBox="0 0 300 322" preserveAspectRatio="none" aria-hidden="true">
-            <polyline data-line="0" points="50,161 150,161 250,161"/>
-            <polyline data-line="1" points="50,115 150,161 250,207"/>
-            <polyline data-line="2" points="50,207 150,161 250,115"/>
+          <svg class="lines" id="lines" viewBox="0 0 300 392" preserveAspectRatio="none" aria-hidden="true">
+            <polyline data-line="0" points="50,196 150,196 250,196"/>
+            <polyline data-line="1" points="50,140 150,196 250,252"/>
+            <polyline data-line="2" points="50,252 150,196 250,140"/>
           </svg>
         </div>
         <div class="overtime" id="overtime" role="status">Овертайм · 5 Free Spins</div>
@@ -193,8 +198,8 @@
 
     <div>
       <section class="card">
-        <h2>Символы <em>· 4 из движка</em></h2>
-        <p>Символы <code>A / B / C / W</code> из <code>slot_skeleton.json</code> получают образы снаряжения. Выплаты — текущий skeleton ruleset за три в линию.</p>
+        <h2>Символы <em>· оперативники</em></h2>
+        <p>Символы <code>A / B / C / W</code> из <code>slot_skeleton.json</code> — портреты оперативников, у каждого значок его гаджета и рамка цвета уровня. Выплаты — текущий skeleton ruleset за три в линию; больше оперативников на барабанах — только с новым ruleset.</p>
         <div class="legend" id="legend"></div>
       </section>
 
@@ -236,10 +241,10 @@
       <section class="card rights">
         <h2>Права и решения</h2>
         <ul>
-          <li>Rainbow Six Siege — игра и товарный знак Ubisoft. Здесь нет логотипов, артов, иконок оперативников, скриншотов и названий карт из игры: только общая стилистика и собственные иконки.</li>
-          <li>Портреты оперативников или официальные материалы — только отдельным решением владельца, с атрибуцией в <code>sources.json</code>, как у GFL в Blackjack.</li>
+          <li>Rainbow Six Siege — игра и товарный знак Ubisoft. Портреты оперативников © Ubisoft — из официального списка оперативников; источник и контрольная сумма каждого файла — в <code>sources.json</code>.</li>
+          <li>Решение владельца 13.10.2026: использовать портреты в некоммерческом фанатском превью с атрибуцией, как GFL в Blackjack. Общая лицензия на повторное использование не заявляется. Логотипов игры и Ubisoft нет; значки гаджетов нарисованы с нуля.</li>
         </ul>
-        <div class="q">Нужно решение владельца: оставляем собственные иконки снаряжения или добираем портреты оперативников (тогда вопрос прав, как у GFL)?</div>
+        <div class="q">Состав символов — предложение: Twitch, Thermite, Montagne, Tachanka. Замена оперативника — одна строка в превью; в папке у владельца 62 портрета до Y6S4.</div>
       </section>
     </div>
   </div>
@@ -247,17 +252,20 @@
 
 <script>
 (() => {
-  const ICONS = {
+  const GADGETS = {
     A: `<svg viewBox="0 0 40 40" aria-hidden="true"><rect x="7" y="15" width="26" height="12" rx="6" fill="#3a4654" stroke="#8b97a4" stroke-width="1.5"/><circle cx="11" cy="29" r="5" fill="#1b2027" stroke="#8b97a4" stroke-width="2"/><circle cx="29" cy="29" r="5" fill="#1b2027" stroke="#8b97a4" stroke-width="2"/><circle cx="20" cy="21" r="3.4" fill="#2f9bff"/><circle cx="20" cy="21" r="1.4" fill="#d9eeff"/><path d="M20 15v-5" stroke="#8b97a4" stroke-width="1.5"/><circle cx="20" cy="9" r="1.5" fill="#2f9bff"/></svg>`,
     B: `<svg viewBox="0 0 40 40" aria-hidden="true"><defs><pattern id="hz" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="3" height="6" fill="#ffd23f"/><rect x="3" width="3" height="6" fill="#1b1b1b"/></pattern></defs><rect x="6" y="8" width="28" height="24" rx="3" fill="#2a1a0e" stroke="#ff7a1a" stroke-width="2"/><rect x="6" y="8" width="28" height="6" fill="url(#hz)"/><rect x="12" y="18" width="16" height="9" rx="2" fill="#ff7a1a"/><circle cx="31" cy="29" r="2" fill="#ff3b3b"/></svg>`,
     C: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 7h24v17c0 6-6 10-12 12-6-2-12-6-12-12z" fill="#13283d" stroke="#2f9bff" stroke-width="2"/><rect x="13" y="13" width="14" height="3.5" rx="1.5" fill="#2f9bff"/><path d="M12 22h16M14 27h12" stroke="#2f9bff" stroke-opacity=".5" stroke-width="1.5"/></svg>`,
     W: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3l14 8v18l-14 8-14-8V11z" fill="#2b2410" stroke="#ffd23f" stroke-width="2"/><path d="M12 15l8 6 8-6M12 22l8 6 8-6" fill="none" stroke="#ffd23f" stroke-width="2.4" stroke-linejoin="round"/></svg>`
   };
+  const OPS = { A: 'Twitch', B: 'Thermite', C: 'Montagne', W: 'Tachanka' };
+  const ICONS = Object.fromEntries(Object.entries(OPS).map(([k, op]) =>
+    [k, `<div class="op op-${k}"><img src="portraits/${op}.png" alt="" loading="eager"><span class="badge">${GADGETS[k]}</span></div>`]));
   const LEGEND = [
-    ['A', 'Дрон', 'Разведка. Самый частый символ.', '×1 за три'],
-    ['B', 'Заряд пролома', 'Взрыв стены. Средний символ.', '×2 за три'],
-    ['C', 'Щит', 'Укрытие защиты. Редкий символ.', '×3 за три'],
-    ['W', 'Жетон оперативника', 'Wild: заменяет любой символ.', '×5 за три жетона']
+    ['A', 'Twitch', 'Атака · дрон-шокер. Самый частый символ.', '×1 за три'],
+    ['B', 'Thermite', 'Атака · пролом укреплённой стены. Средний символ.', '×2 за три'],
+    ['C', 'Montagne', 'Атака · выдвижной щит. Редкий символ.', '×3 за три'],
+    ['W', 'Tachanka', 'Защита · wild, заменяет любой символ. «Lord Tachanka».', '×5 за три']
   ];
   const STRIP = ['A','A','A','B','B','C','C','W','A','B'];
   const PAYLINES = [[3,3,3],[2,3,4],[4,3,2]];
@@ -273,7 +281,7 @@
   const reels = [];
   const rand = (n) => Math.floor(Math.random() * n);
   const column = () => Array.from({ length: 7 }, () => STRIP[rand(STRIP.length)]);
-  const cellHtml = (s) => `<div class="cell" data-s="${s}">${ICONS[s]}</div>`;
+  const cellHtml = (s) => `<div class="cell" data-s="${s}" aria-label="${OPS[s]}">${ICONS[s]}</div>`;
 
   for (let i = 0; i < 3; i++) {
     const reel = document.createElement('div');

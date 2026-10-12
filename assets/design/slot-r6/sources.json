@@ -1,0 +1,46 @@
+[
+  {
+    "symbol": "A",
+    "operator": "Twitch",
+    "side": "attack",
+    "file": "portraits/Twitch.png",
+    "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/Z9R1Anc8MHwbG5iyPoOf2/69fe9aee30e03322a4e09d4b87de15aa/r6-operators-list-twitch.png",
+    "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+    "bytes": 91918,
+    "sha256": "62180a37a2c5f065f564cf883ed28a872d48305f443923754b21daa3c5b9c30c",
+    "rights_note": "Copyright Ubisoft Entertainment; original operator-list portrait from the official Rainbow Six Siege operators page. The project owner approves this non-commercial fan design preview with attribution; no general reuse license is asserted."
+  },
+  {
+    "symbol": "B",
+    "operator": "Thermite",
+    "side": "attack",
+    "file": "portraits/Thermite.png",
+    "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/3NQW8lJVslVSaYSiBlAleU/09fd8e3e946f2e71f39182b9ff18dd77/r6-operators-list-thermite.png",
+    "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+    "bytes": 88451,
+    "sha256": "8ab10881f5a8215ff078e64285487e595c347a3df497422882cf24a0780273f9",
+    "rights_note": "Copyright Ubisoft Entertainment; original operator-list portrait from the official Rainbow Six Siege operators page. The project owner approves this non-commercial fan design preview with attribution; no general reuse license is asserted."
+  },
+  {
+    "symbol": "C",
+    "operator": "Montagne",
+    "side": "attack",
+    "file": "portraits/Montagne.png",
+    "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/1hxlGxmToB93urkgbIzUvW/fa894cd6ab38358284a3a1858cabbeee/r6-operators-list-montagne.png",
+    "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+    "bytes": 86576,
+    "sha256": "5048341dc99572c05b8bb11ce362dbb2de934394aef77a8dd093e53b27bb9799",
+    "rights_note": "Copyright Ubisoft Entertainment; original operator-list portrait from the official Rainbow Six Siege operators page. The project owner approves this non-commercial fan design preview with attribution; no general reuse license is asserted."
+  },
+  {
+    "symbol": "W",
+    "operator": "Tachanka",
+    "side": "defense",
+    "file": "portraits/Tachanka.png",
+    "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/5P9kGyOrnsu7lRyr9xC71t/53981da03fa36adf99adf61bc098bd4a/r6s-operators-list-tachanka.png",
+    "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+    "bytes": 96582,
+    "sha256": "07ce644ab2727a1093bf166093a129802f315a0d2bc13a497f5bf97124cd6c40",
+    "rights_note": "Copyright Ubisoft Entertainment; original operator-list portrait from the official Rainbow Six Siege operators page. The project owner approves this non-commercial fan design preview with attribution; no general reuse license is asserted."
+  }
+]
