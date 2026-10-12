@@ -8,19 +8,19 @@
 FastAPI (источник подтверждённого состояния), PostgreSQL + Redis. Валюта Jokergem — без реальных денег.
 Документация и коммуникация с владельцем — на русском; владелец не программист, объяснять простыми словами.
 
-## Unwritten
-- Publishing: a push to `main` touching `apps/miniapp/**`, the Blackjack deck assets, `package.json` or `pnpm-lock.yaml` redeploys the public GitHub Pages demo (`deploy-pages.yml`), so such a merge is a release; with the `PUBLIC_API_BASE_URL` repo variable empty, Pages intentionally builds the DEMO client. The Slot v2 preview workflow is manual-only. Server deploy follows `docs/Deploy-Production.md` and is done by the owner (see «Совместная работа»).
-- Gotchas: the live slot ruleset is `packages/domain/src/burmaldoza_domain/games/slot_skeleton.json`, shipped in the API image with `packages/`; changing it changes production payouts, so bump `ruleset_version` and rerun Monte Carlo. CI additionally runs `docker compose build api bot miniapp` and `pnpm miniapp:e2e`, which `pnpm verify` does not.
-- Conventions: commit subjects are conventional commits with an optional scope (`fix(miniapp):`, `test(blackjack):`, `ci:`); `ChangeLog.md` bullets go under `## Unreleased` and are written in English, unlike the Russian docs.
-- Why: the API runs as exactly one process (`--workers 1`, one replica) because `EventBus` is in-process memory; a second worker or replica silently loses live room events. Jokergem balances are plain integers and the name is provisional, so a rename needs no migration.
-- Off-limits: `reports/monte-carlo/*.json` are outputs of the seeded `python -m devtools.monte_carlo.*` commands in `README.md`; regenerate them, never edit by hand. Штаб hooks belong to the owner (see «Штаб»).
+## Неочевидное
+- Публикация: пуш в `main`, затрагивающий `apps/miniapp/**`, ассеты колоды Blackjack, `package.json` или `pnpm-lock.yaml`, передеплоивает публичное демо на GitHub Pages (`deploy-pages.yml`), так что такой merge — это релиз; при пустой переменной репозитория `PUBLIC_API_BASE_URL` Pages намеренно собирает DEMO-клиент. Workflow превью Slot v2 запускается только вручную. Серверный деплой — по `docs/Deploy-Production.md`; его делает владелец или локальный агент по его поручению (см. «Совместная работа»).
+- Подводные камни: действующие правила слота лежат в `packages/domain/src/burmaldoza_domain/games/slot_skeleton.json` и попадают в API-образ вместе с `packages/`; их правка меняет выплаты в продакшене, поэтому поднимай `ruleset_version` и перезапускай Monte Carlo. CI дополнительно запускает `docker compose build api bot miniapp` и `pnpm miniapp:e2e`, которых нет в `pnpm verify`.
+- Конвенции: заголовки коммитов — conventional commits с необязательным scope (`fix(miniapp):`, `test(blackjack):`, `ci:`); пункты `ChangeLog.md` идут под `## Unreleased` и пишутся по-английски, в отличие от остальной документации.
+- Почему так: API работает ровно одним процессом (`--workers 1`, одна реплика), потому что `EventBus` живёт в памяти процесса; второй воркер или реплика молча теряет живые события комнат. Балансы Jokergem — обычные целые числа, а название предварительное, поэтому переименование не требует миграции.
+- Не трогать: `reports/monte-carlo/*.json` — результат seeded-команд `python -m devtools.monte_carlo.*` из `README.md`; их перегенерируют, а не правят руками. Хуки Штаба принадлежат владельцу (см. «Штаб»).
 
-## Pointers
-- **Writing** or reviewing code: apply `CODING_STANDARDS.md`; project config and linters win where they disagree.
-- **Security**-sensitive change (auth, permissions, untrusted input, secrets): read `docs/agents/security.md` first.
-- **Committing** or opening a PR: follow `docs/agents/git.md`; the branch, merge and report rules in «Совместная работа» and «Штаб» below take precedence.
-- **Risky** change (spans modules, migrates data, alters a public API): propose a phased plan and get approval before editing.
-- **Done** means you ran the project's own check commands and they are green, or you named the ones you could not run.
+## Указатели
+- **Пишешь** или ревьюишь код: применяй `CODING_STANDARDS.md`; конфиг проекта и линтеры важнее, если расходятся.
+- **Безопасность** (авторизация, права, недоверенный ввод, секреты): сначала прочитай `docs/agents/security.md`.
+- **Коммит** или PR: следуй `docs/agents/git.md`; правила веток, merge и отчётов из «Совместной работы» и «Штаба» ниже важнее.
+- **Рискованное** изменение (несколько модулей, миграция данных, публичный API): предложи поэтапный план и получи одобрение до правок.
+- **Готово** — значит, ты запустил проверки проекта и они зелёные, либо назвал те, что запустить не смог.
 
 ## Источники истины
 

@@ -1,17 +1,13 @@
-# Git and PRs
+# Git и PR
 
-## Before committing
+## Перед коммитом
 
-Run the checklist in `docs/agents/security.md` against the staged changes.
+Пройди чеклист из `docs/agents/security.md` по застейдженным изменениям.
 
-## Commits
+## Коммиты
 
-Conventional commits: `<type>: <description>`, where type is one of `feat`,
-`fix`, `refactor`, `docs`, `test`, `chore`, `perf`, `ci`. A commitlint or
-similar config in the repo overrides this list.
+`<type>(<scope>)?: <description>` — как в истории: тип `feat`, `fix`, `docs`, `test`, `ci`, `chore`, `refactor`, `perf` (встречаются и `deploy`, `design`), scope по затронутой части (`fix(miniapp):`, `test(blackjack):`). Конфиг commitlint, если появится, важнее.
 
-## Pull requests
+## Pull request'ы
 
-Write the summary from the whole branch (`git log <base>..HEAD`), not just the
-last commit, and end it with a test plan: what you ran and what a reviewer
-should check by hand.
+Заголовок — в стиле коммитов: при squash-merge он им станет. Описание пиши по всей ветке (`git log <base>..HEAD`), а не по последнему коммиту, и заканчивай планом проверки: что ты запустил и что ревьюеру проверить руками.
