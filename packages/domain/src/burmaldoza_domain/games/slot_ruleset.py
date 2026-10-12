@@ -7,12 +7,13 @@ from typing import Any
 from .slot import SlotConfig
 
 
-def _default_fixture_path() -> Path:
-    return Path(__file__).resolve().parents[5] / "tests" / "fixtures" / "slot_skeleton.json"
+def _default_ruleset_path() -> Path:
+    # Shipped inside the package so the API image needs no extra mount.
+    return Path(__file__).with_name("slot_skeleton.json")
 
 
 def load_skeleton_config(path: str | Path | None = None) -> SlotConfig:
-    fixture_path = Path(path) if path is not None else _default_fixture_path()
+    fixture_path = Path(path) if path is not None else _default_ruleset_path()
     raw: dict[str, Any] = json.loads(fixture_path.read_text(encoding="utf-8"))
     paytable = {
         (symbol, int(count)): int(multiplier)

@@ -74,10 +74,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    # load_skeleton_config reads this tracked runtime ruleset; the API image does not copy tests/.
-    configs:
-      - source: slot_ruleset
-        target: /app/tests/fixtures/slot_skeleton.json
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready')"]
       interval: 10s
@@ -143,8 +139,6 @@ services:
         aliases: [burmaldoza.ru]
 
 configs:
-  slot_ruleset:
-    file: ./tests/fixtures/slot_skeleton.json
   caddyfile:
     # Let's Encrypt certificates are issued automatically once DNS points at the server.
     # /api/* (incl. the WebSocket /api/v1/rooms/{id}/events) and /health* go to the API,

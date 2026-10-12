@@ -1,15 +1,22 @@
 from pathlib import Path
 
 import pytest
+from burmaldoza_domain.games import slot_ruleset
 from burmaldoza_domain.games.slot import calculate_payout, spin
 from burmaldoza_domain.games.slot_ruleset import load_skeleton_config
 from burmaldoza_domain.rng import SeededRandomSource
 
-FIXTURE_PATH = Path(__file__).parents[2] / "fixtures" / "slot_skeleton.json"
+
+def test_default_ruleset_ships_inside_the_domain_package() -> None:
+    # The production API image copies packages/ but not tests/, so the runtime ruleset
+    # must live next to the loader rather than in a test fixture.
+    package_dir = Path(slot_ruleset.__file__).resolve().parent
+    assert (package_dir / "slot_skeleton.json").is_file()
+    assert load_skeleton_config().ruleset_version == "slot-skeleton-1"
 
 
 def test_spin_returns_three_reels_with_seven_visible_rows() -> None:
-    outcome = spin(load_skeleton_config(FIXTURE_PATH), 10, (0, 1, 2), SeededRandomSource(7))
+    outcome = spin(load_skeleton_config(), 10, (0, 1, 2), SeededRandomSource(7))
 
     assert len(outcome.grid) == 3
     assert all(len(reel) == 7 for reel in outcome.grid)
@@ -19,7 +26,7 @@ def test_spin_returns_three_reels_with_seven_visible_rows() -> None:
 
 
 def test_spin_returns_the_exact_server_stop_for_each_reel() -> None:
-    config = load_skeleton_config(FIXTURE_PATH)
+    config = load_skeleton_config()
 
     class FixedStops:
         def __init__(self) -> None:
@@ -36,7 +43,7 @@ def test_spin_returns_the_exact_server_stop_for_each_reel() -> None:
 
 
 def test_spin_rejects_invalid_bets_and_payline_indexes() -> None:
-    config = load_skeleton_config(FIXTURE_PATH)
+    config = load_skeleton_config()
 
     with pytest.raises(ValueError, match="positive"):
         spin(config, 0, (0,), SeededRandomSource(1))
@@ -47,7 +54,7 @@ def test_spin_rejects_invalid_bets_and_payline_indexes() -> None:
 
 
 def test_calculate_payout_matches_only_left_to_right_consecutive_symbols() -> None:
-    config = load_skeleton_config(FIXTURE_PATH)
+    config = load_skeleton_config()
     grid = (
         ("A", "A", "B", "A", "C", "A", "A"),
         ("A", "A", "B", "A", "C", "A", "A"),
@@ -63,7 +70,7 @@ def test_calculate_payout_matches_only_left_to_right_consecutive_symbols() -> No
 
 
 def test_wild_substitutes_for_the_first_non_wild_symbol() -> None:
-    config = load_skeleton_config(FIXTURE_PATH)
+    config = load_skeleton_config()
     grid = (
         ("W", "A", "B", "A", "C", "A", "A"),
         ("A", "A", "B", "A", "C", "A", "A"),
@@ -79,7 +86,7 @@ def test_wild_substitutes_for_the_first_non_wild_symbol() -> None:
 
 
 def test_exact_gross_and_net_delta_are_returned_for_three_lines() -> None:
-    config = load_skeleton_config(FIXTURE_PATH)
+    config = load_skeleton_config()
 
     class FixedStop:
         def randbelow(self, upper: int) -> int:

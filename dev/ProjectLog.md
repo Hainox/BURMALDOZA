@@ -6,6 +6,12 @@
 - `AGENTS.md` подключается один раз — через `@../AGENTS.md` в `.claude/CLAUDE.md`; упоминание несуществующей настройки `instructionFiles` в `CLAUDE.md` заменено.
 - Плагин agents-kit в `.claude/settings.json` не подключается: облачные сессии не ставят плагины из настроек репозитория.
 - Проверки: только документация; CI `verify` на PR. Остаточный риск: формулировки «Неочевидного» сверены с кодом и workflow, но не проверены владельцем.
+## 2026-10-12 — правила слота внутри пакета домена (PR #50)
+
+- `slot_skeleton.json` перенесён из `tests/fixtures/` в `packages/domain/src/burmaldoza_domain/games/`; `load_skeleton_config()` по умолчанию читает файл рядом с собой. Содержимое и `ruleset_version` (`slot-skeleton-1`) не менялись, отчёты Monte Carlo не перегенерировались.
+- Из `docker-compose.prod.yml` убран mount `configs.slot_ruleset`: API-образ получает файл вместе с `packages/`. `docs/Deploy-Production.md` обновлён.
+- Проверки: новый тест `test_default_ruleset_ships_inside_the_domain_package` сначала красный, после переноса зелёный; `pytest tests/unit` — 139 passed; `ruff check` и `ruff format --check` — чисто; CI `verify` (compose build + e2e) — passed.
+- Review Codex недоступен (лимит), merge — по прямому разрешению владельца от 2026-10-12. Остаточный риск: после деплоя проверить создание комнаты со слотом.
 
 ## 2026-09-29 — demo-copy в игровых комнатах (#37, PR #40)
 
