@@ -3,211 +3,225 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Hold'em · Камуро-тё — превью направления</title>
+<title>Hold'em · Камуро-тё — превью комнаты</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700;900&family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&family=Oswald:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="roster.js"></script>
 <style>
   :root {
-    --bg: #07070c;
-    --ink: #0f0f18;
-    --panel: #151522;
-    --panel-2: #1c1b2b;
-    --line: rgb(255 255 255 / 8%);
-    --line-strong: rgb(255 255 255 / 16%);
-    --text: #f1ece4;
-    --muted: #9b95a6;
-    --neon: #ff2e88;
-    --neon-soft: rgb(255 46 136 / 14%);
-    --cyan: #3be8ff;
-    --gold: #e9b949;
-    --gold-soft: rgb(233 185 73 / 14%);
-    --lacquer: #6d0f1a;
-    --felt: #0e3b2e;
+    --sumi: #0c0a0a;
+    --sumi-2: #171313;
+    --washi: #ece3cf;
+    --washi-2: #ddd1b6;
+    --ink: #1c1716;
+    --crimson: #b8141f;
+    --crimson-2: #7a0b13;
+    --gold: #c9a24a;
+    --text: #f3ede2;
+    --muted: #a59c90;
+    --muted-dark: #6d6253;
+    --line: rgb(255 255 255 / 10%);
+    --brush: 'Yuji Syuku', serif;
     --display: 'Oswald', 'Arial Narrow', sans-serif;
-    --jp: 'Noto Serif JP', serif;
     --body: 'Inter', system-ui, sans-serif;
   }
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
-  body {
-    margin: 0; min-height: 100vh; color: var(--text); font: 14px/1.5 var(--body);
+  body { margin: 0; min-height: 100vh; overflow-x: hidden; color: var(--ink); font: 14px/1.5 var(--body);
     background:
-      radial-gradient(800px 420px at 85% 0%, rgb(255 46 136 / 16%), transparent 65%),
-      radial-gradient(700px 380px at 0% 30%, rgb(59 232 255 / 8%), transparent 60%),
-      radial-gradient(900px 500px at 50% 120%, rgb(109 15 26 / 35%), transparent 60%),
-      var(--bg);
-  }
-  .wrap { max-width: 1180px; margin: 0 auto; padding: 20px 16px 56px; }
-  .topline { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-bottom: 22px; }
-  .brand { display: flex; align-items: center; gap: 10px; font: 600 14px/1 var(--display); letter-spacing: .18em; text-transform: uppercase; }
-  .brand i { font: 900 18px/1 var(--jp); color: var(--neon); text-shadow: 0 0 10px var(--neon); font-style: normal; }
-  .tag { padding: 5px 10px; border: 1px solid var(--line-strong); border-radius: 999px; color: var(--muted); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
-  h1 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; margin: 0 0 6px; font: 700 clamp(30px, 6vw, 52px)/1 var(--display); letter-spacing: .03em; text-transform: uppercase; }
-  h1 .kanji { font: 900 clamp(28px, 5vw, 46px)/1 var(--jp); color: var(--neon); text-shadow: 0 0 14px rgb(255 46 136 / 70%), 0 0 40px rgb(255 46 136 / 35%); }
-  .lede { max-width: 740px; margin: 0 0 26px; color: var(--muted); font-size: 15px; }
-  .layout { display: grid; grid-template-columns: minmax(0, 400px) minmax(0, 1fr); gap: 28px; align-items: start; }
-  @media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+      radial-gradient(70% 50% at 85% 10%, rgb(184 20 31 / 10%), transparent 70%),
+      radial-gradient(60% 50% at 10% 90%, rgb(28 23 22 / 12%), transparent 70%),
+      var(--washi); }
+  /* washi fibres */
+  body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .5;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9 0.05' numOctaves='2' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 0.45  0 0 0 0 0.38  0 0 0 0 0.28  0 0 0 0.35 0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23f)'/%3E%3C/svg%3E"); }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 18px 16px 64px; }
+  .topline { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-bottom: 18px; }
+  .brand { font: 500 14px/1 var(--display); letter-spacing: .3em; text-transform: uppercase; }
+  .brand i { font: 400 20px/1 var(--brush); font-style: normal; color: var(--crimson); margin-right: 8px; }
+  .tag { padding: 5px 10px; border: 1px solid rgb(28 23 22 / 30%); color: var(--muted-dark); font: 500 12px/1 var(--display); letter-spacing: .16em; text-transform: uppercase; }
+
+  .hero { position: relative; display: grid; grid-template-columns: auto 1fr; gap: 20px; align-items: center; margin-bottom: 26px; }
+  .enso { position: relative; width: 150px; height: 150px; flex: none; }
+  .enso svg { width: 100%; height: 100%; }
+  .enso b { position: absolute; inset: 0; display: grid; place-items: center; font: 400 64px/1 var(--brush); color: var(--sumi); }
+  .hero h1 { margin: 0; font: 700 clamp(38px, 7vw, 74px)/.95 var(--display); letter-spacing: .02em; text-transform: uppercase; }
+  .hero h1 span { display: block; font: 400 clamp(16px, 2.4vw, 22px)/1.3 var(--display); letter-spacing: .3em; color: var(--crimson); }
+  .hero p { max-width: 640px; margin: 10px 0 0; color: var(--muted-dark); font-size: 15px; }
+  @media (max-width: 560px) { .hero { grid-template-columns: 1fr; } .enso { width: 110px; height: 110px; } .enso b { font-size: 48px; } }
+
+  .layout { display: grid; grid-template-columns: minmax(0, 410px) minmax(0, 1fr); gap: 30px; align-items: start; }
+  @media (max-width: 920px) { .layout { grid-template-columns: minmax(0, 1fr); } }
 
   /* ---------- phone ---------- */
-  .phone { width: 100%; max-width: 400px; margin: 0 auto; padding: 14px; border: 1px solid var(--line-strong); border-radius: 28px; background: linear-gradient(180deg, #0e0d16, #08080d); box-shadow: 0 30px 80px rgb(0 0 0 / 60%), inset 0 1px 0 rgb(255 255 255 / 5%); }
-  .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px; border: 1px solid var(--line); border-radius: 12px; background: var(--ink); }
-  .tab { padding: 9px 0; border: 0; border-radius: 9px; background: transparent; color: var(--muted); font: 600 13px/1 var(--display); letter-spacing: .14em; text-transform: uppercase; cursor: pointer; }
-  .tab[aria-selected="true"] { background: var(--neon-soft); color: #fff; box-shadow: inset 0 0 0 1px rgb(255 46 136 / 45%); }
-  button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+  .phone { position: relative; width: 100%; max-width: 410px; margin: 0 auto; overflow: hidden; border-radius: 26px; background: var(--sumi); color: var(--text); box-shadow: 0 30px 80px rgb(28 23 22 / 45%), 0 0 0 1px rgb(28 23 22 / 60%); }
+  .tabs { display: grid; grid-template-columns: 1fr 1fr; background: #000; }
+  .tab { padding: 13px 0; border: 0; background: transparent; color: var(--muted); font: 500 14px/1 var(--display); letter-spacing: .26em; text-transform: uppercase; cursor: pointer; }
+  .tab[aria-selected="true"] { color: #fff; box-shadow: inset 0 -3px 0 var(--crimson); }
+  button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   .view[hidden] { display: none; }
 
-  /* lobby */
-  .lobby { margin-top: 12px; }
-  .street { position: relative; height: 92px; margin-bottom: 12px; overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: linear-gradient(180deg, #120f1d, #0a0910); }
-  .street .sign { position: absolute; top: 10px; padding: 4px 6px; border-radius: 4px; font: 900 15px/1.05 var(--jp); writing-mode: vertical-rl; }
-  .street .s1 { left: 14px; color: var(--neon); border: 1px solid rgb(255 46 136 / 55%); text-shadow: 0 0 8px var(--neon); }
-  .street .s2 { left: 52px; color: var(--cyan); border: 1px solid rgb(59 232 255 / 45%); text-shadow: 0 0 8px var(--cyan); }
-  .street .s3 { right: 18px; color: var(--gold); border: 1px solid rgb(233 185 73 / 45%); text-shadow: 0 0 8px var(--gold); }
-  .street .title { position: absolute; left: 96px; right: 70px; top: 22px; }
-  .street .title b { display: block; font: 700 20px/1 var(--display); letter-spacing: .08em; text-transform: uppercase; }
-  .street .title small { color: var(--muted); font-size: 12px; }
-  .street .flicker { animation: flicker 4s infinite; }
-  @keyframes flicker { 0%, 92%, 100% { opacity: 1; } 93% { opacity: .35; } 95% { opacity: .9; } 96% { opacity: .4; } }
-  .mode { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-  .mode button { padding: 12px 10px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--panel); color: var(--text); text-align: left; cursor: pointer; }
-  .mode button b { display: block; font: 600 15px/1.1 var(--display); letter-spacing: .08em; text-transform: uppercase; }
-  .mode button small { color: var(--muted); font-size: 11px; }
-  .mode button[aria-pressed="true"] { border-color: var(--cyan); background: rgb(59 232 255 / 8%); }
-  .tables { display: grid; gap: 8px; }
-  .table-card { display: grid; grid-template-columns: 54px 1fr auto; gap: 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 14px; background: linear-gradient(100deg, var(--panel-2), var(--panel)); color: var(--text); text-align: left; cursor: pointer; }
-  .table-card:hover { border-color: rgb(255 46 136 / 45%); }
-  .table-card .rank { display: grid; place-items: center; width: 54px; height: 54px; border-radius: 12px; background: #0b0a12; font: 900 22px/1 var(--jp); }
-  .table-card b { display: block; font: 600 16px/1.1 var(--display); letter-spacing: .06em; text-transform: uppercase; }
-  .table-card small { color: var(--muted); font-size: 12px; }
-  .table-card .buyin { font: 700 20px/1 var(--display); color: var(--gold); text-align: right; }
-  .table-card .buyin small { display: block; margin-top: 3px; color: var(--muted); font: 500 10px/1 var(--body); text-transform: uppercase; letter-spacing: .06em; }
-  .searching { display: none; margin-top: 10px; padding: 10px 12px; border: 1px dashed rgb(59 232 255 / 50%); border-radius: 12px; color: var(--cyan); font-size: 13px; text-align: center; }
+  /* lobby on washi */
+  .lobby { padding: 16px 14px 18px; color: var(--ink); background:
+      radial-gradient(60% 40% at 80% 0%, rgb(184 20 31 / 14%), transparent 70%), var(--washi); position: relative; }
+  .lobby-head { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .lobby-head b { display: block; font: 700 26px/1 var(--display); letter-spacing: .04em; text-transform: uppercase; }
+  .lobby-head small { color: var(--muted-dark); font-size: 12px; }
+  .lobby-head .v { font: 400 30px/1 var(--brush); color: var(--crimson); writing-mode: vertical-rl; }
+  .mode { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-bottom: 14px; border: 2px solid var(--ink); }
+  .mode button { padding: 10px 8px; border: 0; background: transparent; color: var(--ink); text-align: left; cursor: pointer; }
+  .mode button + button { border-left: 2px solid var(--ink); }
+  .mode button b { display: block; font: 600 15px/1.1 var(--display); letter-spacing: .1em; text-transform: uppercase; }
+  .mode button small { color: var(--muted-dark); font-size: 11px; }
+  .mode button[aria-pressed="true"] { background: var(--ink); color: var(--washi); }
+  .mode button[aria-pressed="true"] small { color: var(--washi-2); }
+  .tables { display: grid; gap: 10px; }
+  .tcard { position: relative; display: grid; grid-template-columns: 62px 1fr 70px; gap: 10px; align-items: center; padding: 10px; border: 0; border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink); background: transparent; color: var(--ink); text-align: left; cursor: pointer; }
+  .tcard:hover { background: rgb(28 23 22 / 6%); }
+  .tcard .kanji { font: 400 34px/1 var(--brush); text-align: center; writing-mode: vertical-rl; margin: 0 auto; }
+  .tcard b { display: block; font: 700 19px/1.05 var(--display); letter-spacing: .06em; text-transform: uppercase; }
+  .tcard small { display: block; margin-top: 2px; color: var(--muted-dark); font-size: 12px; }
+  .tcard .faces { display: flex; margin-top: 6px; }
+  .tcard .faces img { width: 26px; height: 26px; margin-right: -6px; border-radius: 50%; border: 2px solid var(--washi); object-fit: cover; filter: grayscale(1) contrast(1.15); }
+  .hanko { display: grid; place-items: center; width: 64px; height: 64px; border: 3px solid var(--crimson); border-radius: 6px; color: var(--crimson); transform: rotate(-4deg); box-shadow: inset 0 0 0 2px var(--washi), inset 0 0 0 4px rgb(184 20 31 / 60%); }
+  .hanko b { font: 700 18px/1 var(--display); letter-spacing: .02em; color: var(--crimson); }
+  .hanko small { margin: 0; color: var(--crimson); font: 600 9px/1 var(--display); letter-spacing: .14em; }
+  .searching { display: none; margin-top: 12px; padding: 10px 12px; border: 2px dashed var(--ink); font-size: 13px; text-align: center; }
   .searching.on { display: block; }
+  .lobby .note { color: var(--muted-dark); }
 
-  /* table */
-  .felt { position: relative; margin-top: 12px; padding: 14px 12px; border-radius: 22px; background:
-      radial-gradient(ellipse at 50% 45%, rgb(255 255 255 / 6%), transparent 60%),
-      radial-gradient(ellipse at 50% 50%, #12473a, var(--felt) 70%);
-    box-shadow: inset 0 0 0 6px #2a0a10, inset 0 0 0 8px rgb(233 185 73 / 45%), inset 0 0 40px rgb(0 0 0 / 60%); }
-  .seat { display: grid; grid-template-columns: 56px 1fr auto; gap: 10px; align-items: center; }
-  .seat.me { margin-top: 14px; }
-  .avatar { position: relative; width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: #0b0a12; }
-  .avatar svg.portrait, .avatar img.portrait { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
-  .avatar svg.ring { position: absolute; inset: -4px; width: 64px; height: 64px; transform: rotate(-90deg); }
-  .ring circle { fill: none; stroke-width: 3; }
-  .ring .track { stroke: rgb(255 255 255 / 10%); }
-  .ring .prog { stroke: var(--cyan); stroke-linecap: round; stroke-dasharray: 188.5; transition: stroke-dashoffset 1s linear; }
-  .ring .prog.hot { stroke: var(--neon); }
-  .who b { display: block; font: 600 15px/1.1 var(--display); letter-spacing: .06em; text-transform: uppercase; }
-  .who small { color: var(--muted); font-size: 11px; }
-  .stack { font: 700 16px/1 var(--display); color: var(--gold); text-align: right; }
-  .stack small { display: block; margin-top: 3px; color: var(--muted); font: 500 10px/1 var(--body); text-transform: uppercase; }
-  .hand { display: flex; gap: 6px; justify-content: center; margin-top: 8px; }
-  .board-wrap { margin: 14px 0 4px; text-align: center; }
-  .pot { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 10px; padding: 5px 12px; border-radius: 999px; background: rgb(0 0 0 / 45%); font: 600 13px/1 var(--display); letter-spacing: .12em; text-transform: uppercase; }
-  .pot b { color: var(--gold); font-size: 16px; }
-  .board { display: flex; gap: 6px; justify-content: center; }
-  .card { position: relative; width: 50px; height: 70px; border-radius: 7px; perspective: 600px; flex: none; }
+  /* table: cinematic dark */
+  .tableview { position: relative; padding: 14px 14px 16px; background:
+      radial-gradient(55% 38% at 50% 0%, rgb(255 236 210 / 22%), transparent 70%),
+      radial-gradient(90% 30% at 50% 100%, rgb(150 120 100 / 22%), transparent 70%), var(--sumi); }
+  .tableview::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 120px; pointer-events: none; opacity: .6;
+    background: radial-gradient(50% 60% at 30% 100%, rgb(200 180 160 / 20%), transparent 70%), radial-gradient(50% 60% at 75% 100%, rgb(200 180 160 / 16%), transparent 70%); }
+  .opp { display: grid; grid-template-columns: 92px 1fr; gap: 12px; align-items: end; }
+  .opp .pic { position: relative; width: 92px; height: 112px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px rgb(255 255 255 / 15%); }
+  .opp .pic img { width: 100%; height: 100%; object-fit: cover; }
+  .opp .pic::after { content: ''; position: absolute; inset: 0; background: linear-gradient(transparent 60%, rgb(0 0 0 / 70%)); }
+  .opp .ring { position: absolute; left: 6px; bottom: 6px; z-index: 1; width: 30px; height: 30px; transform: rotate(-90deg); }
+  .ring circle { fill: none; stroke-width: 3.5; }
+  .ring .track { stroke: rgb(255 255 255 / 18%); }
+  .ring .prog { stroke: var(--gold); stroke-dasharray: 81.7; transition: stroke-dashoffset 1s linear; }
+  .ring .prog.hot { stroke: var(--crimson); }
+  .plate b { display: block; font: 600 20px/1.05 var(--display); letter-spacing: .04em; text-transform: uppercase; }
+  .plate .bar { width: 64px; height: 4px; margin: 6px 0; background: var(--crimson); }
+  .plate small { color: var(--muted); font-size: 12px; }
+  .plate .stack { margin-top: 6px; font: 500 14px/1 var(--display); letter-spacing: .1em; color: var(--gold); }
+  .felt { position: relative; margin: 14px 0 12px; padding: 16px 10px; border-radius: 120px / 46px; text-align: center;
+    background: radial-gradient(ellipse at 50% 40%, #3a0d12, #1d0608 75%); box-shadow: inset 0 0 0 3px #000, inset 0 0 0 5px rgb(201 162 74 / 55%), inset 0 0 40px rgb(0 0 0 / 70%); overflow: hidden; }
+  .felt::before { content: ''; position: absolute; inset: 0; opacity: .14; pointer-events: none;
+    background: radial-gradient(circle at 50% 100%, transparent 8px, var(--gold) 9px, transparent 10px, transparent 14px, var(--gold) 15px, transparent 16px) 0 0 / 32px 16px; }
+  .pot { position: relative; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 10px; padding: 4px 12px; background: rgb(0 0 0 / 55%); font: 500 12px/1 var(--display); letter-spacing: .24em; text-transform: uppercase; }
+  .pot b { color: var(--gold); font-size: 16px; letter-spacing: .06em; }
+  .board, .hand { position: relative; display: flex; gap: 5px; justify-content: center; }
+  .hand { margin-top: 6px; }
+  .card { position: relative; width: 50px; height: 70px; flex: none; perspective: 600px; }
   .card .inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .5s cubic-bezier(.2,.8,.2,1); }
   .card.up .inner { transform: rotateY(180deg); }
-  .card .face, .card .back { position: absolute; inset: 0; border-radius: 7px; backface-visibility: hidden; }
-  .card .back { overflow: hidden; border: 1px solid rgb(233 185 73 / 60%); background: #1a0610; }
+  .card .face, .card .back { position: absolute; inset: 0; border-radius: 5px; backface-visibility: hidden; }
+  .card .back { overflow: hidden; background: var(--crimson-2); box-shadow: inset 0 0 0 2px var(--washi); }
   .card .back svg { width: 100%; height: 100%; }
-  .card .face { transform: rotateY(180deg); display: grid; grid-template-rows: auto 1fr; padding: 4px 5px; background: linear-gradient(160deg, #fbf6ec, #e9e1d1); color: #15131c; box-shadow: 0 4px 10px rgb(0 0 0 / 35%); }
-  .card .face .r { font: 700 16px/1 var(--display); }
+  .card .face { transform: rotateY(180deg); display: grid; grid-template-rows: auto 1fr; padding: 4px 5px; background: var(--washi); color: var(--ink); box-shadow: 0 6px 14px rgb(0 0 0 / 45%); }
+  .card .face .r { font: 600 17px/1 var(--display); }
   .card .face .s { align-self: center; justify-self: center; font-size: 24px; line-height: 1; }
-  .card .face.red { color: #c3124f; }
-  .card.empty { border: 1px dashed rgb(255 255 255 / 18%); }
-  .card.win .face { box-shadow: 0 0 0 2px var(--gold), 0 0 16px rgb(233 185 73 / 70%); }
-  .log { min-height: 40px; margin-top: 12px; padding: 9px 12px; border-left: 3px solid var(--neon); border-radius: 0 10px 10px 0; background: var(--neon-soft); font-size: 13px; }
-  .log small { display: block; color: var(--muted); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
-  .menu { display: grid; gap: 6px; margin-top: 12px; }
-  .menu button { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 11px 16px 11px 22px; border: 0; color: var(--text); text-align: left; cursor: pointer;
-    background: linear-gradient(90deg, rgb(255 255 255 / 9%), rgb(255 255 255 / 2%)); font: 600 15px/1 var(--display); letter-spacing: .14em; text-transform: uppercase;
-    clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%); }
-  .menu button::before { content: ''; position: absolute; left: 10px; top: 50%; width: 6px; height: 6px; margin-top: -3px; background: var(--muted); transform: rotate(45deg); }
-  .menu button.primary { background: linear-gradient(90deg, rgb(255 46 136 / 45%), rgb(255 46 136 / 10%)); }
-  .menu button.primary::before { background: var(--neon); box-shadow: 0 0 8px var(--neon); }
-  .menu button small { color: var(--muted); font: 500 11px/1 var(--body); letter-spacing: .04em; text-transform: none; }
+  .card .face.red { color: var(--crimson); }
+  .card.empty { border: 1px dashed rgb(255 255 255 / 18%); border-radius: 5px; }
+  .card.win .face { box-shadow: 0 0 0 2px var(--gold), 0 0 18px rgb(201 162 74 / 70%); }
+  .me { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; font: 500 13px/1 var(--display); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+  .me b { color: var(--gold); font-size: 16px; letter-spacing: .06em; }
+  .log { position: relative; min-height: 42px; margin-top: 12px; padding: 9px 12px; border-left: 4px solid var(--crimson); background: rgb(255 255 255 / 5%); font-size: 13px; }
+  .log small { display: block; color: var(--muted); font: 500 11px/1.2 var(--display); letter-spacing: .2em; text-transform: uppercase; }
+  /* battle-style command menu */
+  .menu { position: relative; display: grid; gap: 4px; margin-top: 12px; }
+  .menu button { display: flex; justify-content: space-between; align-items: center; padding: 11px 18px 11px 20px; border: 0; color: var(--text); cursor: pointer; text-align: left;
+    background: linear-gradient(90deg, #000, rgb(0 0 0 / 40%)); font: 500 17px/1 var(--display); letter-spacing: .18em; text-transform: uppercase; clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%); }
+  .menu button small { color: var(--muted); font: 500 12px/1 var(--display); letter-spacing: .08em; }
+  .menu button.primary { background: linear-gradient(90deg, var(--crimson), var(--crimson-2)); }
+  .menu button.primary small { color: #ffd9d9; }
   .menu button:disabled { opacity: .35; cursor: default; }
-  .stamp { position: absolute; left: 50%; top: 44%; z-index: 5; display: grid; place-items: center; width: 120px; height: 120px; margin: -60px 0 0 -60px; border: 4px solid var(--neon); border-radius: 50%; color: var(--neon); font: 900 64px/1 var(--jp);
-    text-shadow: 0 0 18px var(--neon); background: rgb(7 7 12 / 70%); transform: scale(.4) rotate(-14deg); opacity: 0; pointer-events: none; }
-  .stamp.on { animation: stamp .45s cubic-bezier(.2,1.6,.4,1) forwards; }
-  .stamp small { position: absolute; bottom: 16px; font: 600 11px/1 var(--display); letter-spacing: .2em; color: var(--text); text-shadow: none; }
-  @keyframes stamp { to { transform: scale(1) rotate(-14deg); opacity: 1; } }
+  .stamp { position: absolute; left: 50%; top: 36%; z-index: 6; display: grid; place-items: center; width: 132px; height: 132px; margin: -66px 0 0 -66px; border: 5px solid var(--crimson); border-radius: 10px; color: var(--crimson);
+    font: 400 82px/1 var(--brush); background: rgb(236 227 207 / 92%); box-shadow: inset 0 0 0 3px var(--washi), inset 0 0 0 6px rgb(184 20 31 / 60%); transform: scale(2) rotate(-12deg); opacity: 0; pointer-events: none; }
+  .stamp.on { animation: stamp .42s cubic-bezier(.2,1.4,.4,1) forwards; }
+  .stamp small { position: absolute; bottom: 10px; font: 600 11px/1 var(--display); letter-spacing: .24em; }
+  @keyframes stamp { to { transform: scale(1) rotate(-12deg); opacity: 1; } }
+  /* character intro card */
+  .intro { position: absolute; inset: 0; z-index: 8; display: grid; align-content: end; padding: 22px 18px 120px; background: #000; opacity: 0; pointer-events: none; overflow: hidden; }
+  .intro.on { animation: intro 2.4s ease forwards; pointer-events: auto; }
+  .intro img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.25) brightness(.85); transform: scale(1.12); }
+  .intro.on img { animation: kenburns 2.4s ease-out forwards; }
+  .intro::after { content: ''; position: absolute; inset: 0; background:
+      radial-gradient(circle, rgb(0 0 0 / 55%) 1px, transparent 1.6px) 0 0 / 5px 5px, linear-gradient(transparent 35%, rgb(0 0 0 / 85%)); mix-blend-mode: multiply; }
+  .intro .name { position: relative; z-index: 1; }
+  .intro .name small { display: block; font: 400 26px/1 var(--brush); color: var(--crimson); }
+  .intro .name b { display: block; margin-top: 6px; font: 700 34px/1 var(--display); letter-spacing: .03em; text-transform: uppercase; color: #fff; }
+  .intro .name i { display: block; width: 86px; height: 5px; margin: 10px 0 8px; background: var(--crimson); }
+  .intro .name span { font: 500 12px/1 var(--display); letter-spacing: .24em; text-transform: uppercase; color: var(--washi-2); }
+  @keyframes intro { 0% { opacity: 0; } 10%, 82% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes kenburns { to { transform: scale(1); } }
   .note { margin: 10px 2px 0; color: var(--muted); font-size: 11px; text-align: center; }
 
-  /* docs side */
-  .doc { padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: rgb(21 21 34 / 82%); }
-  .doc + .doc { margin-top: 16px; }
-  .doc h2 { margin: 0 0 12px; font: 600 18px/1 var(--display); letter-spacing: .14em; text-transform: uppercase; }
-  .doc h2 em { color: var(--neon); font-style: normal; }
-  .doc p { margin: 0 0 10px; color: var(--muted); }
-  .bots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-  @media (max-width: 560px) { .bots { grid-template-columns: minmax(0, 1fr); } }
-  .bot { padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel-2); }
-  .bot img { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 2px solid var(--gold); background: #0b0a12; }
-  .bot b { display: block; margin-top: 8px; font: 600 15px/1.1 var(--display); letter-spacing: .06em; text-transform: uppercase; }
-  .bot small { color: var(--muted); font-size: 12px; }
-  .bot .lvl { display: inline-block; margin-top: 6px; padding: 2px 8px; border-radius: 6px; background: var(--gold-soft); color: var(--gold); font: 600 12px/1.4 var(--display); letter-spacing: .06em; }
-  .backs { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
-  .backs .big { width: 110px; height: 154px; border-radius: 10px; overflow: hidden; border: 1px solid rgb(233 185 73 / 60%); box-shadow: 0 12px 30px rgb(0 0 0 / 45%); }
-  .backs .big svg { width: 100%; height: 100%; }
-  .backs .faces { display: flex; gap: 8px; }
-  .story { counter-reset: s; display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
-  .story li { position: relative; padding: 10px 12px 10px 46px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel-2); }
-  .story li::before { counter-increment: s; content: counter(s, decimal-leading-zero); position: absolute; left: 12px; top: 10px; color: var(--neon); font: 600 16px/1.2 var(--display); }
-  .story b { font: 600 14px/1.2 var(--display); letter-spacing: .1em; text-transform: uppercase; }
-  .story span { display: block; color: var(--muted); font-size: 13px; }
+  /* ---------- docs on washi ---------- */
+  .doc { padding: 20px; border-top: 3px solid var(--ink); background: rgb(255 255 255 / 30%); }
+  .doc + .doc { margin-top: 20px; }
+  .doc h2 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 0 0 12px; font: 700 24px/1 var(--display); letter-spacing: .06em; text-transform: uppercase; }
+  .doc h2 em { font: 400 24px/1 var(--brush); font-style: normal; color: var(--crimson); }
+  .doc p, .doc li { color: #4a4036; }
+  .doc p { margin: 0 0 10px; }
+  .pools { display: grid; gap: 14px; }
+  .pool h3 { display: flex; align-items: baseline; gap: 10px; margin: 0 0 8px; font: 600 16px/1 var(--display); letter-spacing: .12em; text-transform: uppercase; }
+  .pool h3 span { font: 400 22px/1 var(--brush); color: var(--crimson); }
+  .pool h3 small { color: var(--muted-dark); font: 500 12px/1 var(--body); letter-spacing: 0; text-transform: none; }
+  .pool .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(38px, 1fr)); gap: 3px; }
+  .pool .grid img { width: 100%; aspect-ratio: 1; object-fit: cover; filter: grayscale(1) contrast(1.1); transition: filter .2s; }
+  .pool .grid img:hover { filter: none; }
+  .rules { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+  .rules li { padding: 10px 12px; border-left: 4px solid var(--crimson); background: rgb(255 255 255 / 35%); }
+  .rules b { display: block; color: var(--ink); font: 600 15px/1.2 var(--display); letter-spacing: .1em; text-transform: uppercase; }
   .swatches { display: flex; flex-wrap: wrap; gap: 8px; }
-  .sw { display: flex; align-items: center; gap: 8px; padding: 6px 10px 6px 6px; border: 1px solid var(--line); border-radius: 999px; font-size: 12px; color: var(--muted); }
-  .sw i { width: 20px; height: 20px; border-radius: 50%; }
-  .rights { border-color: rgb(233 185 73 / 25%); }
-  .rights ul { margin: 0; padding-left: 18px; }
-  .rights li { margin-bottom: 6px; color: var(--muted); }
-  .q { margin-top: 10px; padding: 10px 12px; border-left: 3px solid var(--neon); background: var(--neon-soft); border-radius: 0 10px 10px 0; font-size: 13px; }
+  .sw { display: flex; align-items: center; gap: 8px; padding: 5px 10px 5px 5px; border: 1px solid rgb(28 23 22 / 25%); font-size: 12px; color: #4a4036; }
+  .sw i { width: 20px; height: 20px; }
 
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    .intro.on { animation: none; opacity: 0; }
   }
 </style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
-    <pattern id="seigaiha" width="20" height="10" patternUnits="userSpaceOnUse">
-      <rect width="20" height="10" fill="#1a0610"/>
-      <g fill="none" stroke="#e9b949" stroke-opacity=".55" stroke-width="1">
-        <circle cx="10" cy="10" r="9"/><circle cx="10" cy="10" r="6"/><circle cx="10" cy="10" r="3"/>
-        <circle cx="0" cy="5" r="9"/><circle cx="20" cy="5" r="9"/>
-      </g>
+    <pattern id="nami" width="24" height="12" patternUnits="userSpaceOnUse">
+      <rect width="24" height="12" fill="#7a0b13"/>
+      <g fill="none" stroke="#ece3cf" stroke-opacity=".55" stroke-width="1"><circle cx="12" cy="12" r="11"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/><circle cx="0" cy="6" r="11"/><circle cx="24" cy="6" r="11"/></g>
     </pattern>
-    <symbol id="back" viewBox="0 0 110 154">
-      <rect width="110" height="154" fill="url(#seigaiha)"/>
-      <rect x="6" y="6" width="98" height="142" rx="6" fill="none" stroke="#e9b949" stroke-width="1.5"/>
-      <circle cx="55" cy="77" r="30" fill="#6d0f1a" stroke="#e9b949" stroke-width="2"/>
-      <path d="M38 88c6-18 22-26 34-20-8 1-12 6-12 11 6-6 14-6 18 0-8-2-12 3-12 8 0 7-10 12-18 6 6 0 8-3 8-6-6 4-14 4-18 1z" fill="#e9b949"/>
-      <text x="55" y="40" text-anchor="middle" font-family="Noto Serif JP, serif" font-weight="900" font-size="14" fill="#e9b949">賭</text>
-      <text x="55" y="126" text-anchor="middle" font-family="Oswald, sans-serif" font-size="9" letter-spacing="2" fill="#e9b949">BURMALDOZA</text>
-    </symbol>
-    <symbol id="p-me" viewBox="0 0 64 64">
-      <rect width="64" height="64" fill="#101826"/>
-      <path d="M8 64c2-15 13-21 24-21s22 6 24 21z" fill="#2b3f66"/>
-      <path d="M28 44h8l-4 14z" fill="#e9b949"/>
-      <circle cx="32" cy="27" r="12" fill="#d3b296"/>
-      <path d="M19 26c0-10 7-15 14-15 6 0 12 4 12 12-6-4-16-5-26 3z" fill="#2a1f1a"/>
+    <symbol id="back" viewBox="0 0 50 70">
+      <rect width="50" height="70" fill="url(#nami)"/>
+      <circle cx="25" cy="35" r="13" fill="#ece3cf"/>
+      <circle cx="25" cy="35" r="10" fill="#b8141f"/>
+      <text x="25" y="40" text-anchor="middle" font-family="Yuji Syuku, serif" font-size="13" fill="#ece3cf">龍</text>
     </symbol>
   </defs>
 </svg>
 
 <div class="wrap">
   <div class="topline">
-    <div class="brand"><i>神</i>Бурмалдоза · Hold'em</div>
-    <span class="tag">Фанатский концепт · превью направления · #62</span>
+    <div class="brand"><i>龍</i>Бурмалдоза · Hold'em</div>
+    <span class="tag">Фанатский концепт · превью комнаты · #62</span>
   </div>
-  <h1>Камуро-тё <span class="kanji">賭場</span></h1>
-  <p class="lede">Heads-up Hold’em в духе игр RGG Studio: ночной квартал развлечений, неон с вертикальными иероглифами, задняя комната клуба с лакированным красным столом и золотой окантовкой. Действия — наклонное меню, как в боевых меню серии; итог раздачи — печать-иероглиф. Соперники-боты — герои серии; стол, колода и интерфейс нарисованы с нуля.</p>
+
+  <header class="hero">
+    <div class="enso" aria-hidden="true">
+      <svg viewBox="0 0 150 150"><path d="M118 34c-22-22-66-20-86 6s-14 70 16 84 66 4 78-24c6-14 4-30-4-42" fill="none" stroke="#b8141f" stroke-width="13" stroke-linecap="round" opacity=".92"/><path d="M110 28c8 6 12 12 14 18" fill="none" stroke="#b8141f" stroke-width="6" stroke-linecap="round" opacity=".6"/></svg>
+      <b>賭</b>
+    </div>
+    <div>
+      <h1>Камуро-тё<span>Heads-up Hold’em · RGG</span></h1>
+      <p>По мотивам артов серии: тушь и рисовая бумага, ирэдзуми-волны, красная печать, кинематографичная тьма с прожектором и дымом, заставки-представления героев. Каждая раздача — новый соперник из пула своего стола.</p>
+    </div>
+  </header>
 
   <div class="layout">
     <section class="phone" aria-label="Макет комнаты на телефоне">
@@ -217,114 +231,93 @@
       </div>
 
       <div class="view lobby" id="lobby" role="tabpanel" aria-labelledby="t-lobby">
-        <div class="street" aria-hidden="true">
-          <span class="sign s1 flicker">麻雀</span>
-          <span class="sign s2">賭場</span>
-          <span class="sign s3 flicker">神室</span>
-          <div class="title"><b>Задняя комната</b><small>Клуб в переулке, после закрытия</small></div>
+        <div class="lobby-head">
+          <span><b>Задняя комната</b><small>Выберите стол — соперник выпадет из его пула</small></span>
+          <span class="v" aria-hidden="true">賭場</span>
         </div>
         <div class="mode" role="group" aria-label="Режим">
-          <button type="button" data-mode="bot" aria-pressed="true"><b>Против бота</b><small>Сразу, без ожидания</small></button>
+          <button type="button" data-mode="bot" aria-pressed="true"><b>Против героя</b><small>Бот · сразу</small></button>
           <button type="button" data-mode="live" aria-pressed="false"><b>Живой игрок</b><small>Поиск до 60 с · ход 20 с</small></button>
         </div>
-        <div class="tables">
-          <button class="table-card" type="button" data-table="0"><span class="rank" style="color:#ff2e88">若</span><span><b>Стол чинпиры</b><small>Блайнды 5 / 10</small></span><span class="buyin">100<small>JG вход</small></span></button>
-          <button class="table-card" type="button" data-table="1"><span class="rank" style="color:#3be8ff">頭</span><span><b>Стол вакагасиры</b><small>Блайнды 25 / 50</small></span><span class="buyin">500<small>JG вход</small></span></button>
-          <button class="table-card" type="button" data-table="2"><span class="rank" style="color:#e9b949">親</span><span><b>Стол оябуна</b><small>Блайнды 50 / 100</small></span><span class="buyin">1 000<small>JG вход</small></span></button>
-        </div>
-        <div class="searching" id="searching" role="status">Ищем соперника за столом… 60 с. Не нашёлся — вход не списывается.</div>
-        <p class="note">Блайнды 5 % / 10 % входа — предложение из PR #61, ждёт утверждения.</p>
+        <div class="tables" id="tables"></div>
+        <div class="searching" id="searching" role="status">Ищем соперника… до 60 с. Не нашёлся — вход не списывается.</div>
+        <p class="note">Блайнды 5 % / 10 % входа — предложение из PR #61.</p>
       </div>
 
-      <div class="view" id="table" role="tabpanel" aria-labelledby="t-table" hidden>
-        <div class="felt" id="felt">
-          <div class="stamp" id="stamp" aria-hidden="true">勝<small>ПОБЕДА</small></div>
-          <div class="seat">
-            <div class="avatar"><svg class="ring" viewBox="0 0 64 64" aria-hidden="true"><circle class="track" cx="32" cy="32" r="30"/><circle class="prog" id="oppRing" cx="32" cy="32" r="30" style="stroke-dashoffset:0"/></svg><img class="portrait" id="oppPortrait" src="portraits/Goro_Majima.webp" alt=""></div>
-            <div class="who"><b id="oppName">Горо Мадзима</b><small id="oppKind">Бот · стол 500</small></div>
-            <div class="stack"><span id="oppStack">450</span><small>стек</small></div>
-          </div>
-          <div class="hand" id="oppHand"></div>
-
-          <div class="board-wrap">
-            <div class="pot">Банк <b id="pot">75</b></div>
-            <div class="board" id="board"></div>
-          </div>
-
-          <div class="hand" id="myHand"></div>
-          <div class="seat me">
-            <div class="avatar"><svg class="ring" viewBox="0 0 64 64" aria-hidden="true"><circle class="track" cx="32" cy="32" r="30"/><circle class="prog" id="myRing" cx="32" cy="32" r="30" style="stroke-dashoffset:188.5"/></svg><svg class="portrait"><use href="#p-me"/></svg></div>
-            <div class="who"><b>Вы</b><small id="myTurn">Ваш ход · 20 с</small></div>
-            <div class="stack"><span id="myStack">475</span><small>стек</small></div>
-          </div>
+      <div class="view tableview" id="table" role="tabpanel" aria-labelledby="t-table" hidden>
+        <div class="intro" id="intro" aria-hidden="true">
+          <img id="introImg" alt="">
+          <div class="name"><small id="introKanji">幹部</small><b id="introName">—</b><i></i><span id="introSub">—</span></div>
         </div>
-
-        <div class="log" id="log" role="status" aria-live="polite"><small>Префлоп</small>Блайнды 25 / 50. Ваш ход.</div>
-
+        <div class="stamp" id="stamp" aria-hidden="true">勝<small>ПОБЕДА</small></div>
+        <div class="opp">
+          <div class="pic"><img id="oppImg" alt=""><svg class="ring" viewBox="0 0 30 30" aria-hidden="true"><circle class="track" cx="15" cy="15" r="13"/><circle class="prog" id="oppRing" cx="15" cy="15" r="13" style="stroke-dashoffset:81.7"/></svg></div>
+          <div class="plate"><small id="oppTier">Стол 500 · капитаны</small><b id="oppName">—</b><div class="bar"></div><small id="oppGame">—</small><div class="stack">Стек <span id="oppStack">450</span></div></div>
+        </div>
+        <div class="hand" id="oppHand"></div>
+        <div class="felt">
+          <div class="pot">Банк <b id="pot">75</b></div>
+          <div class="board" id="board"></div>
+        </div>
+        <div class="hand" id="myHand"></div>
+        <div class="me"><span id="myTurn">Ваш ход · 20 с</span><span>Стек <b id="myStack">475</b></span></div>
+        <div class="log" id="log" role="status" aria-live="polite"><small>Префлоп</small>Блайнды. Ваш ход.</div>
         <div class="menu" role="group" aria-label="Действия">
           <button type="button" class="primary" id="next">Колл <small>50</small></button>
           <button type="button" disabled>Рейз <small>мин. 100</small></button>
           <button type="button" disabled>Чек</button>
           <button type="button" id="fold">Сбросить</button>
         </div>
-        <p class="note">Сценарий раздачи заранее записан для показа движения. В игре карты, ходы бота и итог определяет только сервер.</p>
+        <p class="note">Раздача записана для показа движения. Соперника, карты и итог в игре выбирает сервер.</p>
       </div>
     </section>
 
     <div>
       <section class="doc">
-        <h2>Соперники-боты <em>· по столам</em></h2>
-        <p>У каждого стола свой бот — герой серии: чем дороже стол, тем легендарнее соперник. Портреты — кадры из игр (© SEGA / RGG Studio), источники в <code>sources.json</code>.</p>
-        <div class="bots">
-          <div class="bot"><img src="portraits/Ichiban_Kasuga.webp" alt="Итибан Касуга"><b>Итибан Касуга</b><small>Рвётся вперёд, верит в удачу и часто блефует.</small><br><span class="lvl">Стол 100</span></div>
-          <div class="bot"><img src="portraits/Goro_Majima.webp" alt="Горо Мадзима"><b>Горо Мадзима</b><small>Бешеный пёс Симано: непредсказуем, любит рейзы.</small><br><span class="lvl">Стол 500</span></div>
-          <div class="bot"><img src="portraits/Kazuma_Kiryu.webp" alt="Кадзума Кирю"><b>Кадзума Кирю</b><small>Дракон Додзимы: терпелив, ставит редко и крупно.</small><br><span class="lvl">Стол 1 000</span></div>
-        </div>
-        <p style="margin-top:12px">Характер — это только подача (реплики, анимации). Решения бота принимает сервер и видит лишь свои карты и борд.</p>
+        <h2>Пулы соперников <em>名簿</em></h2>
+        <p>229 героев серий Yakuza / Like a Dragon / Judgment распределены по столам. Чем дороже стол, тем легендарнее соперник. Распределение — предложение, любого героя можно перенести.</p>
+        <div class="pools" id="pools"></div>
       </section>
 
       <section class="doc">
-        <h2>Колода <em>· рубашка 賭</em></h2>
-        <div class="backs">
-          <div class="big"><svg viewBox="0 0 110 154"><use href="#back"/></svg></div>
-          <div class="faces" id="faceSamples"></div>
-        </div>
-        <p style="margin-top:12px">Рубашка: волны сэйгайха, лакированный красный круг с золотым драконьим мотивом и знак 賭 («ставка»). Лица карт — светлая бумага; червы и бубны — малиновые, пики и трефы — тушь.</p>
-      </section>
-
-      <section class="doc">
-        <h2>Движение <em>· storyboard</em></h2>
-        <ol class="story">
-          <li><b>Вход за стол</b><span>Неоновая вывеска мигает, стол выезжает снизу. Вход списан только после подтверждения сервера.</span></li>
-          <li><b>Раздача</b><span>Карты летят по одной из центра; свои открываются переворотом, карты соперника остаются рубашкой.</span></li>
-          <li><b>Ход</b><span>Кольцо таймера вокруг портрета: 20 с у живого соперника, последние 5 с — малиновое. Против бота у игрока таймера нет.</span></li>
-          <li><b>Улицы</b><span>Флоп — три карты веером, тёрн и ривер — по одной, с паузой. Банк пересчитывается только из подтверждённого события.</span></li>
-          <li><b>Шоудаун</b><span>Карты соперника переворачиваются только на шоудауне; при сбросе — никогда. Выигрышные пять карт подсвечены золотом.</span></li>
-          <li><b>Печать</b><span>Итог — печать 勝 (победа), 負 (поражение) или 分 (ничья) с объяснением комбинации.</span></li>
-        </ol>
-        <p style="margin-top:10px">Reduced motion: без полётов и печати-удара — карты появляются на местах, итог показан текстом.</p>
-      </section>
-
-      <section class="doc">
-        <h2>Палитра</h2>
-        <div class="swatches">
-          <span class="sw"><i style="background:#07070c;border:1px solid #333"></i>Ночь #07070C</span>
-          <span class="sw"><i style="background:#ff2e88"></i>Неон #FF2E88</span>
-          <span class="sw"><i style="background:#3be8ff"></i>Циан #3BE8FF</span>
-          <span class="sw"><i style="background:#e9b949"></i>Золото #E9B949</span>
-          <span class="sw"><i style="background:#6d0f1a"></i>Лак #6D0F1A</span>
-          <span class="sw"><i style="background:#0e3b2e"></i>Сукно #0E3B2E</span>
-        </div>
-        <p style="margin-top:12px">Шрифты: Oswald для меню и цифр, Noto Serif JP для иероглифов, Inter для текста.</p>
-      </section>
-
-      <section class="doc rights">
-        <h2>Права и решения</h2>
-        <ul>
-          <li>Серии Yakuza / Like a Dragon и Judgment — игры SEGA / RGG Studio. Портреты Касуги, Мадзимы и Кирю — кадры из игр с вики-галерей серии, © SEGA / RGG Studio; исходный файл, ссылка и SHA-256 — в <code>sources.json</code>, в превью — обрезанные аватары.</li>
-          <li>Решение владельца 13.10.2026: использовать героев серии в некоммерческом фанатском превью с атрибуцией, как GFL в Blackjack и оперативников в Slot. Общая лицензия не заявляется; логотипов серии нет.</li>
+        <h2>Как выпадает соперник <em>運</em></h2>
+        <ul class="rules">
+          <li><b>Каждая раздача — новый герой</b>Сервер берёт героя из пула стола «мешком»: без повторов, пока игрок не встретит весь пул, затем мешок перемешивается заново.</li>
+          <li><b>Только оформление</b>Герой — это лицо, имя и реплики бота. Стратегия бота задаётся столом, а не героем; карты, ходы и итог от героя не зависят.</li>
+          <li><b>Живой режим</b>Против живого игрока — его аватар Telegram; герои не показываются.</li>
+          <li><b>Честность</b>Выбор героя приходит в снимке раздачи, клиент только показывает заставку. Код героя хранится в истории раздачи.</li>
         </ul>
-        <div class="q">Состав — предложение: Касуга / Мадзима / Кирю. В архиве владельца 340 портретов из 15 игр — состав легко поменять или расширить (например, разные соперники на одном столе).</div>
+      </section>
+
+      <section class="doc">
+        <h2>Движение <em>演出</em></h2>
+        <ul class="rules">
+          <li><b>Заставка героя</b>Стоп-кадр в ч/б с растром, крупное имя, красная черта и подпись стола — как представления персонажей в серии. 2,4 с; тап пропускает.</li>
+          <li><b>Раздача</b>Карты из центра по одной; свои переворачиваются, карты героя — рубашкой с волнами и красным солнцем 龍.</li>
+          <li><b>Ход</b>Золотое кольцо таймера на портрете, последние 5 с — красное. Команды — наклонные плашки, как боевое меню серии.</li>
+          <li><b>Итог</b>Красная печать-ханко 勝 / 負 / 分 с ударом; выигрышные пять карт — золотом. Reduced motion: без заставки и удара печати.</li>
+        </ul>
+      </section>
+
+      <section class="doc">
+        <h2>Палитра <em>色</em></h2>
+        <div class="swatches">
+          <span class="sw"><i style="background:#0c0a0a"></i>Тушь #0C0A0A</span>
+          <span class="sw"><i style="background:#ece3cf;border:1px solid #bbb"></i>Васи #ECE3CF</span>
+          <span class="sw"><i style="background:#b8141f"></i>Киноварь #B8141F</span>
+          <span class="sw"><i style="background:#7a0b13"></i>Тёмный лак #7A0B13</span>
+          <span class="sw"><i style="background:#c9a24a"></i>Золото #C9A24A</span>
+        </div>
+        <p style="margin-top:12px">Шрифты: Yuji Syuku — кисть для иероглифов, Oswald — имена и меню, Inter — текст.</p>
+      </section>
+
+      <section class="doc">
+        <h2>Права <em>権</em></h2>
+        <ul>
+          <li>Yakuza / Like a Dragon и Judgment — игры SEGA / Ryu Ga Gotoku Studio. Аватары героев — кадры профилей персонажей из вики-галерей серии, обрезанные по найденному лицу до 256×256; исходник, ссылка и SHA-256 каждого — в <code>sources.json</code>. Логотипов серии нет; стол, колода, печати и интерфейс нарисованы с нуля.</li>
+          <li>Решение владельца 13.10.2026: герои серии в некоммерческом фанатском превью с атрибуцией, как GFL в Blackjack. Общая лицензия не заявляется.</li>
+          <li>Исключён Минору Дайдодзи — его кадр в больничной койке не подходит для стола.</li>
+        </ul>
       </section>
     </div>
   </div>
@@ -332,127 +325,115 @@
 
 <script>
 (() => {
+  const ROSTER = window.RGG_ROSTER;
+  const TABLES = [
+    { buyin: 100, kanji: '街', name: 'Улица', blinds: '5 / 10' },
+    { buyin: 500, kanji: '幹部', name: 'Капитаны', blinds: '25 / 50' },
+    { buyin: 1000, kanji: '伝説', name: 'Легенды', blinds: '50 / 100' }
+  ];
   const $ = (id) => document.getElementById(id);
-  const RED = new Set(['♥', '♦']);
-  const cardEl = (card, up = false) => {
-    const el = document.createElement('div');
-    el.className = 'card' + (up ? ' up' : '');
-    if (!card) { el.classList.add('empty'); return el; }
-    const [r, s] = card;
-    el.innerHTML = `<div class="inner"><div class="back"><svg viewBox="0 0 110 154"><use href="#back"/></svg></div><div class="face${RED.has(s) ? ' red' : ''}"><span class="r">${r}</span><span class="s">${s}</span></div></div>`;
-    el.setAttribute('aria-label', up ? `${r}${s}` : 'Карта рубашкой');
-    return el;
-  };
-
-  // tabs
-  const tabs = [$('t-lobby'), $('t-table')];
-  const show = (i) => tabs.forEach((t, j) => {
-    t.setAttribute('aria-selected', String(i === j));
-    $(t.getAttribute('aria-controls')).hidden = i !== j;
-  });
-  tabs.forEach((t, i) => t.addEventListener('click', () => show(i)));
+  const fmt = (n) => n.toLocaleString('ru-RU');
+  const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // lobby
+  $('tables').innerHTML = TABLES.map((t, i) => {
+    const sample = shuffle([...ROSTER[t.buyin]]).slice(0, 6);
+    return `<button class="tcard" type="button" data-t="${i}"><span class="kanji" aria-hidden="true">${t.kanji}</span>
+      <span><b>${t.name}</b><small>Блайнды ${t.blinds} · в пуле ${ROSTER[t.buyin].length} героев</small>
+      <span class="faces">${sample.map((h) => `<img src="${h[1]}" alt="" title="${h[0]}">`).join('')}</span></span>
+      <span class="hanko"><b>${fmt(t.buyin)}</b><small>JG</small></span></button>`;
+  }).join('');
+  // pools in docs
+  $('pools').innerHTML = TABLES.slice().reverse().map((t) => `<div class="pool"><h3><span>${t.kanji}</span>${t.name} · ${fmt(t.buyin)}<small>${ROSTER[t.buyin].length} героев</small></h3>
+    <div class="grid">${ROSTER[t.buyin].map((h) => `<img src="${h[1]}" alt="${h[0]}" title="${h[0]} · ${h[2]}" loading="lazy">`).join('')}</div></div>`).join('');
+
+  const tabs = [$('t-lobby'), $('t-table')];
+  const show = (i) => tabs.forEach((t, j) => { t.setAttribute('aria-selected', String(i === j)); $(t.getAttribute('aria-controls')).hidden = i !== j; });
+  tabs.forEach((t, i) => t.addEventListener('click', () => show(i)));
   let mode = 'bot';
   document.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => {
-    mode = b.dataset.mode;
-    document.querySelectorAll('[data-mode]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-    $('searching').classList.remove('on');
-  }));
-  const BOTS = [['Ichiban_Kasuga', 'Итибан Касуга', 100], ['Goro_Majima', 'Горо Мадзима', 500], ['Kazuma_Kiryu', 'Кадзума Кирю', 1000]];
-  document.querySelectorAll('[data-table]').forEach((b) => b.addEventListener('click', () => {
-    const [sym, name, buyin] = BOTS[Number(b.dataset.table)];
-    $('oppPortrait').src = `portraits/${sym}.webp`;
-    $('oppName').textContent = mode === 'bot' ? name : 'Игрок @сосед';
-    $('oppKind').textContent = `${mode === 'bot' ? 'Бот' : 'Живой соперник'} · стол ${buyin.toLocaleString('ru-RU')}`;
-    if (mode === 'live') {
-      $('searching').classList.add('on');
-      setTimeout(() => { $('searching').classList.remove('on'); show(1); reset(); }, 1600);
-    } else { show(1); reset(); }
+    mode = b.dataset.mode; document.querySelectorAll('[data-mode]').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); $('searching').classList.remove('on');
   }));
 
-  // scripted hand: stack 500, blinds 25/50
-  const ME = [['A', '♠'], ['K', '♠']];
-  const OPP = [['Q', '♥'], ['Q', '♣']];
+  // shuffle bag per table
+  const LIVE_AVATAR = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 92 112"><rect width="92" height="112" fill="#171313"/><circle cx="46" cy="42" r="18" fill="#3a3330"/><path d="M12 112c2-26 16-38 34-38s32 12 34 38z" fill="#3a3330"/></svg>');
+  const bags = {};
+  const draw = (buyin) => { if (!bags[buyin] || !bags[buyin].length) bags[buyin] = shuffle([...ROSTER[buyin]]); return bags[buyin].pop(); };
+  let table = TABLES[1];
+  document.querySelectorAll('[data-t]').forEach((b) => b.addEventListener('click', () => {
+    table = TABLES[Number(b.dataset.t)];
+    if (mode === 'live') { $('searching').classList.add('on'); setTimeout(() => { $('searching').classList.remove('on'); show(1); newHand(); }, 1400); }
+    else { show(1); newHand(); }
+  }));
+
+  // scripted hand, scaled to the table
+  const ME = [['A', '♠'], ['K', '♠']], OPP = [['Q', '♥'], ['Q', '♣']];
   const BOARD = [['K', '♥'], ['7', '♠'], ['2', '♦'], ['J', '♠'], ['10', '♠']];
+  const RED = new Set(['♥', '♦']);
+  const cardEl = (c, up) => { const el = document.createElement('div'); el.className = 'card' + (up ? ' up' : '');
+    if (!c) { el.classList.add('empty'); return el; }
+    el.innerHTML = `<div class="inner"><div class="back"><svg viewBox="0 0 50 70"><use href="#back"/></svg></div><div class="face${RED.has(c[1]) ? ' red' : ''}"><span class="r">${c[0]}</span><span class="s">${c[1]}</span></div></div>`;
+    el.setAttribute('aria-label', up ? c.join('') : 'Карта рубашкой'); return el; };
+  const k = () => table.buyin / 500;
   const STEPS = [
-    { street: 'Флоп', show: 3, pot: 100, me: 450, opp: 450, log: 'Вы уравняли 50. Флоп: K♥ 7♠ 2♦. Соперник ставит 50.', btn: 'Колл', amt: '50' },
-    { street: 'Тёрн', show: 4, pot: 200, me: 400, opp: 400, log: 'Тёрн: J♠. Соперник ставит 100 — у вас дро на флеш.', btn: 'Колл', amt: '100' },
-    { street: 'Ривер', show: 5, pot: 400, me: 300, opp: 300, log: 'Ривер: 10♠. Флеш собран. Соперник чекает.', btn: 'Ставка', amt: '200' },
-    { street: 'Шоудаун', show: 5, pot: 800, me: 100, opp: 100, log: 'Соперник уравнял. Шоудаун: Q♥ Q♣ против вашего флеша.', btn: 'Забрать банк', amt: '800', showdown: true },
-    { street: 'Итог', show: 5, pot: 0, me: 900, opp: 100, log: 'Победа: флеш до туза (A♠ K♠ J♠ 10♠ 7♠). +400 JG к входу.', btn: 'Новая раздача', amt: '', done: true }
+    { street: 'Флоп', show: 3, pot: 100, me: 450, opp: 450, log: 'Вы уравняли. Флоп: K♥ 7♠ 2♦. Соперник ставит.', btn: 'Колл', amt: 50 },
+    { street: 'Тёрн', show: 4, pot: 200, me: 400, opp: 400, log: 'Тёрн: J♠. Соперник давит — у вас дро на флеш.', btn: 'Колл', amt: 100 },
+    { street: 'Ривер', show: 5, pot: 400, me: 300, opp: 300, log: 'Ривер: 10♠. Флеш собран. Соперник чекает.', btn: 'Ставка', amt: 200 },
+    { street: 'Шоудаун', show: 5, pot: 800, me: 100, opp: 100, log: 'Соперник уравнял. Шоудаун: Q♥ Q♣ против вашего флеша.', btn: 'Забрать банк', amt: 800, showdown: true },
+    { street: 'Итог', show: 5, pot: 0, me: 900, opp: 100, log: 'Победа: флеш до туза (A♠ K♠ J♠ 10♠ 7♠).', btn: 'Следующая раздача', amt: 0, done: true }
   ];
-  let step = -1, timer = null, left = 20;
-
-  function ring(id, frac, hot) {
-    const p = $(id);
-    p.style.strokeDashoffset = String(188.5 * (1 - frac));
-    p.classList.toggle('hot', !!hot);
+  let step = -1, timer = null, left = 20, hero = null;
+  const money = (v) => fmt(Math.round(v * k()));
+  function ring(frac, hot) { const p = $('oppRing'); p.style.strokeDashoffset = String(81.7 * (1 - frac)); p.classList.toggle('hot', !!hot); }
+  function render(n, showOpp, win) {
+    $('board').replaceChildren(...BOARD.map((c, i) => { const el = cardEl(i < n ? c : null, true); if (win && i !== 0 && i !== 2) el.classList.add('win'); return el; }));
+    $('oppHand').replaceChildren(...OPP.map((c) => cardEl(c, showOpp)));
+    $('myHand').replaceChildren(...ME.map((c) => { const el = cardEl(c, true); if (win) el.classList.add('win'); return el; }));
   }
   function startTimer() {
-    clearInterval(timer);
-    left = 20;
-    ring('myRing', 1);
-    $('myTurn').textContent = 'Ваш ход · 20 с';
-    timer = setInterval(() => {
-      left = Math.max(0, left - 1);
-      ring('myRing', left / 20, left <= 5);
-      $('myTurn').textContent = left > 0 ? `Ваш ход · ${left} с` : 'Время вышло · авто-чек/сброс';
-      if (left === 0) clearInterval(timer);
-    }, 1000);
+    clearInterval(timer); left = 20; ring(0);
+    $('myTurn').textContent = mode === 'bot' ? 'Ваш ход · без таймера' : 'Ваш ход · 20 с';
+    if (mode === 'bot') return;
+    timer = setInterval(() => { left = Math.max(0, left - 1); $('myTurn').textContent = left ? `Ваш ход · ${left} с` : 'Время вышло · авто-чек/сброс'; if (!left) clearInterval(timer); }, 1000);
   }
-  function render(boardCount, showOpp, winning) {
-    $('board').replaceChildren(...BOARD.map((c, i) => {
-      const el = cardEl(i < boardCount ? c : null, true);
-      if (winning && i !== 0 && i !== 2) el.classList.add('win');
-      return el;
-    }));
-    $('oppHand').replaceChildren(...OPP.map((c) => cardEl(c, showOpp)));
-    $('myHand').replaceChildren(...ME.map((c) => {
-      const el = cardEl(c, true);
-      if (winning) el.classList.add('win');
-      return el;
-    }));
-  }
-  function reset() {
-    step = -1;
-    $('stamp').classList.remove('on');
-    $('pot').textContent = '75';
-    $('myStack').textContent = '475';
-    $('oppStack').textContent = '450';
-    $('log').innerHTML = '<small>Префлоп</small>Блайнды 25 / 50. Ваш ход.';
-    $('next').innerHTML = 'Колл <small>50</small>';
-    ring('oppRing', 0);
+  function newHand() {
+    hero = mode === 'bot' ? draw(table.buyin) : ['Игрок @сосед', LIVE_AVATAR, 'Живой соперник · аватар Telegram'];
+    $('oppImg').src = hero[1]; $('oppName').textContent = hero[0]; $('oppGame').textContent = hero[2];
+    $('oppTier').textContent = `Стол ${fmt(table.buyin)} · ${table.name.toLowerCase()}`;
+    if (mode === 'bot' && !reduce) {
+      $('introImg').src = hero[1]; $('introName').textContent = hero[0]; $('introKanji').textContent = table.kanji;
+      $('introSub').textContent = `${hero[2]} · стол ${fmt(table.buyin)}`;
+      const intro = $('intro'); intro.classList.remove('on'); void intro.offsetWidth; intro.classList.add('on');
+    }
+    step = -1; $('stamp').classList.remove('on');
+    $('pot').textContent = money(75); $('myStack').textContent = money(475); $('oppStack').textContent = money(450);
+    $('log').innerHTML = `<small>Префлоп</small>Блайнды ${table.blinds}. Ваш ход.`;
+    $('next').innerHTML = `Колл <small>${money(50)}</small>`;
     render(0, false, false);
-    // deal animation: flip own cards after a beat
     $('myHand').querySelectorAll('.card').forEach((c) => c.classList.remove('up'));
-    setTimeout(() => $('myHand').querySelectorAll('.card').forEach((c, i) => setTimeout(() => c.classList.add('up'), i * 180)), 250);
+    setTimeout(() => $('myHand').querySelectorAll('.card').forEach((c, i) => setTimeout(() => c.classList.add('up'), i * 180)), reduce ? 0 : 900);
     startTimer();
   }
+  $('intro').addEventListener('click', () => $('intro').classList.remove('on'));
+  $('intro').addEventListener('animationend', (e) => { if (e.target === $('intro')) $('intro').classList.remove('on'); });
   $('next').addEventListener('click', () => {
-    if (step >= STEPS.length - 1) { reset(); return; }
-    step++;
-    const s = STEPS[step];
+    if (step >= STEPS.length - 1) { newHand(); return; }
+    const s = STEPS[++step];
     render(s.show, !!(s.showdown || s.done), !!s.done);
-    $('pot').textContent = s.pot.toLocaleString('ru-RU');
-    $('myStack').textContent = s.me.toLocaleString('ru-RU');
-    $('oppStack').textContent = s.opp.toLocaleString('ru-RU');
-    $('log').innerHTML = `<small>${s.street}</small>${s.log}`;
-    $('next').innerHTML = `${s.btn}${s.amt ? ` <small>${s.amt}</small>` : ''}`;
-    if (s.done) { clearInterval(timer); $('myTurn').textContent = 'Раздача завершена'; ring('myRing', 0); $('stamp').classList.add('on'); }
+    $('pot').textContent = money(s.pot); $('myStack').textContent = money(s.me); $('oppStack').textContent = money(s.opp);
+    $('log').innerHTML = `<small>${s.street}</small>${s.log}${s.done ? ` +${money(400)} JG к входу.` : ''}`;
+    $('next').innerHTML = `${s.btn}${s.amt ? ` <small>${money(s.amt)}</small>` : ''}`;
+    if (s.done) { clearInterval(timer); $('myTurn').textContent = 'Раздача завершена'; $('stamp').innerHTML = '勝<small>ПОБЕДА</small>'; $('stamp').classList.add('on'); }
     else startTimer();
   });
   $('fold').addEventListener('click', () => {
     clearInterval(timer);
     $('log').innerHTML = '<small>Сброс</small>Вы сбросили карты. Карты соперника не открываются.';
-    $('stamp').innerHTML = '負<small>СБРОС</small>';
-    $('stamp').classList.remove('on'); void $('stamp').offsetWidth; $('stamp').classList.add('on');
-    setTimeout(() => { $('stamp').innerHTML = '勝<small>ПОБЕДА</small>'; reset(); }, 2200);
+    $('stamp').innerHTML = '負<small>СБРОС</small>'; $('stamp').classList.remove('on'); void $('stamp').offsetWidth; $('stamp').classList.add('on');
+    setTimeout(newHand, 1800);
   });
-
-  // samples
-  $('faceSamples').replaceChildren(...[['A', '♠'], ['K', '♥'], ['10', '♦'], ['7', '♣']].map((c) => cardEl(c, true)));
-  render(0, false, false);
+  newHand();
 })();
 </script>
 </body>

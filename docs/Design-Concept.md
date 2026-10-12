@@ -13,13 +13,13 @@ Native mobile-first lounge: тёмный ink-фон, винные поверхн
 
 - **Blackjack** — Girls' Frontline: колоды Deck A/B с персонажами, сцена Sector 09
   ([превью](./design/blackjack-gfl-deck-a-preview/README.md)).
-- **Slot** — Rainbow Six Siege: тактический HUD, бетон, оранжевый атаки и синий защиты
-  ([превью](../assets/design/slot-r6/README.md), ждёт утверждения).
-- **Hold'em** — игры RGG Studio (Yakuza / Like a Dragon, Judgment): ночной Камуро-тё, лакированный стол, неон
-  ([превью](../assets/design/holdem-rgg/README.md), ждёт утверждения).
+- **Slot** — Rainbow Six Siege: холодный монохром, дым и прожекторы арены, «операции» как сезонная ротация лиц на
+  символах, Tachanka — постоянный wild ([превью](../assets/design/slot-r6/README.md), ждёт утверждения).
+- **Hold'em** — игры RGG Studio (Yakuza / Like a Dragon, Judgment): тушь и васи, ирэдзуми, печать-ханко, заставки героев;
+  соперник каждой раздачи — герой из пула стола ([превью](../assets/design/holdem-rgg/README.md), ждёт утверждения).
 
-Официальные материалы правообладателей используются только отдельным решением владельца и с атрибуцией в
-`sources.json`; превью Slot и Hold'em нарисованы с нуля.
+Портреты правообладателей используются по решению владельца с атрибуцией в `sources.json`; логотипов нет, интерфейс,
+столы, колоды и значки нарисованы с нуля.
 
 ## Первый путь
 
