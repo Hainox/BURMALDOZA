@@ -1,5 +1,12 @@
 # Project Log
 
+## 2026-10-12 — правила слота внутри пакета домена (PR #50)
+
+- `slot_skeleton.json` перенесён из `tests/fixtures/` в `packages/domain/src/burmaldoza_domain/games/`; `load_skeleton_config()` по умолчанию читает файл рядом с собой. Содержимое и `ruleset_version` (`slot-skeleton-1`) не менялись, отчёты Monte Carlo не перегенерировались.
+- Из `docker-compose.prod.yml` убран mount `configs.slot_ruleset`: API-образ получает файл вместе с `packages/`. `docs/Deploy-Production.md` обновлён.
+- Проверки: новый тест `test_default_ruleset_ships_inside_the_domain_package` сначала красный, после переноса зелёный; `pytest tests/unit` — 139 passed; `ruff check` и `ruff format --check` — чисто; CI `verify` (compose build + e2e) — passed.
+- Review Codex недоступен (лимит), merge — по прямому разрешению владельца от 2026-10-12. Остаточный риск: после деплоя проверить создание комнаты со слотом.
+
 ## 2026-09-29 — demo-copy в игровых комнатах (#37, PR #40)
 
 - По разрешению владельца расширен scope только на copy в `SlotRoom.svelte`, `BlackjackRoom.svelte` и `PokerRoom.svelte`: DEMO теперь прямо обозначает клиентское состояние без серверного подтверждения; live-формулировки сохранены. Баланс расчёта Blackjack в DEMO подписан `DEMO BALANCE`.
