@@ -23,7 +23,7 @@
     --def-soft: rgb(47 155 255 / 14%);
     --hazard: #ffd23f;
     --ok: #3ddc84;
-    --cell: 56px;
+    --cell: 64px;
     --radius: 10px;
     --display: 'Rajdhani', 'Arial Narrow', sans-serif;
     --body: 'Inter', system-ui, sans-serif;
@@ -76,7 +76,7 @@
   .cell { padding: 3px 4px; }
   .op { position: relative; width: 100%; height: 100%; overflow: hidden; border-radius: 7px; border: 1px solid var(--tier); background:
       linear-gradient(90deg, color-mix(in srgb, var(--tier) 38%, transparent), transparent 75%), #0e1216; border-width: 2px; }
-  .op img { position: absolute; left: 50%; top: -8%; width: 92%; transform: translateX(-36%); pointer-events: none; }
+  .op img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 45%; pointer-events: none; }
   .op .badge { position: absolute; left: 3px; bottom: 3px; width: 20px; height: 20px; padding: 1px; border-radius: 5px; background: rgb(11 13 16 / 85%); }
   .op .badge svg { width: 100%; height: 100%; }
   .op-D1 { --tier: #9aa6b2; } .op-D2 { --tier: #2ec4b6; } .op-D3 { --tier: #2f9bff; } .op-D4 { --tier: #a37bff; }
@@ -124,9 +124,9 @@
   .card p { margin: 0 0 10px; color: var(--muted); }
   .legend { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   @media (max-width: 520px) { .legend { grid-template-columns: minmax(0, 1fr); } }
-  .sym { display: grid; grid-template-columns: 52px 1fr; gap: 12px; align-items: center; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel-2); }
-  .sym .ico { width: 52px; height: 64px; }
-  .sym .ico .op img { width: 120%; top: -6%; transform: translateX(-42%); }
+  .sym { display: grid; grid-template-columns: 64px 1fr; gap: 12px; align-items: center; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel-2); }
+  .sym .ico { width: 64px; height: 52px; }
+
   .sym b { display: block; font: 700 15px/1.1 var(--display); letter-spacing: .06em; }
   .sym small { color: var(--muted); font-size: 12px; }
   .sym .pay { display: inline-block; margin-top: 4px; padding: 2px 7px; border-radius: 6px; background: var(--atk-soft); color: var(--atk); font: 700 12px/1.4 var(--display); letter-spacing: .06em; }
@@ -173,10 +173,10 @@
       <div class="stage">
         <div class="stage-head"><b>Точки пролома</b><span>3 линии · wild = Tachanka</span></div>
         <div class="reels" id="reels">
-          <svg class="lines" id="lines" viewBox="0 0 300 392" preserveAspectRatio="none" aria-hidden="true">
-            <polyline data-line="0" points="50,196 150,196 250,196"/>
-            <polyline data-line="1" points="50,140 150,196 250,252"/>
-            <polyline data-line="2" points="50,252 150,196 250,140"/>
+          <svg class="lines" id="lines" viewBox="0 0 300 448" preserveAspectRatio="none" aria-hidden="true">
+            <polyline data-line="0" points="50,224 150,224 250,224"/>
+            <polyline data-line="1" points="50,160 150,224 250,288"/>
+            <polyline data-line="2" points="50,288 150,224 250,160"/>
           </svg>
         </div>
         <div class="overtime" id="overtime" role="status">Овертайм · 5 Free Spins</div>
@@ -265,7 +265,7 @@
   };
   const OPS = { D1: 'Rook', D2: 'Bandit', D3: 'Jager', D4: 'Smoke', A1: 'Twitch', A2: 'Thermite', A3: 'Montagne', W: 'Tachanka' };
   const ICONS = Object.fromEntries(Object.entries(OPS).map(([k, op]) =>
-    [k, `<div class="op op-${k}"><img src="portraits/${op}.png" alt="" loading="eager"><span class="badge">${GADGETS[k]}</span></div>`]));
+    [k, `<div class="op op-${k}"><img src="portraits/faces/${op}.png" alt="" loading="eager"><span class="badge">${GADGETS[k]}</span></div>`]));
   const LEGEND = [
     ['D1', 'Rook', 'Защита · бронепластины. Самый частый.', '×1'],
     ['D2', 'Bandit', 'Защита · батарея под током.', '×2'],

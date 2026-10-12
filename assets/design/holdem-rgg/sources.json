@@ -1,0 +1,35 @@
+[
+  {
+    "table_buy_in": 100,
+    "character": "Ichiban Kasuga",
+    "game": "07_Yakuza_Like_a_Dragon",
+    "file": "portraits/Ichiban_Kasuga.webp",
+    "derived_from": "YLAD_-_Character_Profile_-_Ichiban_Kasuga.png",
+    "source": "https://static.wikia.nocookie.net/yakuza/images/f/fb/YLAD_-_Character_Profile_-_Ichiban_Kasuga.png/revision/latest?cb=20201115123141",
+    "source_sha256": "0da70f969e2e1070e334c4c39ab7134cf0860c419fca302db58fdcbd7fa2b1a3",
+    "processing": "square face crop, resized to 320x320 WebP",
+    "rights_note": "Copyright SEGA / Ryu Ga Gotoku Studio; in-game character profile still from the Yakuza wiki gallery. The project owner approves this non-commercial fan design preview with attribution; no general reuse license is asserted."
+  },
+  {
+    "table_buy_in": 500,
+    "character": "Goro Majima",
+    "game": "00_Yakuza_0",
+    "file": "portraits/Goro_Majima.webp",
+    "derived_from": "Y0_-_Character_Profile_-_Goro_Majima.png",
+    "source": "https://static.wikia.nocookie.net/yakuza/images/4/4c/Y0_-_Character_Profile_-_Goro_Majima.png/revision/latest?cb=20221006005230",
+    "source_sha256": "e0a1cd4ed6e68750391717763333a3c79a8f6c430cb1b8fcbfcec851edb6f65a",
+    "processing": "square face crop, resized to 320x320 WebP",
+    "rights_note": "Copyright SEGA / Ryu Ga Gotoku Studio; in-game character profile still from the Yakuza wiki gallery. The project owner approves this non-commercial fan design preview with attribution; no general reuse license is asserted."
+  },
+  {
+    "table_buy_in": 1000,
+    "character": "Kazuma Kiryu",
+    "game": "00_Yakuza_0",
+    "file": "portraits/Kazuma_Kiryu.webp",
+    "derived_from": "Y0_-_Character_Profile_-_Kazuma_Kiryu.png",
+    "source": "https://static.wikia.nocookie.net/yakuza/images/6/62/Y0_-_Character_Profile_-_Kazuma_Kiryu.png/revision/latest?cb=20221006005336",
+    "source_sha256": "c3c943e20aa4b19eb84d68bc92ea34f8fe1d6d123c1be0719d78492fe006d617",
+    "processing": "square face crop, resized to 320x320 WebP",
+    "rights_note": "Copyright SEGA / Ryu Ga Gotoku Studio; in-game character profile still from the Yakuza wiki gallery. The project owner approves this non-commercial fan design preview with attribution; no general reuse license is asserted."
+  }
+]

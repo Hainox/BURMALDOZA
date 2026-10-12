@@ -93,7 +93,7 @@
   .seat { display: grid; grid-template-columns: 56px 1fr auto; gap: 10px; align-items: center; }
   .seat.me { margin-top: 14px; }
   .avatar { position: relative; width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: #0b0a12; }
-  .avatar svg.portrait { width: 48px; height: 48px; border-radius: 50%; }
+  .avatar svg.portrait, .avatar img.portrait { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
   .avatar svg.ring { position: absolute; inset: -4px; width: 64px; height: 64px; transform: rotate(-90deg); }
   .ring circle { fill: none; stroke-width: 3; }
   .ring .track { stroke: rgb(255 255 255 / 10%); }
@@ -147,7 +147,7 @@
   .bots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
   @media (max-width: 560px) { .bots { grid-template-columns: minmax(0, 1fr); } }
   .bot { padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel-2); }
-  .bot svg { width: 64px; height: 64px; border-radius: 50%; background: #0b0a12; }
+  .bot img { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 2px solid var(--gold); background: #0b0a12; }
   .bot b { display: block; margin-top: 8px; font: 600 15px/1.1 var(--display); letter-spacing: .06em; text-transform: uppercase; }
   .bot small { color: var(--muted); font-size: 12px; }
   .bot .lvl { display: inline-block; margin-top: 6px; padding: 2px 8px; border-radius: 6px; background: var(--gold-soft); color: var(--gold); font: 600 12px/1.4 var(--display); letter-spacing: .06em; }
@@ -191,32 +191,6 @@
       <text x="55" y="40" text-anchor="middle" font-family="Noto Serif JP, serif" font-weight="900" font-size="14" fill="#e9b949">賭</text>
       <text x="55" y="126" text-anchor="middle" font-family="Oswald, sans-serif" font-size="9" letter-spacing="2" fill="#e9b949">BURMALDOZA</text>
     </symbol>
-    <symbol id="p-chinpira" viewBox="0 0 64 64">
-      <rect width="64" height="64" fill="#140f1c"/>
-      <path d="M10 64c2-14 12-20 22-20s20 6 22 20z" fill="#7a1430"/>
-      <path d="M24 46l8 10 8-10" fill="#f1ece4"/>
-      <circle cx="32" cy="28" r="12" fill="#d8b9a0"/>
-      <path d="M20 26c0-10 6-15 13-15 8 0 12 6 12 12-4-4-9-5-14-3-4 2-8 3-11 6z" fill="#e9b949"/>
-      <rect x="25" y="27" width="14" height="4" rx="2" fill="#15131c"/>
-    </symbol>
-    <symbol id="p-waka" viewBox="0 0 64 64">
-      <rect width="64" height="64" fill="#0e1420"/>
-      <path d="M8 64c2-15 13-21 24-21s22 6 24 21z" fill="#22283a"/>
-      <path d="M26 44l6 12 6-12" fill="#b0122c"/>
-      <circle cx="32" cy="27" r="12" fill="#cfae93"/>
-      <path d="M20 24c1-9 7-13 12-13 7 0 12 4 12 12-5-3-15-3-24 1z" fill="#1a1a1a"/>
-      <path d="M26 33h12" stroke="#5a3a2a" stroke-width="1.5"/>
-      <path d="M44 50c4 2 6 6 7 12" stroke="#3be8ff" stroke-width="2" fill="none" opacity=".7"/>
-    </symbol>
-    <symbol id="p-oyabun" viewBox="0 0 64 64">
-      <rect width="64" height="64" fill="#1a0a0a"/>
-      <path d="M6 64c3-16 14-22 26-22s23 6 26 22z" fill="#f1ece4"/>
-      <path d="M14 64c2-8 6-12 10-14l-2 14zM50 64c-2-8-6-12-10-14l2 14z" fill="#6d0f1a"/>
-      <path d="M22 52c4 3 8 4 10 4s6-1 10-4" stroke="#6d0f1a" stroke-width="2" fill="none"/>
-      <circle cx="32" cy="27" r="12" fill="#c9a688"/>
-      <path d="M20 25c0-8 5-13 12-13s12 5 12 13c-3-5-8-6-12-6s-9 1-12 6z" fill="#9b9b9b"/>
-      <path d="M25 36c4 3 10 3 14 0" stroke="#9b9b9b" stroke-width="3" fill="none"/>
-    </symbol>
     <symbol id="p-me" viewBox="0 0 64 64">
       <rect width="64" height="64" fill="#101826"/>
       <path d="M8 64c2-15 13-21 24-21s22 6 24 21z" fill="#2b3f66"/>
@@ -233,7 +207,7 @@
     <span class="tag">Фанатский концепт · превью направления · #62</span>
   </div>
   <h1>Камуро-тё <span class="kanji">賭場</span></h1>
-  <p class="lede">Heads-up Hold’em в духе игр RGG Studio: ночной квартал развлечений, неон с вертикальными иероглифами, задняя комната клуба с лакированным красным столом и золотой окантовкой. Действия — наклонное меню, как в боевых меню серии; итог раздачи — печать-иероглиф. Всё нарисовано с нуля, без официальных материалов.</p>
+  <p class="lede">Heads-up Hold’em в духе игр RGG Studio: ночной квартал развлечений, неон с вертикальными иероглифами, задняя комната клуба с лакированным красным столом и золотой окантовкой. Действия — наклонное меню, как в боевых меню серии; итог раздачи — печать-иероглиф. Соперники-боты — герои серии; стол, колода и интерфейс нарисованы с нуля.</p>
 
   <div class="layout">
     <section class="phone" aria-label="Макет комнаты на телефоне">
@@ -266,8 +240,8 @@
         <div class="felt" id="felt">
           <div class="stamp" id="stamp" aria-hidden="true">勝<small>ПОБЕДА</small></div>
           <div class="seat">
-            <div class="avatar"><svg class="ring" viewBox="0 0 64 64" aria-hidden="true"><circle class="track" cx="32" cy="32" r="30"/><circle class="prog" id="oppRing" cx="32" cy="32" r="30" style="stroke-dashoffset:0"/></svg><svg class="portrait" id="oppPortrait"><use href="#p-waka"/></svg></div>
-            <div class="who"><b id="oppName">Рю «Вакагасира»</b><small id="oppKind">Бот · стол 500</small></div>
+            <div class="avatar"><svg class="ring" viewBox="0 0 64 64" aria-hidden="true"><circle class="track" cx="32" cy="32" r="30"/><circle class="prog" id="oppRing" cx="32" cy="32" r="30" style="stroke-dashoffset:0"/></svg><img class="portrait" id="oppPortrait" src="portraits/Goro_Majima.webp" alt=""></div>
+            <div class="who"><b id="oppName">Горо Мадзима</b><small id="oppKind">Бот · стол 500</small></div>
             <div class="stack"><span id="oppStack">450</span><small>стек</small></div>
           </div>
           <div class="hand" id="oppHand"></div>
@@ -300,11 +274,11 @@
     <div>
       <section class="doc">
         <h2>Соперники-боты <em>· по столам</em></h2>
-        <p>У каждого стола свой бот с характером — от уличного задиры до главы семьи. Оригинальные персонажи «по мотивам», не герои серии.</p>
+        <p>У каждого стола свой бот — герой серии: чем дороже стол, тем легендарнее соперник. Портреты — кадры из игр (© SEGA / RGG Studio), источники в <code>sources.json</code>.</p>
         <div class="bots">
-          <div class="bot"><svg><use href="#p-chinpira"/></svg><b>Кэнта «Чинпира»</b><small>Шумный, блефует часто и неумело.</small><br><span class="lvl">Стол 100</span></div>
-          <div class="bot"><svg><use href="#p-waka"/></svg><b>Рю «Вакагасира»</b><small>Холодный счёт, ставит по силе руки.</small><br><span class="lvl">Стол 500</span></div>
-          <div class="bot"><svg><use href="#p-oyabun"/></svg><b>Гэндзо «Оябун»</b><small>Терпеливый, редкие и крупные рейзы.</small><br><span class="lvl">Стол 1 000</span></div>
+          <div class="bot"><img src="portraits/Ichiban_Kasuga.webp" alt="Итибан Касуга"><b>Итибан Касуга</b><small>Рвётся вперёд, верит в удачу и часто блефует.</small><br><span class="lvl">Стол 100</span></div>
+          <div class="bot"><img src="portraits/Goro_Majima.webp" alt="Горо Мадзима"><b>Горо Мадзима</b><small>Бешеный пёс Симано: непредсказуем, любит рейзы.</small><br><span class="lvl">Стол 500</span></div>
+          <div class="bot"><img src="portraits/Kazuma_Kiryu.webp" alt="Кадзума Кирю"><b>Кадзума Кирю</b><small>Дракон Додзимы: терпелив, ставит редко и крупно.</small><br><span class="lvl">Стол 1 000</span></div>
         </div>
         <p style="margin-top:12px">Характер — это только подача (реплики, анимации). Решения бота принимает сервер и видит лишь свои карты и борд.</p>
       </section>
@@ -347,10 +321,10 @@
       <section class="doc rights">
         <h2>Права и решения</h2>
         <ul>
-          <li>Серии Yakuza / Like a Dragon и Judgment — игры SEGA / RGG Studio. Здесь нет их логотипов, артов, героев, моделей и скриншотов: только атмосфера квартала и собственные иллюстрации. Названия персонажей — оригинальные.</li>
-          <li>Портреты героев серии или официальные материалы — только отдельным решением владельца, с атрибуцией в <code>sources.json</code>, как у GFL в Blackjack.</li>
+          <li>Серии Yakuza / Like a Dragon и Judgment — игры SEGA / RGG Studio. Портреты Касуги, Мадзимы и Кирю — кадры из игр с вики-галерей серии, © SEGA / RGG Studio; исходный файл, ссылка и SHA-256 — в <code>sources.json</code>, в превью — обрезанные аватары.</li>
+          <li>Решение владельца 13.10.2026: использовать героев серии в некоммерческом фанатском превью с атрибуцией, как GFL в Blackjack и оперативников в Slot. Общая лицензия не заявляется; логотипов серии нет.</li>
         </ul>
-        <div class="q">Нужно решение владельца: оставляем оригинальных соперников «по мотивам» или добираем героев серии (тогда вопрос прав, как у GFL)?</div>
+        <div class="q">Состав — предложение: Касуга / Мадзима / Кирю. В архиве владельца 340 портретов из 15 игр — состав легко поменять или расширить (например, разные соперники на одном столе).</div>
       </section>
     </div>
   </div>
@@ -385,10 +359,10 @@
     document.querySelectorAll('[data-mode]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
     $('searching').classList.remove('on');
   }));
-  const BOTS = [['p-chinpira', 'Кэнта «Чинпира»', 100], ['p-waka', 'Рю «Вакагасира»', 500], ['p-oyabun', 'Гэндзо «Оябун»', 1000]];
+  const BOTS = [['Ichiban_Kasuga', 'Итибан Касуга', 100], ['Goro_Majima', 'Горо Мадзима', 500], ['Kazuma_Kiryu', 'Кадзума Кирю', 1000]];
   document.querySelectorAll('[data-table]').forEach((b) => b.addEventListener('click', () => {
     const [sym, name, buyin] = BOTS[Number(b.dataset.table)];
-    $('oppPortrait').innerHTML = `<use href="#${sym}"/>`;
+    $('oppPortrait').src = `portraits/${sym}.webp`;
     $('oppName').textContent = mode === 'bot' ? name : 'Игрок @сосед';
     $('oppKind').textContent = `${mode === 'bot' ? 'Бот' : 'Живой соперник'} · стол ${buyin.toLocaleString('ru-RU')}`;
     if (mode === 'live') {
