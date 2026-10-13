@@ -47,6 +47,7 @@ async def upsert_user(session: AsyncSession, context: TelegramAuthContext) -> Cu
                 .values(
                     telegram_user_id=context.telegram_user_id,
                     display_name=context.display_name,
+                    username=context.username,
                 )
                 .on_conflict_do_nothing(index_elements=[User.telegram_user_id])
                 .returning(User.id)
@@ -62,7 +63,11 @@ async def upsert_user(session: AsyncSession, context: TelegramAuthContext) -> Cu
         await session.execute(
             update(User)
             .where(User.id == user_id)
-            .values(display_name=context.display_name, last_seen_at=datetime.now(UTC))
+            .values(
+                display_name=context.display_name,
+                username=context.username,
+                last_seen_at=datetime.now(UTC),
+            )
         )
     return CurrentUser(
         user_id=user_id,
