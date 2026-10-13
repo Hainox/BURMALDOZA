@@ -4,12 +4,15 @@ import ipaddress
 import re
 from urllib.parse import urlsplit
 
-from pydantic import Field
+from burmaldoza_domain.games.slot_operations import OperationOverride
+from pydantic import AwareDatetime, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", extra="ignore", hide_input_in_errors=True
+    )
 
     database_url: str = Field(
         default="postgresql+asyncpg://burmaldoza:change-me-before-local-run@localhost:5432/burmaldoza"
@@ -21,6 +24,27 @@ class Settings(BaseSettings):
     telegram_init_data_max_age_seconds: int = 86400
     environment: str = "development"
     api_port: int = 8000
+    slot_event_operation_id: str | None = None
+    slot_event_starts_at: AwareDatetime | None = None
+    slot_event_ends_at: AwareDatetime | None = None
+
+    @model_validator(mode="after")
+    def validate_slot_event(self) -> Settings:
+        fields = (self.slot_event_operation_id, self.slot_event_starts_at, self.slot_event_ends_at)
+        if any(value is not None for value in fields):
+            if any(value is None for value in fields):
+                raise ValueError("slot event requires operation ID, start and end together")
+            _ = self.slot_operation_override
+        return self
+
+    @property
+    def slot_operation_override(self) -> OperationOverride | None:
+        if self.slot_event_operation_id is None:
+            return None
+        assert self.slot_event_starts_at is not None and self.slot_event_ends_at is not None
+        return OperationOverride(
+            self.slot_event_operation_id, self.slot_event_starts_at, self.slot_event_ends_at
+        )
 
 
 _DEFAULT_PORTS = {"http": 80, "https": 443}

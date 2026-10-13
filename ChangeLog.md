@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added cosmetic seven-day Siege operation rotation starting October 19, 2026 at 00:00 Moscow time, with optional dated arena overrides and immutable operation metadata on spin replays. Invalid or incomplete event configuration now fails at startup. Slot payouts and reel strips are unchanged.
+
 - Added the Kamurocho Hold'em lobby and seat-specific table, hero intros, confirmed actions, PvP deadlines, reconnect/retry recovery, reduced motion and image attribution. Waiting search cancellation requires the server fix from PR #79. Demo hands never update the wallet.
 
 - Allow players to cancel a waiting Hold'em opponent search with an idempotent action, without charging the buy-in.
