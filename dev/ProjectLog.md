@@ -471,6 +471,14 @@
 - Ссылки на чеклист добавлены в этап 5 `docs/Development-Roadmap.md` и в условия публичного запуска `docs/Launch-Checkpoint.md`.
 - Проверки: `git diff --check` — passed.
 
+## 2026-10-13 — история операций в Mini App (#51)
+
+- Codex (точный вариант и effort не отображаются) реализовал задачу в ветке `codex/miniapp-ledger-history`; на финальных проверках у Codex закончился лимит. Claude Code (claude-opus-5-5, effort не отображается) замещает Codex: довёл ветку, проверил и открыл PR. Command Code недоступен, задача передана Codex владельцем.
+- Сделано: `ApiClient.getWalletLedger()` читает `GET /api/v1/wallet/ledger` и отклоняет некорректный ответ; компонент `LedgerHistory.svelte` показывает причину, время МСК, изменение и баланс после, состояния загрузки, ошибки с повтором и пустого списка. В DEMO запросов нет, записи не выдумываются. История перечитывается с сервера после подтверждённого гранта, ответа на действие, события и снимка комнаты. Сервер не менялся.
+- Правка Claude Code: при повторной загрузке последний подтверждённый список остаётся на экране, без мигания «Загружаем историю…»; временный конфиг Playwright Codex удалён.
+- Проверки: `pnpm miniapp:check` — 0 errors / 0 warnings; `pnpm miniapp:test` — 27 passed; `pnpm miniapp:build` — passed; полный Playwright — 31 passed в трёх прогонах подряд (на порту 4175, так как 4173 занят посторонним локальным сервером).
+- Риск: тест `slot-stop.spec.ts` «renders the live canonical grid…» изредка падает при параллельном прогоне — так же и на `main` без этой задачи (1 из 4 прогонов), к истории операций не относится.
+
 ## 2026-10-13 — правки после review PR #48 (#55)
 
 - Claude Code (claude-opus-5-5, effort не отображается), ветка `claude/journal-followups-48` от `main` `5785e30`. Закрыты четыре некритичных замечания из review PR #48.
@@ -479,3 +487,9 @@
 - `docs/project-journal/README.md`: dev-серверы по умолчанию только на localhost; `--host 0.0.0.0` — только для облачного контейнера.
 - `ChangeLog.md`: убрана пустая строка внутри списка `## Unreleased`.
 - Проверки: `node docs/project-journal/test-offline.cjs` — passed; `node --check` app.js и test-offline.cjs — passed; `git diff --check` — passed.
+
+## 2026-10-13 — review Codex и синхронизация PR #60 после merge #58
+
+- По прямому разрешению владельца Codex слил PR #58 обычным merge commit `8ddfe3c`, затем синхронизировал ветку `codex/miniapp-ledger-history` с этой базой для PR #60. Единственный конфликт — в этом журнале; обе записи #51/#55 сохранены. Mini App при синхронизации не менялся.
+- Перед merge проверены точные head: #58 `4cddba5`, #60 `4094e04`; Verify зелёный, блокирующих review нет. Независимая проверка #60: check 0/0, unit 27 passed, build passed, Chromium E2E 31 passed; регрессии обоих PR подтверждены mutation checks в изолированных копиях. Review опубликован в каждом PR.
+- После разрешения конфликта: offline regression журнала, `node --check` app.js и `git diff --cached --check` — passed. На новом head PR #60 требуется новый Verify перед merge. Сервер и hooks/poller не затрагивались; публикация Pages при merge #60 разрешена владельцем вместе с merge.
