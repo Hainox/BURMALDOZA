@@ -11,6 +11,7 @@ from burmaldoza_contracts.rooms import (
     WebSocketAuthMessage,
 )
 from burmaldoza_domain.core import StateVersionConflictError
+from burmaldoza_domain.games.slot_ruleset import SLOT_RULESET_VERSIONS
 from fastapi import (
     APIRouter,
     Depends,
@@ -48,7 +49,7 @@ class GameInfo(BaseModel):
 _RULESETS: dict[GameType, dict[str, object]] = {
     GameType.SLOT: {
         "game_type": GameType.SLOT,
-        "version": "slot-skeleton-1",
+        "version": "slot-siege-1",
         "columns": 3,
         "rows": 7,
         "min_bet": 10,
@@ -75,7 +76,7 @@ _RULESETS: dict[GameType, dict[str, object]] = {
 async def games(current_user: CurrentUser = Depends(get_current_user)) -> list[GameInfo]:
     del current_user
     return [
-        GameInfo(game_type=GameType.SLOT, ruleset_version="slot-skeleton-1"),
+        GameInfo(game_type=GameType.SLOT, ruleset_version="slot-siege-1"),
         GameInfo(game_type=GameType.BLACKJACK, ruleset_version="blackjack-gfl-skeleton-1"),
         GameInfo(game_type=GameType.HOLDEM, ruleset_version="holdem-skeleton-1"),
     ]
@@ -89,6 +90,8 @@ async def ruleset(
 ) -> dict[str, object]:
     del current_user
     definition = _RULESETS.get(game_type)
+    if game_type is GameType.SLOT and version in SLOT_RULESET_VERSIONS:
+        return {**_RULESETS[GameType.SLOT], "version": version}
     if definition is None or definition["version"] != version:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="ruleset not found")
     return definition
