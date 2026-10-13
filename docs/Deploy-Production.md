@@ -72,6 +72,18 @@ fallocate -l 4G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /
 echo '/swapfile none swap sw 0 0' >> /etc/fstab
 ```
 
+Образ Ubuntu 22.04 у HostKey (проверено 13.10.2026) не пишет `/var/log/auth.log`, и fail2ban со
+стандартной настройкой падает с «Have not found any log file for sshd jail». Тогда jail читает журнал systemd:
+
+```bash
+printf '[sshd]\nenabled = true\nbackend = systemd\n' > /etc/fail2ban/jail.d/sshd-systemd.local
+apt -y install python3-systemd && systemctl restart fail2ban && fail2ban-client status sshd
+```
+
+Тот же образ может прийти с уже установленным Docker. Если `apt-cache policy docker-ce` показывает
+источник `download.docker.com` и `docker compose version` не ниже 2.23.1, блок установки ниже
+пропустить и выполнить только `usermod -aG docker deploy`.
+
 Docker Engine и плагин Compose ставятся из официального apt-репозитория Docker. Snap и Ubuntu-пакет
 `docker.io` не подходят: в них нет современного Compose v2. Нужен Compose **2.23.1+** (раздел 1),
 поэтому версия проверяется сразу после установки.
@@ -150,6 +162,10 @@ cut -d= -f1 .env         # проверка: только имена перем�
 )
 ```
 
+Токен вставляется **один раз**: при скрытом вводе легко вставить его дважды. Проверка без вывода значения —
+длина около 46 символов и ответ Telegram:
+`v=$(grep '^BOT_TOKEN=' .env | cut -d= -f2-); echo ${#v}; curl -s "https://api.telegram.org/bot$v/getMe" | grep -o '"ok":[a-z]*'; unset v`.
+
 | Переменная | Откуда | Примечание |
 |---|---|---|
 | `POSTGRES_PASSWORD` | `openssl rand -hex 32` | Меняется только вместе с данными базы. |
@@ -180,7 +196,8 @@ docker compose version                                 # 2.23.1+
 "${C[@]}" config --quiet                                # обязательные значения заданы
 "${C[@]}" config --format json | python3 -c '
 import json, sys
-s = json.load(sys.stdin)["services"]
+doc = json.load(sys.stdin)
+s = doc["services"]
 assert {k for k,v in s.items() if v.get("ports")} == {"caddy"}
 assert {(str(p["published"]), p["protocol"]) for p in s["caddy"]["ports"]} == {("80","tcp"),("443","tcp"),("443","udp")}
 assert "--workers 1" in " ".join(s["api"]["command"])
@@ -189,7 +206,7 @@ assert s["miniapp"]["build"]["args"]["PUBLIC_API_BASE_URL"] == "https://burmaldo
 assert s["bot"]["environment"]["API_BASE_URL"] == "http://api:8000"
 assert set(s["bot"]["networks"]) == {"edge", "bot_api"}
 assert set(s["api"]["networks"]) == {"backend", "edge", "bot_api"}
-assert s["networks"]["bot_api"]["internal"] is True
+assert doc["networks"]["bot_api"]["internal"] is True
 assert s["api"]["environment"]["MINIAPP_URL"] == s["bot"]["environment"]["MINIAPP_URL"] == "https://burmaldoza.ru"
 token = s["api"]["environment"]["INTERNAL_API_TOKEN"]
 assert len(token) >= 64 and token.isascii() and token.isalnum()
