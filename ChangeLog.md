@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added cosmetic seven-day Siege operation rotation starting October 19, 2026 at 00:00 Moscow time, with optional dated arena overrides and immutable operation metadata on spin replays. Invalid or incomplete event configuration now fails at startup. Slot payouts and reel strips are unchanged.
+
 - Telegram haptic feedback now works: the Mini App adapter uses `WebApp.HapticFeedback` instead of a non-existent `WebApp.haptic`.
 - Added an index on ledger entries by time and reason for the weekly leaderboard; requires database migration 20261013_0006.
 - Wallet history now orders a settlement payout before its stake when timestamps are equal, keeping the newest entries first.

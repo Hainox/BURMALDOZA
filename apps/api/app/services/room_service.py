@@ -12,6 +12,7 @@ from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 from burmaldoza_contracts.common import GameType, RoomStatus
 from burmaldoza_contracts.events import EventEnvelope
 from burmaldoza_contracts.rooms import ActionRequest, RoomSnapshot, WebSocketAuthMessage
+from burmaldoza_contracts.slot import SlotOperationMetadata
 from burmaldoza_domain.core import (
     InsufficientBalanceError,
     InvalidActionError,
@@ -30,11 +31,13 @@ from burmaldoza_domain.games.blackjack import (
     apply_action as apply_blackjack_action,
 )
 from burmaldoza_domain.games.slot import SlotConfig, SlotOutcome, spin
+from burmaldoza_domain.games.slot_operations import OperationOverride, select_operation
 from burmaldoza_domain.games.slot_ruleset import load_slot_config
 from burmaldoza_domain.rng import RandomSource, SystemRandomSource
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.telegram_auth import TelegramAuthError, verify_telegram_init_data
 from app.db.models import GameAction, GamePlayer, GameRoom
 from app.dependencies import CurrentUser, upsert_user
@@ -268,6 +271,7 @@ class RoomService:
         bot_token: str = "",
         max_auth_age_seconds: int = 86400,
         now: Callable[[], datetime] | None = None,
+        slot_operation_override: OperationOverride | None = None,
     ) -> None:
         if session is not None and store is not None:
             raise ValueError("provide either session or store")
@@ -287,6 +291,7 @@ class RoomService:
         self.bot_token = bot_token
         self.max_auth_age_seconds = max_auth_age_seconds
         self.now = now or (lambda: datetime.now(UTC))
+        self.slot_operation_override = slot_operation_override or settings.slot_operation_override
         self._lock = asyncio.Lock()
 
     async def create_room(
@@ -309,6 +314,8 @@ class RoomService:
             if game_type is GameType.SLOT else _RULESET_VERSIONS[game_type]
         )
         public_state = _initial_public_state(game_type)
+        if game_type is GameType.SLOT and ruleset_version == "slot-siege-1":
+            public_state.update(self._slot_operation_metadata())
 
         if self.store is not None:
             async with self._lock:
@@ -323,7 +330,7 @@ class RoomService:
                     members={user_id},
                 )
                 self.store.rooms[room.room_id] = room
-                return _snapshot_from_memory(room)
+                return self._with_slot_operation(_snapshot_from_memory(room))
 
         assert self.session is not None
         async with self.session.begin():
@@ -339,14 +346,14 @@ class RoomService:
             await self.session.flush()
             self.session.add(GamePlayer(room_id=room.id, user_id=user_id, seat=0, stack=0))
             await self.session.flush()
-            return self._db_snapshot(room)
+            return self._with_slot_operation(self._db_snapshot(room))
 
     async def snapshot(self, room_id: UUID, user_id: int) -> RoomSnapshot:
         if self.store is not None:
             async with self._lock:
                 room = self._get_memory_room(room_id)
                 self._require_member(room, user_id)
-                return _snapshot_from_memory(room)
+                return self._with_slot_operation(_snapshot_from_memory(room))
 
         assert self.session is not None
         async with self.session.begin():
@@ -355,7 +362,7 @@ class RoomService:
             if room.game_type == 'holdem':
                 from app.services.holdem_service import HoldemService
                 return await HoldemService(self).project_snapshot(room, user_id)
-            return self._db_snapshot(room)
+            return self._with_slot_operation(self._db_snapshot(room))
 
     async def apply_action(self, room_id: UUID, user_id: int, request: ActionRequest) -> EventEnvelope:
         if self.store is not None:
@@ -400,6 +407,21 @@ class RoomService:
                 event = await self._advance_db(room, user_id, request, action)
         await self.event_bus.publish(event)
         return event
+
+    def _slot_operation_metadata(self) -> dict[str, Any]:
+        operation = select_operation(_utc(self.now()), self.slot_operation_override)
+        return SlotOperationMetadata(
+            operation_id=operation.operation_id,
+            next_operation_id=operation.next_operation_id,
+            operation_changes_at=operation.changes_at,
+        ).model_dump(mode="json")
+
+    def _with_slot_operation(self, snapshot: RoomSnapshot) -> RoomSnapshot:
+        if snapshot.game_type is GameType.SLOT and snapshot.ruleset_version == "slot-siege-1":
+            return snapshot.model_copy(update={
+                "public_state": {**snapshot.public_state, **self._slot_operation_metadata()}
+            })
+        return snapshot
 
     async def personalize_event(self, event: EventEnvelope, user_id: int) -> EventEnvelope:
         if event.type.startswith('holdem.'):
@@ -578,6 +600,7 @@ class RoomService:
             ):
                 raise RoomServiceError("slot paylines must be a list of integer indexes")
             active_paylines = tuple(raw_paylines)
+            operation = self._slot_operation_metadata() if config.ruleset_version == "slot-siege-1" else {}
 
             try:
                 outcome = spin(config, bet, active_paylines, self.slot_rng)
@@ -597,7 +620,8 @@ class RoomService:
                 raise RoomServiceError("insufficient balance for slot bet") from error
 
             return _ActionExecution(
-                result=_serialize_slot_result(outcome, settlement),
+                result={**_serialize_slot_result(outcome, settlement), **operation},
+                public_state=operation,
                 private_state=private_state,
             )
 
