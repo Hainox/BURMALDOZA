@@ -6,7 +6,7 @@ window.SIEGE_LINEUPS = {
    "name": "Ледяной рассвет",
    "kind": "season",
    "accent": "#8cc4ff",
-   "when": "Недели 1–2",
+   "when": "Неделя 1",
    "def": [
     "Pulse",
     "Valkyrie",
@@ -24,7 +24,7 @@ window.SIEGE_LINEUPS = {
    "name": "Красный сигнал",
    "kind": "season",
    "accent": "#ff4b4b",
-   "when": "Недели 3–4",
+   "when": "Неделя 2",
    "def": [
     "Kaid",
     "Goyo",
@@ -42,7 +42,7 @@ window.SIEGE_LINEUPS = {
    "name": "Пыльная буря",
    "kind": "season",
    "accent": "#e7a64a",
-   "when": "Недели 5–6",
+   "when": "Неделя 3",
    "def": [
     "Warden",
     "Aruni",
@@ -60,7 +60,7 @@ window.SIEGE_LINEUPS = {
    "name": "Бархатная ночь",
    "kind": "season",
    "accent": "#b18cff",
-   "when": "Недели 7–8",
+   "when": "Неделя 4",
    "def": [
     "Melusi",
     "Thorn",
