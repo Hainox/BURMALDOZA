@@ -194,6 +194,19 @@ export class ApiClient {
     return mapRoomSnapshot(snapshot);
   }
 
+  async getOpponentAvatar(roomId: string, signal?: AbortSignal): Promise<Blob | null> {
+    const response = await this.fetcher(`${this.baseUrl}/api/v1/rooms/${encodeURIComponent(roomId)}/opponent-avatar`, {
+      method:'GET', headers:{'X-Telegram-Init-Data':this.initData}, cache:'no-store', signal
+    });
+    if (response.status === 204) return null;
+    if (!response.ok) throw new ApiError(response.status, 'Аватар недоступен');
+    const contentType = response.headers.get('Content-Type')?.split(';')[0];
+    if (!['image/jpeg','image/png'].includes(contentType ?? '')) throw new Error('Некорректный аватар');
+    const blob = await response.blob();
+    if (!blob.size || blob.size > 256 * 1024) throw new Error('Некорректный размер аватара');
+    return blob;
+  }
+
   async applyAction(
     roomId: string,
     expectedStateVersion: number,

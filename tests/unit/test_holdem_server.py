@@ -95,6 +95,96 @@ async def read(factory, service, room_id, user):
 
 
 @pytest.mark.asyncio
+async def test_opponent_profile_is_seat_specific_optional_and_not_persisted(holdem_db):
+    factory, service, _, _ = holdem_db
+    waiting = await create(factory, service, mode="pvp")
+    assert waiting.public_state["opponent_profile"] is None
+    async with factory() as session, session.begin():
+        (await session.get(User, 2)).username = "opponent_test"
+    second = await create(factory, service, user=2, mode="pvp")
+    first = await read(factory, service, waiting.room_id, 1)
+    path = f"/api/v1/rooms/{first.room_id}/opponent-avatar"
+    assert first.public_state["opponent_profile"] == {
+        "nickname": "@opponent_test", "avatar_path": path,
+    }
+    assert second.public_state["opponent_profile"]["nickname"] == "Живой игрок"
+    event = await move(factory, service, first, 1, "call")
+    assert event.payload["public_state"]["opponent_profile"] == first.public_state["opponent_profile"]
+    async with factory() as session:
+        room = await session.get(GameRoom, first.room_id)
+        assert "opponent_profile" not in room.state_json
+        assert "opponent_test" not in str(room.state_json)
+    with pytest.raises(RoomAccessError):
+        await read(factory, service, first.room_id, 3)
+    async with factory() as session, session.begin():
+        (await session.get(User, 2)).username = None
+    assert (await read(factory, service, first.room_id, 1)).public_state[
+        "opponent_profile"
+    ]["nickname"] == "Живой игрок"
+    bot = await create(factory, service, user=3)
+    assert bot.public_state["opponent_profile"] is None
+
+
+@pytest.mark.asyncio
+async def test_avatar_endpoint_authorizes_before_source_and_cache(holdem_db):
+    from app.dependencies import CurrentUser, get_current_user, get_room_service
+    from app.routers.rooms import router
+    from app.services.opponent_avatar import AvatarService
+    from fastapi import FastAPI
+    from httpx import ASGITransport, AsyncClient, MockTransport, Response
+
+    factory, service, _, _ = holdem_db
+    waiting = await create(factory, service, mode="pvp")
+    current = [1]
+    calls = []
+
+    def source(request):
+        calls.append(request)
+        return Response(200, json={"ok": True, "result": {"photos": []}})
+
+    app = FastAPI()
+    app.include_router(router)
+    app.state.opponent_avatars = AvatarService("fixture", transport=MockTransport(source))
+    app.dependency_overrides[get_current_user] = lambda: CurrentUser(current[0], current[0], "Test")
+
+    async def get_service():
+        async with factory() as session:
+            yield service(session)
+
+    app.dependency_overrides[get_room_service] = get_service
+    path = f"/api/v1/rooms/{waiting.room_id}/opponent-avatar"
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        assert (await client.get(path)).status_code == 204
+        assert not calls
+        await create(factory, service, user=2, mode="pvp")
+        response = await client.get(path)
+        assert response.status_code == 204
+        assert response.headers["Cache-Control"] == "no-store"
+        assert len(calls) == 1
+        current[0] = 3
+        assert (await client.get(path)).status_code == 403
+        assert len(calls) == 1
+        assert (await client.get(f"/api/v1/rooms/{uuid4()}/opponent-avatar")).status_code == 404
+        from tests.unit.test_opponent_avatar import JPEG
+        from tests.unit.test_opponent_avatar import source as avatar_source
+
+        current[0] = 1
+        app.state.opponent_avatars = AvatarService("fixture", transport=avatar_source())
+        response = await client.get(path)
+        assert response.status_code == 200
+        assert response.content == JPEG
+        assert response.headers["content-type"] == "image/jpeg"
+        assert response.headers["x-content-type-options"] == "nosniff"
+        assert response.headers["cache-control"] == "no-store"
+        app.state.opponent_avatars = AvatarService("fixture", transport=avatar_source("timeout"))
+        response = await client.get(path)
+        assert response.status_code == 503
+        assert response.headers["retry-after"] == "30"
+        del app.dependency_overrides[get_current_user]
+        assert (await client.get(path)).status_code == 401
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("buy_in", [100, 500, 1000])
 async def test_bot_create_debits_once_replays_and_fold_never_exposes_enemy(holdem_db, buy_in):
     factory, service, _, bus = holdem_db
@@ -417,7 +507,7 @@ async def test_websocket_snapshots_events_are_personalized_and_nonmembers_reject
 
     app.dependency_overrides[get_session] = session_dep
     raw = {
-        user: make_init_data(auth_date=datetime.now(UTC), user={"id": user, "first_name": "Test"})
+        user: make_init_data(auth_date=datetime.now(UTC), user={"id": user, "first_name": "Test", "username": f"fixture_{user}"})
         for user in (1, 2, 3)
     }
     with TestClient(app) as client:
@@ -440,6 +530,9 @@ async def test_websocket_snapshots_events_are_personalized_and_nonmembers_reject
                 assert response.status_code == 200
                 event1 = ws1.receive_json()["event"]
                 event2 = ws2.receive_json()["event"]
+                assert event1["payload"]["public_state"]["opponent_profile"]["nickname"] == "@fixture_2"
+                assert event2["payload"]["public_state"]["opponent_profile"]["nickname"] == "@fixture_1"
+                assert response.json()["event"]["payload"]["public_state"]["opponent_profile"] == event1["payload"]["public_state"]["opponent_profile"]
                 assert (
                     event1["payload"]["public_state"]["hole_cards"]
                     == own1["public_state"]["hole_cards"]
