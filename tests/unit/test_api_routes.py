@@ -273,6 +273,7 @@ async def test_wallet_request_id_from_another_user_is_a_conflict_in_database() -
         assert first_wallet.json()["balance"] == 1250
         assert second_wallet.json()["balance"] == 1000
 
+
 @pytest.mark.asyncio
 async def test_ledger_orders_settlement_payout_before_stake_with_equal_timestamps() -> None:
     from uuid import UUID
