@@ -2,8 +2,12 @@
 
 ## Unreleased
 
-- Refreshed the local project journal snapshot and QA status; closed assignments no longer appear as pending handoffs, and an empty queue is explained explicitly.
+- Wallet history now orders a settlement payout before its stake when timestamps are equal, keeping the newest entries first.
+- Added the authenticated Mini App top-15 leaderboard by net game result for the current Moscow calendar week, using verified Telegram usernames with an anonymous fallback; requires database migration 20261013_0004. DEMO shows no invented rankings. Players outside the top see their own place, and the table refreshes at most every 15 seconds.
+- New Slot rooms use the approved slot-siege-1 eight-symbol payout rules; existing skeleton rooms retain their original ruleset.
 
+- The Mini App now shows the player's wallet history (last 100 server ledger entries, Moscow time) and rereads it after confirmed grants and game actions; DEMO shows no invented entries.
+- Refreshed the local project journal snapshot and QA status; closed assignments no longer appear as pending handoffs, and an empty queue is explained explicitly.
 - Demo Slot, Blackjack and Hold’em copy now clearly identifies client-generated demo state; demo grid, bonus state and balance no longer imply server confirmation, while live wording remains unchanged.
 - Mini App result labels now distinguish a completed demo outcome from a server-confirmed live result. Demo Slot and Hold’em details no longer claim server confirmation; confirmed balances remain limited to live results.
 - Made the Blackjack demo table playable: a deterministic demo hand with HIT/STAND/DOUBLE, the dealer row revealed on stand, and an explicit marker that no server confirmed the round. A rejected live action (409 or a network failure) now re-reads the room automatically, so the next action sends the current `state_version` instead of repeating the stale one.

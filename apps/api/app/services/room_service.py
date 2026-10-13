@@ -30,7 +30,7 @@ from burmaldoza_domain.games.blackjack import (
     apply_action as apply_blackjack_action,
 )
 from burmaldoza_domain.games.slot import SlotConfig, SlotOutcome, spin
-from burmaldoza_domain.games.slot_ruleset import load_skeleton_config
+from burmaldoza_domain.games.slot_ruleset import load_slot_config
 from burmaldoza_domain.rng import RandomSource, SystemRandomSource
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -85,7 +85,7 @@ class MemoryRoomStore:
 
 
 _RULESET_VERSIONS = {
-    GameType.SLOT: "slot-skeleton-1",
+    GameType.SLOT: "slot-siege-1",
     GameType.BLACKJACK: "blackjack-gfl-skeleton-1",
     GameType.HOLDEM: "holdem-skeleton-1",
 }
@@ -264,6 +264,7 @@ class RoomService:
         slot_config: SlotConfig | None = None,
         slot_rng: RandomSource | None = None,
         blackjack_rng: RandomSource | None = None,
+        holdem_rng: RandomSource | None = None,
         bot_token: str = "",
         max_auth_age_seconds: int = 86400,
         now: Callable[[], datetime] | None = None,
@@ -278,23 +279,35 @@ class RoomService:
             if session is not None
             else WalletService(store=MemoryWalletStore())
         )
-        self.slot_config = slot_config or load_skeleton_config()
+        self.slot_config = slot_config or load_slot_config()
         self.slot_rng = slot_rng or SystemRandomSource()
         self.blackjack_rng = blackjack_rng or SystemRandomSource()
+        self.holdem_rng = holdem_rng or SystemRandomSource()
         self.blackjack_rules = BlackjackRules()
         self.bot_token = bot_token
         self.max_auth_age_seconds = max_auth_age_seconds
         self.now = now or (lambda: datetime.now(UTC))
         self._lock = asyncio.Lock()
 
-    async def create_room(self, user_id: int, game_type: GameType, mode: str) -> RoomSnapshot:
+    async def create_room(
+        self, user_id: int, game_type: GameType, mode: str, *,
+        buy_in: int | None = None, action_id: UUID | None = None,
+    ) -> RoomSnapshot:
         try:
             game_type = GameType(game_type)
         except ValueError as error:
             raise RoomServiceError("unknown game type") from error
+        if game_type is GameType.HOLDEM:
+            from app.services.holdem_service import HoldemService
+            return await HoldemService(self).create(user_id, mode, buy_in, action_id)
+        if buy_in is not None or action_id is not None:
+            raise RoomServiceError("buy_in and creation action_id are only accepted for Hold'em")
         if not mode or len(mode) > 32:
             raise RoomServiceError("room mode is invalid")
-        ruleset_version = _RULESET_VERSIONS[game_type]
+        ruleset_version = (
+            self.slot_config.ruleset_version
+            if game_type is GameType.SLOT else _RULESET_VERSIONS[game_type]
+        )
         public_state = _initial_public_state(game_type)
 
         if self.store is not None:
@@ -339,6 +352,9 @@ class RoomService:
         async with self.session.begin():
             room = await self._load_db_room(room_id, lock=False)
             await self._require_db_member(room_id, user_id)
+            if room.game_type == 'holdem':
+                from app.services.holdem_service import HoldemService
+                return await HoldemService(self).project_snapshot(room, user_id)
             return self._db_snapshot(room)
 
     async def apply_action(self, room_id: UUID, user_id: int, request: ActionRequest) -> EventEnvelope:
@@ -359,6 +375,11 @@ class RoomService:
             return event
 
         assert self.session is not None
+        async with self.session.begin():
+            game_type = await self.session.scalar(select(GameRoom.game_type).where(GameRoom.id == room_id))
+        if game_type == 'holdem':
+            from app.services.holdem_service import HoldemService
+            return await HoldemService(self).apply(room_id, user_id, request)
         event: EventEnvelope
         async with self.session.begin():
             room = await self._load_db_room(room_id, lock=True)
@@ -378,6 +399,15 @@ class RoomService:
                 action = _action_name(request, GameType(room.game_type))
                 event = await self._advance_db(room, user_id, request, action)
         await self.event_bus.publish(event)
+        return event
+
+    async def personalize_event(self, event: EventEnvelope, user_id: int) -> EventEnvelope:
+        if event.type.startswith('holdem.'):
+            from app.services.holdem_service import HoldemService
+            assert self.session is not None
+            async with self.session.begin():
+                room = await self._load_db_room(event.room_id, lock=False)
+                return await HoldemService(self).project_event(room, event, user_id)
         return event
 
     async def authenticate_websocket(self, first_message: WebSocketAuthMessage) -> CurrentUser:
@@ -439,6 +469,7 @@ class RoomService:
             room.game_type,
             action,
             room.private_state,
+            room.ruleset_version,
         )
         room.state_version += 1
         room.status = RoomStatus.ACTIVE
@@ -458,6 +489,7 @@ class RoomService:
             request.action_id,
             room.public_state,
             execution.result,
+            room.ruleset_version,
         )
         room.actions[request.action_id] = event
         return event
@@ -496,6 +528,7 @@ class RoomService:
         action_id: UUID,
         public_state: dict[str, Any],
         result: dict[str, Any] | None = None,
+        ruleset_version: str | None = None,
     ) -> EventEnvelope:
         payload: dict[str, Any] = {
             "action_id": str(action_id),
@@ -508,7 +541,7 @@ class RoomService:
             room_id=room_id,
             state_version=state_version,
             type=f"{game_type.value}.action.accepted",
-            ruleset_version=_RULESET_VERSIONS[game_type],
+            ruleset_version=ruleset_version or _RULESET_VERSIONS[game_type],
             server_time=_utc(self.now()),
             payload=payload,
             animation_hint=_ANIMATION_HINTS[game_type],
@@ -522,8 +555,16 @@ class RoomService:
         game_type: GameType,
         action: str,
         private_state: dict[str, Any],
+        ruleset_version: str | None = None,
     ) -> _ActionExecution:
         if game_type is GameType.SLOT:
+            config = self.slot_config
+            if ruleset_version is not None and ruleset_version != config.ruleset_version:
+                try:
+                    config = load_slot_config(ruleset_version)
+                except ValueError as error:
+                    # A stored room with an unregistered ruleset is a room error, not a 500.
+                    raise RoomServiceError("slot room uses an unknown ruleset") from error
             if action != "spin":
                 raise RoomServiceError(f"action {action!r} is not supported by the slot room")
 
@@ -531,7 +572,7 @@ class RoomService:
             if isinstance(bet, bool) or not isinstance(bet, int) or not 10 <= bet <= 100:
                 raise RoomServiceError("slot bet must be an integer between 10 and 100")
 
-            raw_paylines = request.payload.get("paylines", tuple(range(len(self.slot_config.paylines))))
+            raw_paylines = request.payload.get("paylines", tuple(range(len(config.paylines))))
             if not isinstance(raw_paylines, (list, tuple)) or any(
                 isinstance(index, bool) or not isinstance(index, int) for index in raw_paylines
             ):
@@ -539,7 +580,7 @@ class RoomService:
             active_paylines = tuple(raw_paylines)
 
             try:
-                outcome = spin(self.slot_config, bet, active_paylines, self.slot_rng)
+                outcome = spin(config, bet, active_paylines, self.slot_rng)
             except ValueError as error:
                 raise RoomServiceError(str(error)) from error
 
@@ -742,6 +783,7 @@ class RoomService:
             game_type,
             action,
             room.private_state_json or {},
+            room.ruleset_version,
         )
         next_state = self._next_public_state(
             room.state_json or {},
@@ -756,7 +798,7 @@ class RoomService:
         room.state_json = next_state
         room.private_state_json = execution.private_state
         event = self._build_event(
-            room.id, next_version, game_type, request.action_id, next_state, execution.result
+            room.id, next_version, game_type, request.action_id, next_state, execution.result, room.ruleset_version
         )
         self.session.add(
             GameAction(

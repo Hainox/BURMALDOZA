@@ -13,6 +13,7 @@ from burmaldoza_contracts.common import GameType
 from burmaldoza_contracts.rooms import ActionRequest, WebSocketAuthMessage
 from burmaldoza_domain.core import StateVersionConflictError
 from burmaldoza_domain.games.blackjack import Card
+from burmaldoza_domain.games.slot_ruleset import load_skeleton_config
 
 from tests.unit.test_telegram_auth import BOT_TOKEN, NOW, make_init_data
 
@@ -53,7 +54,7 @@ async def test_slot_spin_persists_canonical_result_and_replays_without_respinnin
             return 0
 
     rng = FixedStops()
-    service = RoomService(store=MemoryRoomStore(), wallet_service=wallet, slot_rng=rng)
+    service = RoomService(store=MemoryRoomStore(), wallet_service=wallet, slot_rng=rng, slot_config=load_skeleton_config())
     created = await service.create_room(12345, GameType.SLOT, "solo")
     request = ActionRequest(
         action_id=uuid4(), expected_state_version=created.state_version, payload={"action": "spin", "bet": 10}
@@ -91,7 +92,7 @@ async def test_slot_zero_payout_is_persisted_without_a_payout_ledger_entry() -> 
             assert upper == 10
             return next(self.values)
 
-    service = RoomService(store=MemoryRoomStore(), wallet_service=wallet, slot_rng=FixedStops())
+    service = RoomService(store=MemoryRoomStore(), wallet_service=wallet, slot_rng=FixedStops(), slot_config=load_skeleton_config())
     created = await service.create_room(12345, GameType.SLOT, "solo")
     request = ActionRequest(
         action_id=uuid4(), expected_state_version=created.state_version, payload={"action": "spin", "bet": 10}
@@ -173,7 +174,7 @@ async def test_snapshot_is_available_after_reconnect_and_auth_is_server_verified
 @pytest.mark.asyncio
 async def test_action_from_non_member_is_rejected() -> None:
     service = RoomService(store=MemoryRoomStore())
-    created = await service.create_room(12345, GameType.HOLDEM, "heads-up")
+    created = await service.create_room(12345, GameType.BLACKJACK, "solo")
 
     with pytest.raises(RoomServiceError, match="member"):
         await service.apply_action(
@@ -341,3 +342,42 @@ async def test_blackjack_bet_must_match_published_ruleset_range() -> None:
                 action_id=uuid4(), expected_state_version=0, payload={"action": "deal", "bet": True}
             ),
         )
+
+@pytest.mark.asyncio
+async def test_new_slot_rooms_use_siege_but_old_rooms_keep_their_ruleset() -> None:
+    from burmaldoza_domain.games.slot_ruleset import load_skeleton_config
+
+    store = MemoryRoomStore()
+    wallet = WalletService(store=MemoryWalletStore())
+    await wallet.claim_welcome_grant(12345, uuid4())
+    old_service = RoomService(store=store, wallet_service=wallet, slot_config=load_skeleton_config())
+    old = await old_service.create_room(12345, GameType.SLOT, "solo")
+    service = RoomService(store=store, wallet_service=wallet)
+    new = await service.create_room(12345, GameType.SLOT, "solo")
+    assert old.ruleset_version == "slot-skeleton-1"
+    assert new.ruleset_version == "slot-siege-1"
+    for snapshot in (old, new):
+        event = await service.apply_action(snapshot.room_id, 12345, ActionRequest(
+            action_id=uuid4(), expected_state_version=0, payload={"action": "spin", "bet": 10}
+        ))
+        assert event.ruleset_version == snapshot.ruleset_version
+        assert event.payload["result"]["ruleset_version"] == snapshot.ruleset_version
+        symbols = {symbol for reel in event.payload["result"]["grid"] for symbol in reel}
+        allowed = {"A", "B", "C", "W"} if snapshot is old else {"D1", "D2", "D3", "D4", "A1", "A2", "A3", "W"}
+        assert symbols <= allowed
+
+
+@pytest.mark.asyncio
+async def test_slot_room_with_unregistered_ruleset_is_a_room_error() -> None:
+    wallet = WalletService(store=MemoryWalletStore())
+    await wallet.claim_welcome_grant(12345, uuid4())
+    store = MemoryRoomStore()
+    service = RoomService(store=store, wallet_service=wallet)
+    created = await service.create_room(12345, GameType.SLOT, "solo")
+    store.rooms[created.room_id].ruleset_version = "slot-retired-0"
+    request = ActionRequest(
+        action_id=uuid4(), expected_state_version=created.state_version, payload={"action": "spin"}
+    )
+
+    with pytest.raises(RoomServiceError, match="unknown ruleset"):
+        await service.apply_action(created.room_id, 12345, request)
