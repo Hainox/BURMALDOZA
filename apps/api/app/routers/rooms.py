@@ -17,6 +17,7 @@ from fastapi import (
     Depends,
     Header,
     HTTPException,
+    Query,
     WebSocket,
     WebSocketDisconnect,
     status,
@@ -64,9 +65,11 @@ _RULESETS: dict[GameType, dict[str, object]] = {
     },
     GameType.HOLDEM: {
         "game_type": GameType.HOLDEM,
-        "version": "holdem-skeleton-1",
-        "buy_in_min": 100,
-        "buy_in_max": 250,
+        "version": "holdem-v1",
+        "buy_ins": [100, 500, 1000],
+        "modes": ["bot", "pvp"],
+        "turn_timeout_seconds": 20,
+        "search_timeout_seconds": 60,
         "max_players": 2,
     },
 }
@@ -78,7 +81,7 @@ async def games(current_user: CurrentUser = Depends(get_current_user)) -> list[G
     return [
         GameInfo(game_type=GameType.SLOT, ruleset_version="slot-siege-1"),
         GameInfo(game_type=GameType.BLACKJACK, ruleset_version="blackjack-gfl-skeleton-1"),
-        GameInfo(game_type=GameType.HOLDEM, ruleset_version="holdem-skeleton-1"),
+        GameInfo(game_type=GameType.HOLDEM, ruleset_version="holdem-v1"),
     ]
 
 
@@ -97,6 +100,22 @@ async def ruleset(
     return definition
 
 
+@router.get("/holdem/history")
+async def holdem_history(
+    limit: int = Query(default=15, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: RoomService = Depends(get_room_service),
+) -> dict[str, object]:
+    from app.services.holdem_service import HoldemService
+
+    return {
+        "items": await HoldemService(service).history(current_user.user_id, limit, offset),
+        "limit": limit,
+        "offset": offset,
+    }
+
+
 @router.post("/rooms", response_model=RoomSnapshot)
 async def create_room(
     payload: RoomCreateRequest,
@@ -104,7 +123,13 @@ async def create_room(
     service: RoomService = Depends(get_room_service),
 ) -> RoomSnapshot:
     try:
-        return await service.create_room(current_user.user_id, payload.game_type, payload.mode)
+        return await service.create_room(
+            current_user.user_id,
+            payload.game_type,
+            payload.mode,
+            buy_in=payload.buy_in,
+            action_id=payload.action_id,
+        )
     except RoomServiceError as error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
 
@@ -135,9 +160,13 @@ async def room_action(
         try:
             request_id = parse_idempotency_key(x_request_id)
         except InvalidIdempotencyKey as error:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)
+            ) from error
         if request_id != payload.action_id:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="request ID must equal action_id")
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail="request ID must equal action_id"
+            )
     try:
         event = await service.apply_action(room_id, current_user.user_id, payload)
     except RoomNotFoundError as error:
@@ -174,11 +203,14 @@ async def room_events(websocket: WebSocket, room_id: UUID) -> None:
             raw_auth = await websocket.receive_json()
         first_message = WebSocketAuthMessage.model_validate(raw_auth)
         current_user = await service.authenticate_websocket(first_message)
-        snapshot = await service.snapshot(room_id, current_user.user_id)
         async with service.event_bus.subscribe(room_id) as events:
-            await websocket.send_json({"type": "snapshot", "snapshot": snapshot.model_dump(mode="json")})
+            snapshot = await service.snapshot(room_id, current_user.user_id)
+            await websocket.send_json(
+                {"type": "snapshot", "snapshot": snapshot.model_dump(mode="json")}
+            )
             while True:
                 event = await events.get()
+                event = await service.personalize_event(event, current_user.user_id)
                 await websocket.send_json({"type": "event", "event": event.model_dump(mode="json")})
     except TimeoutError:
         await websocket.close(code=4401, reason="authentication timeout")
