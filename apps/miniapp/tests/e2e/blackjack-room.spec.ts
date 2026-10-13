@@ -1,4 +1,5 @@
 import { expect, test, type Page, type Route } from '@playwright/test';
+import { openRoom } from './helpers';
 
 const roomId = '00000000-0000-0000-0000-00000000b16c';
 const approvedRuleset = 'blackjack-gfl-skeleton-1';
@@ -251,7 +252,7 @@ test.describe('Blackjack GFL room', () => {
   test('resolves a natural blackjack inside the deal response', async ({ page }) => {
     const counters = await stubLiveBlackjack(page, { hand: 'natural' });
     await page.goto('/');
-    await page.getByTestId('room-card-blackjack').click();
+    await openRoom(page, 'blackjack');
     await expect(page.getByTestId('blackjack-room')).toBeVisible();
 
     await page.getByTestId('blackjack-room').evaluate((element) => {
@@ -294,7 +295,7 @@ test.describe('Blackjack GFL room', () => {
   test('renders the server deal, hides the hole card, and settles from the server', async ({ page }) => {
     await stubLiveBlackjack(page);
     await page.goto('/');
-    await page.getByTestId('room-card-blackjack').click();
+    await openRoom(page, 'blackjack');
     const blackjackRoom = page.getByTestId('blackjack-room');
     await expect(blackjackRoom).toBeVisible();
     await expect(blackjackRoom).toContainText('Раздаёт только сервер.');
@@ -336,7 +337,7 @@ test.describe('Blackjack GFL room', () => {
   test('accepts only integer bets between 25 and 100', async ({ page }) => {
     await stubLiveBlackjack(page);
     await page.goto('/');
-    await page.getByTestId('room-card-blackjack').click();
+    await openRoom(page, 'blackjack');
 
     await page.getByTestId('blackjack-bet').fill('10');
     await expect(page.getByTestId('blackjack-deal')).toBeDisabled();
@@ -352,7 +353,7 @@ test.describe('Blackjack GFL room', () => {
   test('answers a repeated tap with exactly one action request', async ({ page }) => {
     const counters = await stubLiveBlackjack(page, { actionDelayMs: 250 });
     await page.goto('/');
-    await page.getByTestId('room-card-blackjack').click();
+    await openRoom(page, 'blackjack');
     await page.getByTestId('blackjack-bet').fill('25');
 
     const deal = page.getByTestId('blackjack-deal');
@@ -375,7 +376,7 @@ test.describe('Blackjack GFL room', () => {
   test('re-reads a stale room after 409 so the retry uses the new state version', async ({ page }) => {
     const counters = await stubLiveBlackjack(page, { externalWrite: true });
     await page.goto('/');
-    await page.getByTestId('room-card-blackjack').click();
+    await openRoom(page, 'blackjack');
     await page.getByTestId('blackjack-bet').fill('25');
 
     await page.getByTestId('blackjack-deal').click();
@@ -392,7 +393,7 @@ test.describe('Blackjack GFL room', () => {
   test('restores the confirmed server snapshot after reconnect without client math', async ({ page }) => {
     await stubLiveBlackjack(page);
     await page.goto('/');
-    await page.getByTestId('room-card-blackjack').click();
+    await openRoom(page, 'blackjack');
 
     await page.getByTestId('blackjack-bet').fill('25');
     await page.getByTestId('blackjack-deal').click();
@@ -408,7 +409,7 @@ test.describe('Blackjack GFL room', () => {
 
   test('plays a marked demo hand and never presents it as a server result', async ({ page }) => {
     await page.goto('/');
-    await page.getByTestId('room-card-blackjack').click();
+    await openRoom(page, 'blackjack');
     const blackjackRoom = page.getByTestId('blackjack-room');
     await expect(page.getByTestId('blackjack-demo-note')).toContainText('ДЕМО');
     await expect(blackjackRoom).toContainText('Демо-раздачу и результат показывает клиент.');
@@ -443,7 +444,7 @@ test.describe('Blackjack GFL room', () => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await stubLiveBlackjack(page);
     await page.goto('/');
-    await page.getByTestId('room-card-blackjack').click();
+    await openRoom(page, 'blackjack');
 
     await page.getByTestId('blackjack-bet').fill('25');
     await page.getByTestId('blackjack-deal').click();

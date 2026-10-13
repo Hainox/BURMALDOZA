@@ -31,8 +31,8 @@
 | Комната | Тема | Что в `main` | В работе |
 |---|---|---|---|
 | **Blackjack** | Girls' Frontline: колоды Deck A/B с персонажами, сцена Sector 09 | Hit / Stand / Double, закрытая карта дилера, DEMO-стол, resync после 409 | — |
-| **Slot 3×7** | Rainbow Six Siege: символы-оперативники, «операции» с недельной ротацией лиц | правила `slot-skeleton-1`, три линии, staged stop | правила `slot-siege-1` (8 символов, RTP ≈ 96 %) — PR #70; дизайн — PR #63 |
-| **Hold’em** | игры RGG (Yakuza / Judgment): Камуро-тё, герои-соперники по столам | доменные правила heads-up, DEMO-комната | серверная игра против бота и живого игрока, столы 100 / 500 / 1 000 — PR #71; дизайн — PR #63 |
+| **Slot 3×7** | Rainbow Six Siege: символы-оперативники, «операции» с недельной ротацией лиц | правила `slot-siege-1` (8 символов, RTP ≈ 96 %) для новых комнат, три линии, staged stop; превью дизайна — `assets/design/slot-r6` | символы-оперативники в интерфейсе комнаты (сейчас живой режим показывает коды `D1`…`W`), ротация операций на сервере |
+| **Hold’em** | игры RGG (Yakuza / Judgment): Камуро-тё, герои-соперники по столам | серверная игра против бота и живого игрока, столы 100 / 500 / 1 000, таймер хода 20 с; превью дизайна — `assets/design/holdem-rgg` | интерфейс комнаты в Mini App |
 
 Портреты персонажей используются в некоммерческом фанатском превью с атрибуцией источников (`sources.json` рядом с ассетами).
 
@@ -93,17 +93,16 @@ python -m devtools.monte_carlo.holdem_bot --trials 5000 --seed 53 --json  # repo
 
 CI повторяет Python lint/tests, Mini App check/test/build, PostgreSQL/Redis services и сохраняет три JSON-отчёта как artifact.
 
-## Проверенное состояние `main` (`141729d`, 13.10.2026)
+## Проверенное состояние (13.10.2026)
 
-Источник истины — CI на каждом PR и на `main` (Python lint/tests с PostgreSQL 16 и Redis 7, Mini App check/test/build, E2E, Docker Compose build). Локальный прогон на чистой копии:
+Источник истины — CI на каждом PR и на `main` (Python lint/tests с PostgreSQL 16 и Redis 7, Mini App check/test/build, E2E, Docker Compose build). Локальный прогон после слияния рейтинга, слота Siege и серверного Hold'em:
 
 - `uv run --locked ruff check .`: clean.
-- `uv run --locked pytest -q` с PostgreSQL 16 и Redis 7 в Docker: 149 passed, интеграционные выполнены.
-- `pnpm miniapp:check`: 0 errors / 0 warnings.
-- `pnpm miniapp:test`: 27 passed.
-- `pnpm miniapp:build`: passed.
-- `pnpm miniapp:e2e`: 30 passed, 1 failed — известный нестабильный тест остановки барабанов `slot-stop.spec.ts`, иногда падает по таймингу при параллельном прогоне.
-- Локальный `.env` с другим `MINIAPP_URL` меняет результат `tests/unit/test_cors.py`; проверяйте на чистой копии или в CI.
+- `uv run --locked pytest -q` с PostgreSQL 16 и Redis 7 в Docker: 269 passed, интеграционные выполнены.
+- `alembic upgrade head` на чистой базе: до `20261013_0006`; откат на шаг — проходит.
+- `pnpm miniapp:check`: 0 errors / 0 warnings; `pnpm miniapp:test`: 38 passed.
+- `pnpm miniapp:e2e`: 35 passed в шести прогонах подряд (клики по карточкам комнат ждут гидратации — см. `tests/e2e/helpers.ts`).
+- Тест CORS берёт адрес из настроек приложения, поэтому локальный `.env` больше не влияет на результат.
 
 ## Документы
 
@@ -112,6 +111,7 @@ CI повторяет Python lint/tests, Mini App check/test/build, PostgreSQL/R
 - [Роадмап](./docs/Development-Roadmap.md) — foundation → tests → QA → thematic content.
 - [Техническая архитектура](./docs/Technical-Architecture.md) — границы модулей и финальный стек.
 - [Design concept](./docs/Design-Concept.md) — native UI, motion system и темы комнат.
+- [Sound design](./docs/Sound-Design.md) — звук и виброотклик Telegram (предложение, на доработке).
 - [Чекпоинт запуска](./docs/Launch-Checkpoint.md) — что готово, открытые блокеры и условия запуска.
 - [Чеклист ручной приёмки](./docs/Manual-QA-Checklist.md) — проверка на iOS, Android и Telegram Desktop.
 - [Production deploy](./docs/Deploy-Production.md) — сервер, `.env`, проверки, резервные копии и откат.

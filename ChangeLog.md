@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Telegram haptic feedback now works: the Mini App adapter uses `WebApp.HapticFeedback` instead of a non-existent `WebApp.haptic`.
+- Added an index on ledger entries by time and reason for the weekly leaderboard; requires database migration 20261013_0006.
 - Wallet history now orders a settlement payout before its stake when timestamps are equal, keeping the newest entries first.
 - Added the authenticated Mini App top-15 leaderboard by net game result for the current Moscow calendar week, using verified Telegram usernames with an anonymous fallback; requires database migration 20261013_0004. DEMO shows no invented rankings. Players outside the top see their own place, and the table refreshes at most every 15 seconds.
 - New Slot rooms use the approved slot-siege-1 eight-symbol payout rules; existing skeleton rooms retain their original ruleset.

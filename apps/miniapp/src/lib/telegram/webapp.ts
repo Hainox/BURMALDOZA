@@ -12,9 +12,37 @@ export interface TelegramWebAppAdapter {
   haptic?: (type: 'impact' | 'notification' | 'selection', style?: string) => void;
 }
 
+export type HapticImpactStyle = 'light' | 'medium' | 'heavy' | 'rigid' | 'soft';
+export type HapticNotificationType = 'error' | 'success' | 'warning';
+
+/** Telegram WebApp.HapticFeedback (Bot API 6.1+). */
+interface TelegramHapticFeedback {
+  impactOccurred: (style: HapticImpactStyle) => unknown;
+  notificationOccurred: (type: HapticNotificationType) => unknown;
+  selectionChanged: () => unknown;
+}
+
 type TelegramGlobal = {
-  WebApp?: Partial<TelegramWebAppAdapter>;
+  WebApp?: Partial<Omit<TelegramWebAppAdapter, 'haptic'>> & { HapticFeedback?: TelegramHapticFeedback };
 };
+
+const IMPACT_STYLES: readonly string[] = ['light', 'medium', 'heavy', 'rigid', 'soft'];
+const NOTIFICATION_TYPES: readonly string[] = ['error', 'success', 'warning'];
+
+function hapticFrom(feedback: TelegramHapticFeedback | undefined): TelegramWebAppAdapter['haptic'] {
+  if (!feedback) return undefined;
+  return (type, style) => {
+    if (type === 'impact') {
+      feedback.impactOccurred((style && IMPACT_STYLES.includes(style) ? style : 'light') as HapticImpactStyle);
+    } else if (type === 'notification') {
+      feedback.notificationOccurred(
+        (style && NOTIFICATION_TYPES.includes(style) ? style : 'success') as HapticNotificationType
+      );
+    } else {
+      feedback.selectionChanged();
+    }
+  };
+}
 
 const fallback: TelegramWebAppAdapter = {
   initData: '',
@@ -40,6 +68,6 @@ export function getTelegramWebApp(): TelegramWebAppAdapter {
     expand: webApp.expand ?? fallback.expand,
     setHeaderColor: webApp.setHeaderColor ?? fallback.setHeaderColor,
     setBackgroundColor: webApp.setBackgroundColor ?? fallback.setBackgroundColor,
-    haptic: webApp.haptic
+    haptic: hapticFrom(webApp.HapticFeedback)
   };
 }

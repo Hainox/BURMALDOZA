@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, String, Uuid, func
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Integer, String, Uuid, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from . import Base
@@ -36,7 +36,11 @@ class WalletOperation(Base):
 
 class LedgerEntry(Base):
     __tablename__ = "ledger_entries"
-    __table_args__ = (CheckConstraint("balance_after >= 0", name="ck_ledger_entries_balance_after_non_negative"),)
+    __table_args__ = (
+        CheckConstraint("balance_after >= 0", name="ck_ledger_entries_balance_after_non_negative"),
+        # Weekly leaderboard: game entries filtered by time window and reason.
+        Index("ix_ledger_entries_created_at_reason", "created_at", "reason"),
+    )
 
     id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
     operation_id: Mapped[UUID] = mapped_column(
