@@ -11,7 +11,10 @@ export default defineConfig({
   reporter: 'list',
   use: {
     baseURL,
-    trace: 'on-first-retry'
+    trace: 'on-first-retry',
+    // Настоящий telegram-web-app.js из app.html перезаписал бы подставной window.Telegram
+    // из тестов пустым initData; в e2e он не загружается, тесты не зависят от сети.
+    launchOptions: { args: ['--host-resolver-rules=MAP telegram.org 127.0.0.1'] }
   },
   projects: [
     {
