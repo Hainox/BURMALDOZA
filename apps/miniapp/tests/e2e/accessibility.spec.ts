@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { openRoom } from './helpers';
 
 test.describe('Mini App shell', () => {
   test('exposes the three rooms and a clear demo boundary', async ({ page }) => {
@@ -13,7 +14,7 @@ test.describe('Mini App shell', () => {
   test('shows a completed slot demo result without server claims', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
-    await page.getByTestId('room-card-slot').click();
+    await openRoom(page, 'slot');
 
     await expect(page.getByTestId('room-shell')).toBeVisible();
     const slotRoom = page.locator('.slot-room');
@@ -39,7 +40,7 @@ test.describe('Mini App shell', () => {
 
   test('labels an in-progress slot demo result as demo', async ({ page }) => {
     await page.goto('/');
-    await page.getByTestId('room-card-slot').click();
+    await openRoom(page, 'slot');
     await page.getByTestId('slot-spin').click();
 
     const resultBand = page.getByTestId('result-band');
@@ -50,7 +51,7 @@ test.describe('Mini App shell', () => {
 
   test('labels a Hold’em demo outcome as unconfirmed', async ({ page }) => {
     await page.goto('/');
-    await page.getByTestId('room-card-holdem').click();
+    await openRoom(page, 'holdem');
     const pokerRoom = page.locator('.poker-room');
     await expect(pokerRoom).toContainText('Демо-действия выполняются на клиенте; серверного подтверждения нет.');
     await expect(pokerRoom).not.toContainText('только подтверждённые действия');
@@ -67,7 +68,7 @@ test.describe('Mini App shell', () => {
   test('demo Slot description does not claim the result came from a server', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
-    await page.getByTestId('room-card-slot').click();
+    await openRoom(page, 'slot');
     await page.getByTestId('slot-spin').click();
 
     const resultBand = page.getByTestId('result-band');
@@ -78,7 +79,7 @@ test.describe('Mini App shell', () => {
   test('Hold’em demo description does not imply a server-confirmed action', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
-    await page.getByTestId('room-card-holdem').click();
+    await openRoom(page, 'holdem');
     await page.getByRole('button', { name: 'CHECK' }).click();
 
     const resultBand = page.getByTestId('result-band');
@@ -88,7 +89,7 @@ test.describe('Mini App shell', () => {
 
   test('plays a full reel cycle before revealing the confirmed grid', async ({ page }) => {
     await page.goto('/');
-    await page.getByTestId('room-card-slot').click();
+    await openRoom(page, 'slot');
     await page.getByTestId('slot-spin').click();
 
     await expect(page.getByTestId('slot-machine')).toHaveAttribute('data-reel-phase', 'spinning');
@@ -102,7 +103,7 @@ test.describe('Mini App shell', () => {
 
   test('keeps the reel transform moving during the travel phase', async ({ page }) => {
     await page.goto('/');
-    await page.getByTestId('room-card-slot').click();
+    await openRoom(page, 'slot');
     await page.getByTestId('slot-spin').click();
 
     const track = page.getByTestId('slot-reel-track-0');

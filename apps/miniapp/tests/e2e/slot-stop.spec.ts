@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { openRoom } from './helpers';
 
 async function sampleTrackTransform(page: Page, index: number) {
   return page.getByTestId(`slot-reel-track-${index}`).evaluate((element) => getComputedStyle(element).transform);
@@ -7,7 +8,7 @@ async function sampleTrackTransform(page: Page, index: number) {
 test.describe('Slot v2 stop continuity', () => {
   test('moves the computed transform through travel and lands reels at staggered times', async ({ page }) => {
     await page.goto('/');
-    await page.getByTestId('room-card-slot').click();
+    await openRoom(page, 'slot');
     await page.getByTestId('slot-spin').click();
 
     const machine = page.getByTestId('slot-machine');
@@ -134,7 +135,7 @@ test.describe('Slot v2 stop continuity', () => {
 
   test('runs travel and staged left-to-right landing phases', async ({ page }) => {
     await page.goto('/');
-    await page.getByTestId('room-card-slot').click();
+    await openRoom(page, 'slot');
 
     const machine = page.getByTestId('slot-machine');
     await machine.evaluate((element) => {
@@ -179,7 +180,7 @@ test.describe('Slot v2 stop continuity', () => {
 
   test('announces landing progress and disables spin until settled', async ({ page }) => {
     await page.goto('/');
-    await page.getByTestId('room-card-slot').click();
+    await openRoom(page, 'slot');
 
     const machine = page.getByTestId('slot-machine');
     const spin = page.getByTestId('slot-spin');
@@ -205,7 +206,7 @@ test.describe('Slot v2 stop continuity', () => {
   test('settles every reel immediately under reduced motion', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
-    await page.getByTestId('room-card-slot').click();
+    await openRoom(page, 'slot');
     await page.getByTestId('slot-spin').click();
 
     const machine = page.getByTestId('slot-machine');
@@ -316,7 +317,7 @@ test.describe('Slot v2 stop continuity', () => {
     });
 
     await page.goto('/');
-    await page.getByTestId('room-card-slot').click();
+    await openRoom(page, 'slot');
     await expect(page.getByTestId('room-shell')).toBeVisible();
     await expect(page.locator('.slot-room')).toContainText('Полная прокрутка барабанов. Сервер подтверждает сетку, клиент показывает движение.');
     await expect(page.getByTestId('slot-status')).toContainText('READY · SERVER-FIRST');

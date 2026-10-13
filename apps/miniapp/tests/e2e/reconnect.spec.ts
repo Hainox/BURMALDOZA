@@ -1,8 +1,9 @@
 import { expect, test } from '@playwright/test';
+import { openRoom } from './helpers';
 
 test('resync returns to a stable room snapshot', async ({ page }) => {
   await page.goto('/');
-  await page.getByTestId('room-card-holdem').click();
+  await openRoom(page, 'holdem');
 
   await expect(page.getByTestId('room-shell')).toBeVisible();
   await page.getByTestId('resync-button').click();

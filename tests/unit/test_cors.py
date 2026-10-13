@@ -4,14 +4,17 @@ from fastapi.testclient import TestClient
 
 
 def test_miniapp_origin_is_allowed_for_api_requests() -> None:
+    from app.core.config import cors_origin, settings
+
+    # The allowed origin comes from MINIAPP_URL, so a developer's local .env must not
+    # break this test: assert against the same configured value the app was built with.
+    origin = cors_origin(settings.miniapp_url)
+    assert origin, "MINIAPP_URL must resolve to an origin"
     with TestClient(app) as client:
-        response = client.get(
-            "/health/live",
-            headers={"Origin": "https://example.invalid"},
-        )
+        response = client.get("/health/live", headers={"Origin": origin})
 
     assert response.status_code == 200
-    assert response.headers["access-control-allow-origin"] == "https://example.invalid"
+    assert response.headers["access-control-allow-origin"] == origin
 
 
 def test_unlisted_origin_is_not_reflected() -> None:

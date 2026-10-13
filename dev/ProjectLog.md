@@ -548,3 +548,10 @@
 - `assets/design/sound/preview.html`: 36 звуков и три сцены (интерфейс, Blackjack GFL, Slot Siege, Hold'em RGG), синтез Web Audio без аудиофайлов и без звуков из игр.
 - Найдено: `apps/miniapp/src/lib/telegram/webapp.ts` ожидает `WebApp.haptic`, которого в Telegram нет (настоящий API — `WebApp.HapticFeedback`), поэтому вибрация сейчас не срабатывает; исправление — при встраивании звука.
 - Проверки: Playwright Chromium 390 и 1280 px — все кнопки и сцены без ошибок консоли, горизонтальной прокрутки нет; `git diff --check` — passed.
+
+## 2026-10-13 — слияние всех PR и исправление замечаний
+
+- Claude Code (claude-opus-5-5, effort не отображается) по прямому решению владельца («сливай все» и исправить все наблюдения). Слиты #68, #69, #70, #71, #63, #66 (вместе с ранее слитыми #61, #72). Codex недоступен по лимиту; Hold'em слит без его независимого review.
+- Исправлено по ходу слияния: оформление теста #68; в #69 — своё место игрока вне топ-15 (`me`), рейтинг не мигает и обновляется не чаще раза в 15 с; в #70 — неизвестная версия правил комнаты даёт ошибку комнаты, а не 500.
+- Ветка `claude/cleanup-observations`: тест CORS не зависит от локального `.env`; обёртка вибрации Telegram использует `WebApp.HapticFeedback` (раньше вибрация не срабатывала); e2e открывают комнаты через `openRoom` с повтором клика до гидратации (нестабильный `slot-stop.spec.ts` — 6 чистых прогонов подряд); индекс `ix_ledger_entries_created_at_reason` и миграция `20261013_0006`; README, чекпоинт запуска и роадмап — по состоянию после слияния.
+- Проверки: `ruff check` — passed; `pytest -q` с PostgreSQL 16 / Redis 7 — 269 passed; `alembic upgrade head` / откат на шаг — passed; `pnpm miniapp:check` — 0/0; `pnpm miniapp:test` — 38 passed; `pnpm miniapp:e2e` — 35 passed ×6.
