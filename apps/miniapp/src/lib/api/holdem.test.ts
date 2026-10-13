@@ -25,4 +25,12 @@ describe('Hold’em boundary', () => {
     expect(parseHoldem(active).opponent).toEqual([{hidden:true},{hidden:true}]);
     expect(parseHoldem({...active,showdown:true}).opponent).toEqual(active.opponent_cards);
   });
+  it('accepts the server card format with full suit names', () => {
+    // Так карты приходят из domain (holdem-v1 на production): масть словом.
+    const server = {...waiting,phase:'active',stacks:[95,90],street_contributions:[5,10],current_seat:0,pot:15,current_bet:10,minimum_raise:20,community_cards:[{rank:'10',suit:'clubs'}],hole_cards:[{rank:'K',suit:'hearts'},{rank:'A',suit:'spades'}],opponent_cards:[{hidden:true},{hidden:true}]};
+    const view = parseHoldem(server);
+    expect(view.own).toEqual([{rank:'K',suit:'H'},{rank:'A',suit:'S'}]);
+    expect(view.board).toEqual([{rank:'10',suit:'C'}]);
+    expect(() => parseHoldem({...server,hole_cards:[{rank:'K',suit:'stars'},{rank:'A',suit:'spades'}]})).toThrow();
+  });
 });
