@@ -6,7 +6,7 @@
 <title>Hold'em · Камуро-тё — превью комнаты</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&family=Oswald:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&family=Permanent+Marker&family=Oswald:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="roster.js"></script>
 <style>
   :root {
@@ -23,6 +23,7 @@
     --muted-dark: #6d6253;
     --line: rgb(255 255 255 / 10%);
     --brush: 'Yuji Syuku', serif;
+    --marker: 'Permanent Marker', 'Oswald', sans-serif;
     --display: 'Oswald', 'Arial Narrow', sans-serif;
     --body: 'Inter', system-ui, sans-serif;
   }
@@ -92,11 +93,17 @@
   .lobby .note { color: var(--muted-dark); }
 
   /* table: cinematic dark */
-  .tableview { position: relative; padding: 14px 14px 16px; background:
-      radial-gradient(55% 38% at 50% 0%, rgb(255 236 210 / 22%), transparent 70%),
+  .tableview { position: relative; padding: 104px 14px 16px; background:
+      radial-gradient(55% 38% at 50% 0%, rgb(255 120 100 / 18%), transparent 70%),
       radial-gradient(90% 30% at 50% 100%, rgb(150 120 100 / 22%), transparent 70%), var(--sumi); }
   .tableview::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 120px; pointer-events: none; opacity: .6;
     background: radial-gradient(50% 60% at 30% 100%, rgb(200 180 160 / 20%), transparent 70%), radial-gradient(50% 60% at 75% 100%, rgb(200 180 160 / 16%), transparent 70%); }
+  .gate { position: absolute; left: -4%; right: -4%; top: 0; height: 230px; z-index: 0; pointer-events: none; opacity: .62; filter: blur(.6px); }
+  .gate svg { width: 100%; height: 100%; }
+  .gate .bulbs circle { animation: bulbs 2.4s ease-in-out infinite; }
+  .gate .bulbs circle:nth-child(3n) { animation-delay: .8s; } .gate .bulbs circle:nth-child(3n+1) { animation-delay: 1.6s; }
+  @keyframes bulbs { 50% { opacity: .45; } }
+  .tableview > *:not(.gate):not(.intro):not(.stamp) { position: relative; z-index: 1; }
   .opp { display: grid; grid-template-columns: 92px 1fr; gap: 12px; align-items: end; }
   .opp .pic { position: relative; width: 92px; height: 112px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px rgb(255 255 255 / 15%); }
   .opp .pic img { width: 100%; height: 100%; object-fit: cover; }
@@ -106,7 +113,7 @@
   .ring .track { stroke: rgb(255 255 255 / 18%); }
   .ring .prog { stroke: var(--gold); stroke-dasharray: 81.7; transition: stroke-dashoffset 1s linear; }
   .ring .prog.hot { stroke: var(--crimson); }
-  .plate b { display: block; font: 600 20px/1.05 var(--display); letter-spacing: .04em; text-transform: uppercase; }
+  .plate b { display: block; font: 400 21px/1.05 var(--marker); letter-spacing: .02em; text-transform: uppercase; color: #e8262f; text-shadow: 0 0 1px #fff, 0 2px 8px rgb(0 0 0 / 70%); }
   .plate .bar { width: 64px; height: 4px; margin: 6px 0; background: var(--crimson); }
   .plate small { color: var(--muted); font-size: 12px; }
   .plate .stack { margin-top: 6px; font: 500 14px/1 var(--display); letter-spacing: .1em; color: var(--gold); }
@@ -147,20 +154,26 @@
   .stamp.on { animation: stamp .42s cubic-bezier(.2,1.4,.4,1) forwards; }
   .stamp small { position: absolute; bottom: 10px; font: 600 11px/1 var(--display); letter-spacing: .24em; }
   @keyframes stamp { to { transform: scale(1) rotate(-12deg); opacity: 1; } }
-  /* character intro card */
-  .intro { position: absolute; inset: 0; z-index: 8; display: grid; align-content: end; padding: 22px 18px 120px; background: #000; opacity: 0; pointer-events: none; overflow: hidden; }
-  .intro.on { animation: intro 2.4s ease forwards; pointer-events: auto; }
-  .intro img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.25) brightness(.85); transform: scale(1.12); }
-  .intro.on img { animation: kenburns 2.4s ease-out forwards; }
-  .intro::after { content: ''; position: absolute; inset: 0; background:
-      radial-gradient(circle, rgb(0 0 0 / 55%) 1px, transparent 1.6px) 0 0 / 5px 5px, linear-gradient(transparent 35%, rgb(0 0 0 / 85%)); mix-blend-mode: multiply; }
-  .intro .name { position: relative; z-index: 1; }
-  .intro .name small { display: block; font: 400 26px/1 var(--brush); color: var(--crimson); }
-  .intro .name b { display: block; margin-top: 6px; font: 700 34px/1 var(--display); letter-spacing: .03em; text-transform: uppercase; color: #fff; }
-  .intro .name i { display: block; width: 86px; height: 5px; margin: 10px 0 8px; background: var(--crimson); }
-  .intro .name span { font: 500 12px/1 var(--display); letter-spacing: .24em; text-transform: uppercase; color: var(--washi-2); }
-  @keyframes intro { 0% { opacity: 0; } 10%, 82% { opacity: 1; } 100% { opacity: 0; } }
-  @keyframes kenburns { to { transform: scale(1); } }
+  /* character intro card — как представления героев в серии */
+  .intro { position: absolute; inset: 0; z-index: 8; display: grid; align-content: center; gap: 14px; padding: 0; background: #050505; opacity: 0; pointer-events: none; }
+  .intro.on { animation: intro 3s ease forwards; pointer-events: auto; }
+  .intro .frame { position: relative; width: 100%; aspect-ratio: 4 / 5; max-height: 78%; overflow: hidden; }
+  .intro .frame img { position: absolute; inset: -4%; width: 108%; height: 108%; object-fit: cover; object-position: 48% 40%; filter: grayscale(1) sepia(.12) contrast(1.08) brightness(.95); transform: scale(1.06); }
+  .intro.on .frame img { animation: kenburns 3s ease-out forwards; }
+  .intro .frame::after { content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse 72% 70% at 50% 45%, transparent 55%, rgb(5 5 5 / 65%) 80%, #050505 100%);
+    backdrop-filter: blur(0px); }
+  .intro .frame::before { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; backdrop-filter: blur(2.5px);
+    -webkit-mask-image: radial-gradient(ellipse 70% 68% at 50% 45%, transparent 60%, #000 95%); mask-image: radial-gradient(ellipse 70% 68% at 50% 45%, transparent 60%, #000 95%); }
+  .intro .name { position: absolute; left: 0; right: 0; bottom: 9%; z-index: 2; display: grid; justify-items: center; gap: 4px; padding: 0 12px; text-align: center; }
+  .intro .name b, .intro .name span { font-family: var(--marker); font-weight: 400; color: #c3141d; text-transform: uppercase;
+    text-shadow: -1.5px -1.5px 0 #fff, 1.5px -1.5px 0 #fff, -1.5px 1.5px 0 #fff, 1.5px 1.5px 0 #fff, 0 2px 0 #fff, 0 0 10px rgb(0 0 0 / 80%), 0 3px 14px rgb(0 0 0 / 70%); }
+  .intro .name b { font-size: 36px; line-height: 1; letter-spacing: .04em; }
+  .intro .name span { font-size: 15px; line-height: 1.25; letter-spacing: .02em; max-width: 92%; }
+  .intro .meta { text-align: center; font: 500 12px/1 var(--display); letter-spacing: .26em; text-transform: uppercase; color: var(--muted); }
+  .intro .meta i { font: 400 18px/1 var(--brush); font-style: normal; color: var(--crimson); margin-right: 8px; letter-spacing: 0; }
+  @keyframes intro { 0% { opacity: 0; } 8%, 85% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes kenburns { from { transform: scale(1.12); } to { transform: scale(1.02); } }
   .note { margin: 10px 2px 0; color: var(--muted); font-size: 11px; text-align: center; }
 
   /* ---------- docs on washi ---------- */
@@ -197,11 +210,43 @@
       <rect width="24" height="12" fill="#7a0b13"/>
       <g fill="none" stroke="#ece3cf" stroke-opacity=".55" stroke-width="1"><circle cx="12" cy="12" r="11"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/><circle cx="0" cy="6" r="11"/><circle cx="24" cy="6" r="11"/></g>
     </pattern>
-    <symbol id="back" viewBox="0 0 50 70">
-      <rect width="50" height="70" fill="url(#nami)"/>
-      <circle cx="25" cy="35" r="13" fill="#ece3cf"/>
-      <circle cx="25" cy="35" r="10" fill="#b8141f"/>
-      <text x="25" y="40" text-anchor="middle" font-family="Yuji Syuku, serif" font-size="13" fill="#ece3cf">龍</text>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff1b8"/><stop offset=".35" stop-color="#e3b24c"/><stop offset=".7" stop-color="#a8761f"/><stop offset="1" stop-color="#f2cf6e"/></linearGradient>
+    <radialGradient id="backbg" cx=".5" cy=".45" r=".7"><stop offset="0" stop-color="#3b0a10"/><stop offset="1" stop-color="#0c0204"/></radialGradient>
+    <symbol id="back" viewBox="0 0 100 140">
+      <rect width="100" height="140" fill="url(#backbg)"/>
+      <rect x="4" y="4" width="92" height="132" rx="5" fill="none" stroke="url(#gold)" stroke-width="1.8"/>
+      <rect x="8" y="8" width="84" height="124" rx="3" fill="none" stroke="url(#gold)" stroke-width=".7" opacity=".7"/>
+      <g fill="none" stroke="url(#gold)" stroke-width="1" opacity=".5">
+        <path d="M14 30c4-6 12-4 10 2-2 4-8 2-6-1"/><path d="M70 120c4-6 12-4 10 2-2 4-8 2-6-1"/><path d="M12 76c3-5 9-3 8 1"/>
+      </g>
+      <g opacity=".95">
+        <circle cx="84" cy="62" r="9" fill="rgb(255 210 120 / 18%)"/>
+        <circle cx="84" cy="62" r="5.5" fill="url(#gold)"/><circle cx="82.5" cy="60.5" r="1.8" fill="#fff8dc"/>
+        <path d="M84 52c2 3 1 5-1 6M91 58c-3 0-5 2-5 4" stroke="url(#gold)" stroke-width="1" fill="none"/>
+      </g>
+      <path d="M18 124l-12 5 7-9-10-1 12-4z" fill="url(#gold)"/>
+      <g fill="url(#gold)">
+        <path d="M10 108l-7-2 6-3z"/><path d="M14 96l-6-5 7 0z"/><path d="M26 89l-2-7 6 4z"/><path d="M44 91l1-7 4 6z"/>
+        <path d="M62 92l4-6 1 7z"/><path d="M78 82l7-2-4 6z"/><path d="M82 68l7 1-6 4z"/><path d="M72 52l5-5 0 7z"/>
+        <path d="M54 50l1-7 4 6z"/><path d="M38 46l-6-4 7-1z"/><path d="M33 36l-7-1 6-4z"/>
+      </g>
+      <path id="dragonBody" d="M18 124C6 104 22 90 42 94C64 98 84 88 76 68C68 50 34 56 36 38C37 28 46 22 56 24" fill="none" stroke="url(#gold)" stroke-width="10" stroke-linecap="round"/>
+      <path d="M18 124C6 104 22 90 42 94C64 98 84 88 76 68C68 50 34 56 36 38C37 28 46 22 56 24" fill="none" stroke="#6b3207" stroke-width="6" stroke-dasharray="2.2 2.8" stroke-linecap="round" opacity=".55"/>
+      <path d="M18 124C6 104 22 90 42 94C64 98 84 88 76 68C68 50 34 56 36 38C37 28 46 22 56 24" fill="none" stroke="#fff3c4" stroke-width="1" opacity=".55" transform="translate(-1.5 -1.5)"/>
+      <g stroke="url(#gold)" stroke-width="3" stroke-linecap="round" fill="none">
+        <path d="M40 44l-11 7"/><path d="M58 98l3 11"/>
+      </g>
+      <g stroke="url(#gold)" stroke-width="1.6" stroke-linecap="round" fill="none">
+        <path d="M29 51l-5-1M29 51l-4 3M29 51l-1 5"/><path d="M61 109l-4 3M61 109l1 5M61 109l5 2"/>
+      </g>
+      <path d="M50 22l-10-7 5 9-10-1 11 6z" fill="url(#gold)"/>
+      <path d="M52 18L66 13L80 17L86 21L77 23L84 28L70 31L59 31L52 28Z" fill="url(#gold)" stroke="#5a2a08" stroke-width=".6"/>
+      <path d="M77 23L66 25L78 26" fill="#3b0a10"/>
+      <path d="M71 23.5l2 2.5M75 24l1.5 2" stroke="#fff8dc" stroke-width=".8"/>
+      <circle cx="64" cy="19" r="1.6" fill="#3b0a10"/><circle cx="64.4" cy="18.6" r=".5" fill="#ffe08a"/>
+      <path d="M56 15L49 3M61 14L61 1" stroke="url(#gold)" stroke-width="2.6" stroke-linecap="round"/>
+      <path d="M49 3l-2 3M61 1l-2 3" stroke="url(#gold)" stroke-width="1.4" stroke-linecap="round"/>
+      <path d="M84 19C94 14 98 26 91 34M81 29C89 33 89 43 81 47" stroke="url(#gold)" stroke-width="1.3" fill="none" stroke-linecap="round"/>
     </symbol>
   </defs>
 </svg>
@@ -246,8 +291,28 @@
 
       <div class="view tableview" id="table" role="tabpanel" aria-labelledby="t-table" hidden>
         <div class="intro" id="intro" aria-hidden="true">
-          <img id="introImg" alt="">
-          <div class="name"><small id="introKanji">幹部</small><b id="introName">—</b><i></i><span id="introSub">—</span></div>
+          <div class="frame"><img id="introImg" alt=""><div class="name"><b id="introName">—</b><span id="introSub">—</span></div></div>
+          <div class="meta"><i id="introKanji">幹部</i><span id="introTable">Стол 500</span></div>
+        </div>
+        <div class="gate" aria-hidden="true">
+          <svg viewBox="0 0 400 250" preserveAspectRatio="xMidYMin slice">
+            <defs>
+              <linearGradient id="gpost" x1="0" x2="1"><stop offset="0" stop-color="#3a0507"/><stop offset=".5" stop-color="#8e0f16"/><stop offset="1" stop-color="#3a0507"/></linearGradient>
+              <radialGradient id="glow" cx=".5" cy=".3" r=".6"><stop offset="0" stop-color="rgb(255 70 60 / 55%)"/><stop offset="1" stop-color="rgb(255 70 60 / 0%)"/></radialGradient>
+            </defs>
+            <ellipse cx="200" cy="70" rx="210" ry="120" fill="url(#glow)"/>
+            <rect x="52" y="54" width="16" height="200" fill="url(#gpost)"/>
+            <rect x="332" y="54" width="16" height="200" fill="url(#gpost)"/>
+            <path d="M30 70 Q200 6 370 70 L370 88 Q200 26 30 88 Z" fill="#9c121a" stroke="#ff5a4e" stroke-width="1.2"/>
+            <rect x="122" y="36" width="156" height="34" rx="3" fill="#120203" stroke="#ff5a4e" stroke-width="1.4"/>
+            <text x="200" y="61" text-anchor="middle" font-family="Yuji Syuku, serif" font-size="22" fill="#ffe7c7" letter-spacing="6">神室町</text>
+            <text x="200" y="82" text-anchor="middle" font-family="Oswald, sans-serif" font-size="8" fill="#ffb3a8" letter-spacing="5">KAMUROCHO</text>
+            <g class="bulbs" fill="#ffd9a0">
+              <circle cx="44" cy="76" r="2"/><circle cx="70" cy="62" r="2"/><circle cx="98" cy="51" r="2"/><circle cx="128" cy="43" r="2"/><circle cx="160" cy="38" r="2"/>
+              <circle cx="240" cy="38" r="2"/><circle cx="272" cy="43" r="2"/><circle cx="302" cy="51" r="2"/><circle cx="330" cy="62" r="2"/><circle cx="356" cy="76" r="2"/>
+            </g>
+            <g fill="#ffd9a0" opacity=".55"><rect x="58" y="110" width="4" height="6"/><rect x="58" y="140" width="4" height="6"/><rect x="338" y="110" width="4" height="6"/><rect x="338" y="140" width="4" height="6"/></g>
+          </svg>
         </div>
         <div class="stamp" id="stamp" aria-hidden="true">勝<small>ПОБЕДА</small></div>
         <div class="opp">
@@ -292,8 +357,8 @@
       <section class="doc">
         <h2>Движение <em>演出</em></h2>
         <ul class="rules">
-          <li><b>Заставка героя</b>Стоп-кадр в ч/б с растром, крупное имя, красная черта и подпись стола — как представления персонажей в серии. 2,4 с; тап пропускает.</li>
-          <li><b>Раздача</b>Карты из центра по одной; свои переворачиваются, карты героя — рубашкой с волнами и красным солнцем 龍.</li>
+          <li><b>Заставка героя</b>Как представления персонажей в серии: ч/б стоп-кадр 16:9 с размытыми краями, имя красным маркером с белой обводкой и подпись — титул героя или его игра. 3 с; тап пропускает.</li>
+          <li><b>Раздача</b>Карты из центра по одной; свои переворачиваются, карты героя — рубашкой с золотым драконом.</li>
           <li><b>Ход</b>Золотое кольцо таймера на портрете, последние 5 с — красное. Команды — наклонные плашки, как боевое меню серии.</li>
           <li><b>Итог</b>Красная печать-ханко 勝 / 負 / 分 с ударом; выигрышные пять карт — золотом. Reduced motion: без заставки и удара печати.</li>
         </ul>
@@ -307,8 +372,9 @@
           <span class="sw"><i style="background:#b8141f"></i>Киноварь #B8141F</span>
           <span class="sw"><i style="background:#7a0b13"></i>Тёмный лак #7A0B13</span>
           <span class="sw"><i style="background:#c9a24a"></i>Золото #C9A24A</span>
+          <span class="sw"><i style="background:#c3141d"></i>Заставка #C3141D</span>
         </div>
-        <p style="margin-top:12px">Шрифты: Yuji Syuku — кисть для иероглифов, Oswald — имена и меню, Inter — текст.</p>
+        <p style="margin-top:12px">Шрифты: Permanent Marker — имена и подписи героев, как в заставках серии (латиница); Yuji Syuku — кисть для иероглифов; Oswald — меню и русский текст; Inter — пояснения.</p>
       </section>
 
       <section class="doc">
@@ -346,7 +412,7 @@
   }).join('');
   // pools in docs
   $('pools').innerHTML = TABLES.slice().reverse().map((t) => `<div class="pool"><h3><span>${t.kanji}</span>${t.name} · ${fmt(t.buyin)}<small>${ROSTER[t.buyin].length} героев</small></h3>
-    <div class="grid">${ROSTER[t.buyin].map((h) => `<img src="${h[1]}" alt="${h[0]}" title="${h[0]} · ${h[2]}" loading="lazy">`).join('')}</div></div>`).join('');
+    <div class="grid">${ROSTER[t.buyin].map((h) => `<img src="${h[1]}" alt="${h[0]}" title="${h[0]} · ${h[4]}" loading="lazy">`).join('')}</div></div>`).join('');
 
   const tabs = [$('t-lobby'), $('t-table')];
   const show = (i) => tabs.forEach((t, j) => { t.setAttribute('aria-selected', String(i === j)); $(t.getAttribute('aria-controls')).hidden = i !== j; });
@@ -373,7 +439,7 @@
   const RED = new Set(['♥', '♦']);
   const cardEl = (c, up) => { const el = document.createElement('div'); el.className = 'card' + (up ? ' up' : '');
     if (!c) { el.classList.add('empty'); return el; }
-    el.innerHTML = `<div class="inner"><div class="back"><svg viewBox="0 0 50 70"><use href="#back"/></svg></div><div class="face${RED.has(c[1]) ? ' red' : ''}"><span class="r">${c[0]}</span><span class="s">${c[1]}</span></div></div>`;
+    el.innerHTML = `<div class="inner"><div class="back"><svg viewBox="0 0 50 70"><use href="#back" width="50" height="70"/></svg></div><div class="face${RED.has(c[1]) ? ' red' : ''}"><span class="r">${c[0]}</span><span class="s">${c[1]}</span></div></div>`;
     el.setAttribute('aria-label', up ? c.join('') : 'Карта рубашкой'); return el; };
   const k = () => table.buyin / 500;
   const STEPS = [
@@ -398,12 +464,12 @@
     timer = setInterval(() => { left = Math.max(0, left - 1); $('myTurn').textContent = left ? `Ваш ход · ${left} с` : 'Время вышло · авто-чек/сброс'; if (!left) clearInterval(timer); }, 1000);
   }
   function newHand() {
-    hero = mode === 'bot' ? draw(table.buyin) : ['Игрок @сосед', LIVE_AVATAR, 'Живой соперник · аватар Telegram'];
-    $('oppImg').src = hero[1]; $('oppName').textContent = hero[0]; $('oppGame').textContent = hero[2];
+    hero = mode === 'bot' ? draw(table.buyin) : ['Игрок @сосед', LIVE_AVATAR, LIVE_AVATAR, '', 'Живой соперник · аватар Telegram'];
+    $('oppImg').src = hero[1]; $('oppName').textContent = hero[0]; $('oppGame').textContent = hero[4];
     $('oppTier').textContent = `Стол ${fmt(table.buyin)} · ${table.name.toLowerCase()}`;
     if (mode === 'bot' && !reduce) {
-      $('introImg').src = hero[1]; $('introName').textContent = hero[0]; $('introKanji').textContent = table.kanji;
-      $('introSub').textContent = `${hero[2]} · стол ${fmt(table.buyin)}`;
+      $('introImg').src = hero[2]; $('introName').textContent = hero[0]; $('introSub').textContent = hero[3];
+      $('introKanji').textContent = table.kanji; $('introTable').textContent = `Стол ${fmt(table.buyin)} · ${table.name.toLowerCase()}`;
       const intro = $('intro'); intro.classList.remove('on'); void intro.offsetWidth; intro.classList.add('on');
     }
     step = -1; $('stamp').classList.remove('on');
