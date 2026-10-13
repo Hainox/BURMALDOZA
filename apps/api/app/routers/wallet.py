@@ -5,7 +5,7 @@ from uuid import UUID
 
 from burmaldoza_contracts.wallet import WalletSnapshot
 from fastapi import APIRouter, Depends, Header, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import case, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.idempotency import InvalidIdempotencyKey, parse_idempotency_key
@@ -57,7 +57,13 @@ async def ledger(
         await session.execute(
             select(LedgerEntry)
             .where(LedgerEntry.wallet_id == current_user.user_id)
-            .order_by(LedgerEntry.created_at.desc(), LedgerEntry.id.desc())
+            .order_by(
+                LedgerEntry.created_at.desc(),
+                LedgerEntry.operation_id.desc(),
+                # Within one settlement the credit is newer than its debit.
+                case((LedgerEntry.reason == "game_payout", 1), else_=0).desc(),
+                LedgerEntry.id.desc(),
+            )
             .limit(100)
         )
     ).scalars()

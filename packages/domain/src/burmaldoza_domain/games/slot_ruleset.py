@@ -6,6 +6,24 @@ from typing import Any
 
 from .slot import SlotConfig
 
+SLOT_RULESET_VERSIONS = ("slot-skeleton-1", "slot-siege-1")
+_RULESET_FILES = {
+    "slot-skeleton-1": "slot_skeleton.json",
+    "slot-siege-1": "slot_siege.json",
+}
+
+
+def load_slot_config(version: str = "slot-siege-1") -> SlotConfig:
+    """Load an explicitly registered ruleset; versions are never filesystem paths."""
+    try:
+        filename = _RULESET_FILES[version]
+    except KeyError:
+        raise ValueError(f"unknown slot ruleset: {version}") from None
+    config = load_skeleton_config(Path(__file__).with_name(filename))
+    if config.ruleset_version != version:
+        raise ValueError("slot ruleset file version does not match registry")
+    return config
+
 
 def _default_ruleset_path() -> Path:
     # Shipped inside the package so the API image needs no extra mount.
