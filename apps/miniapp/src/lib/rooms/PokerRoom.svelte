@@ -1,28 +1,145 @@
 <script lang="ts">
-  import type { MotionState } from '$lib/game/motion';
-  import ResultBand from '$lib/components/ResultBand.svelte';
-  import type { RoomResult } from '$lib/state/room.svelte';
+  import { onMount, onDestroy } from 'svelte';
+  import { base } from '$app/paths';
+  import type { ApiClient } from '$lib/api/client';
+  import { createHoldem, parseHoldem, type HoldemMode, type HoldemView } from '$lib/api/holdem';
+  import type { RoomSnapshot } from '$lib/state/room.svelte';
+  import HandTable from '$lib/components/holdem/HandTable.svelte';
+  import heroes from '$lib/components/holdem/heroes.json';
 
-  export let motion: MotionState = 'idle';
-  export let result: RoomResult | null = null;
-  export let onAction: (action: string) => void = () => undefined;
-  export let resultSource: 'demo' | 'live' = 'demo';
-  const community = ['A♣', '7♦', 'Q♠', '—', '—'];
+  export let client: ApiClient | null = null;
+  export let live = false;
+  export let reducedMotion = false;
+  export let onBalance: (balance:number) => void = () => undefined;
+  let mode: HoldemMode = 'bot';
+  let buyIn = 100;
+  let snapshot: RoomSnapshot | null = null;
+  let view: HoldemView | null = null;
+  let busy = false;
+  let error = '';
+  let introRoom = '';
+  let showIntro = false;
+  let seconds = 0;
+  let stopStream: (() => void) | null = null;
+  let polling = false;
+  let disposed = false;
+  let lastBalance: number | null = null;
+  let pollTimer: ReturnType<typeof setInterval>;
+  let clockTimer: ReturnType<typeof setInterval>;
+  let pendingCreate: {mode:HoldemMode;buyIn:number;id:string} | null = null;
+  let pendingAction: {roomId:string;version:number;id:string;payload:Record<string,unknown>} | null = null;
+  $: hero = mode === 'bot' && view?.heroCode ? (heroes as Record<string,{name:string;avatar:string;intro:string;title:string}>)[view.heroCode] ?? null : null;
+
+  function accept(next: RoomSnapshot) {
+    if (disposed || (snapshot?.roomId === next.roomId && next.stateVersion < snapshot.stateVersion)) return;
+    const parsed = parseHoldem(next.publicState);
+    snapshot = next; view = parsed;
+    if (live && parsed.balance !== null && parsed.balance !== lastBalance) {lastBalance=parsed.balance;onBalance(parsed.balance);}
+    seconds = parsed.deadline ? Math.max(0,Math.ceil((Date.parse(parsed.deadline)-Date.now())/1000)) : 0;
+    const knownHero = mode === 'bot' && parsed.heroCode && parsed.heroCode in heroes;
+    if (knownHero && introRoom !== next.roomId) { introRoom = next.roomId; showIntro = !reducedMotion; }
+  }
+  function stream(roomId:string) {
+    stopStream?.();
+    stopStream = client?.subscribeToRoom(roomId, next => {if(snapshot?.roomId !== roomId)return;try{accept(next);}catch(e){error=String(e);}}, event => {
+      if (snapshot?.roomId !== roomId) return;
+      try { accept({...snapshot,stateVersion:event.state_version,publicState:event.payload.public_state as Record<string,unknown>}); } catch(e) {error=String(e);}
+    }) ?? null;
+  }
+  async function refresh() {
+    if (!live || !client || !snapshot || polling || busy) return;
+    polling = true;
+    const id = snapshot.roomId;
+    try { const next = await client.getRoom(id); if (snapshot?.roomId === id) accept(next); }
+    catch { error = 'Не удалось обновить раздачу. Повторите синхронизацию.'; }
+    finally { polling = false; }
+  }
+  export async function resync() {error='';await refresh();if(snapshot && !disposed)stream(snapshot.roomId);}
+  async function start() {
+    if (busy) return;
+    busy = true; error = ''; showIntro = false;
+    try {
+      if (live && client) {
+        pendingCreate ??= {mode,buyIn,id:crypto.randomUUID()};
+        sessionStorage.setItem('holdem-create',JSON.stringify(pendingCreate));
+        mode = pendingCreate.mode; buyIn = pendingCreate.buyIn;
+        const next = await createHoldem(client, mode, buyIn, pendingCreate.id);
+        accept(next); pendingCreate = null;
+        sessionStorage.removeItem('holdem-create');
+        sessionStorage.setItem('holdem-room', JSON.stringify({id:next.roomId,mode}));
+        if (!disposed) stream(next.roomId);
+      } else {
+        mode = 'bot';
+        accept({roomId:`demo-${crypto.randomUUID()}`,gameType:'holdem',title:'Камуро-тё',rulesetVersion:'holdem-demo-1',stateVersion:1,publicState:{phase:'active',buy_in:buyIn,seat:0,hero_code:'Kazuma_Kiryu',game_phase:'pre_flop',pot:buyIn*0.15,stacks:[buyIn*0.95,buyIn*0.9],street_contributions:[buyIn*0.05,buyIn*0.1],current_seat:0,current_bet:buyIn*0.1,minimum_raise:buyIn*0.2,legal_actions:['fold','call'],community_cards:[],hole_cards:[{rank:'A',suit:'S'},{rank:'K',suit:'S'}],showdown:false}});
+      }
+    } catch(e) {
+      if (typeof e === 'object' && e !== null && 'status' in e && typeof e.status === 'number' && e.status >= 400 && e.status < 500) {pendingCreate=null;sessionStorage.removeItem('holdem-create');error='Сервер отклонил вход. Проверьте баланс и выберите стол.';}
+      else error='Не удалось начать раздачу. «Повторить» отправит тот же запрос.';
+    }
+    finally {busy=false;}
+  }
+  async function action(name:string, fields:Record<string,unknown>={}) {
+    if (busy || !snapshot || !view) return;
+    if (!pendingAction && name !== 'cancel' && !view.legal.includes(name)) return;
+    busy=true; error='';
+    try {
+      if (live && client) {
+        pendingAction ??= {roomId:snapshot.roomId,version:snapshot.stateVersion,id:crypto.randomUUID(),payload:{action:name,...fields}};
+        sessionStorage.setItem('holdem-action',JSON.stringify(pendingAction));
+        const p = pendingAction;
+        const response = await client.applyAction(p.roomId,p.version,p.id,p.payload);
+        accept({...snapshot,stateVersion:response.event.state_version,publicState:response.event.payload.public_state as Record<string,unknown>});
+        pendingAction=null;
+        sessionStorage.removeItem('holdem-action');
+      } else {
+        const p=snapshot.publicState;
+        // A fixed recorded scene, never a live outcome or a wallet update.
+        accept({...snapshot,stateVersion:snapshot.stateVersion+1,publicState:{...p,phase:'settled',game_phase:'showdown',legal_actions:[],showdown:name !== 'fold',pot:buyIn,stacks:[buyIn/2,buyIn/2],street_contributions:[buyIn/2,buyIn/2],community_cards:name === 'fold' ? [] : [{rank:'Q',suit:'S'},{rank:'J',suit:'S'},{rank:'10',suit:'S'},{rank:'2',suit:'D'},{rank:'7',suit:'C'}],opponent_cards:[{rank:'9',suit:'H'},{rank:'9',suit:'D'}],last_result:{winner_seats:[name === 'fold' ? 1 : 0],payouts:name === 'fold' ? [buyIn/2,buyIn*1.5] : [buyIn*1.5,buyIn/2],net_deltas:name === 'fold' ? [-buyIn/2,buyIn/2] : [buyIn/2,-buyIn/2],outcome:name === 'fold' ? 'fold' : 'showdown'}}});
+      }
+    } catch (e) {
+      const status = typeof e === 'object' && e !== null && 'status' in e ? e.status : null;
+      if (typeof status === 'number' && status >= 400 && status < 500) {pendingAction=null;sessionStorage.removeItem('holdem-action');}
+      error=pendingAction ? 'Ответ не получен. Повторите тот же запрос.' : 'Ход отклонён. Состояние перечитано; выберите доступное действие.';
+      if (client) {try{accept(await client.getRoom(snapshot.roomId));}catch{error+=' Синхронизация недоступна.';}}
+    } finally {busy=false;}
+  }
+  function lobby() { stopStream?.();stopStream=null;snapshot=null;view=null;pendingAction=null;sessionStorage.removeItem('holdem-room');sessionStorage.removeItem('holdem-action'); }
+  function focusIntro(node:HTMLButtonElement) {node.focus();}
+  function restoreAction(roomId:string) {
+    try {const p=JSON.parse(sessionStorage.getItem('holdem-action') ?? 'null');if(p?.roomId === roomId && typeof p.id === 'string' && Number.isSafeInteger(p.version) && ['fold','check','call','raise','cancel'].includes(p.payload?.action)){pendingAction=p;error='Остался неподтверждённый запрос. Повторите ход с тем же идентификатором.';}}
+    catch {sessionStorage.removeItem('holdem-action');}
+  }
+  onMount(() => {
+    pollTimer=setInterval(() => {void refresh();},2000);
+    clockTimer=setInterval(() => {seconds=view?.deadline ? Math.max(0,Math.ceil((Date.parse(view.deadline)-Date.now())/1000)) : 0;},250);
+    if (live && client) {
+      try {const pending=JSON.parse(sessionStorage.getItem('holdem-create') ?? 'null');if(pending && ['bot','pvp'].includes(pending.mode) && [100,500,1000].includes(pending.buyIn) && typeof pending.id === 'string') {pendingCreate=pending;void start();return;}} catch {sessionStorage.removeItem('holdem-create');}
+      try { const stored=JSON.parse(sessionStorage.getItem('holdem-room') ?? 'null'); if(stored?.id && ['bot','pvp'].includes(stored.mode)) {mode=stored.mode;busy=true;client.getRoom(stored.id).then(next=>{accept(next);restoreAction(next.roomId);if(!disposed)stream(next.roomId);}).catch(()=>{sessionStorage.removeItem('holdem-room');error='Предыдущая раздача недоступна. Выберите стол.';}).finally(()=>{busy=false;});} } catch {sessionStorage.removeItem('holdem-room');}
+    }
+  });
+  onDestroy(() => {disposed=true;stopStream?.();clearInterval(pollTimer);clearInterval(clockTimer);});
 </script>
-
-<div class="game-room poker-room">
-  <div class="room-intro"><div><span class="room-kicker">HEADS-UP · RGG SKELETON</span><h2>Hold’em</h2><p>{resultSource === 'live' ? 'Один pot, два места, только подтверждённые действия.' : 'Один pot, два места. Демо-действия выполняются на клиенте; серверного подтверждения нет.'}</p></div><span class="bet-chip">100 JG</span></div>
-  <section class="poker-table" class:resolving={motion === 'resolving'} aria-label="Heads-up poker table">
-    <div class="poker-rail"></div><div class="player opponent"><span class="avatar">♟</span><span><b>DEALER</b><small>stack 250</small></span><i>2 cards</i></div><div class="pot">POT <strong>100</strong> <small>JG</small></div>
-    <div class="community-cards">{#each community as card, index}<span class:revealed={card !== '—'} style={`--card-delay: ${index * 100}ms`}>{card}</span>{/each}</div>
-    <div class="player hero"><span class="avatar">✦</span><span><b>YOU</b><small>stack 150</small></span><i>BTN</i></div>
-  </section>
-  <div class="action-grid"><button on:click={() => onAction('fold')} disabled={motion === 'resolving'}>FOLD</button><button on:click={() => onAction('check')} disabled={motion === 'resolving'}>CHECK</button><button class="action-primary" on:click={() => onAction('call')} disabled={motion === 'resolving'}>CALL <small>25 JG</small></button><button on:click={() => onAction('raise')} disabled={motion === 'resolving'}>RAISE</button></div>
-  <ResultBand {result} {motion} source={resultSource} />
+<svelte:head><link rel="stylesheet" href={`${base}/holdem/font.css`} /></svelte:head>
+<div class="poker-room" aria-busy={busy}>
+  <header><span>神室町 · HEADS-UP</span><h2>Камуро-тё</h2><p>{live ? 'Одна раздача. Два места. Итог с сервера.' : 'DEMO · записанная демонстрационная раздача. Баланс не меняется.'}</p></header>
+  {#if error}<div class="error" role="alert">{error} {#if pendingCreate}<button on:click={start} disabled={busy}>Повторить</button>{/if}{#if pendingAction}<button on:click={() => action('retry')} disabled={busy}>Повторить ход</button>{/if}{#if snapshot}<button on:click={refresh} disabled={busy}>Синхронизировать</button>{/if}</div>{/if}
+  {#if !view}
+    <section class="lobby" aria-label="Лобби Hold’em">
+      <fieldset disabled={busy || !!pendingCreate}><legend>Соперник</legend><label><input type="radio" bind:group={mode} value="bot" /> Против бота</label><label><input type="radio" bind:group={mode} value="pvp" disabled={!live} /> Живой игрок</label></fieldset>
+      <fieldset disabled={busy || !!pendingCreate}><legend>Вход в раздачу</legend>{#each [100,500,1000] as table}<label><input type="radio" bind:group={buyIn} value={table} /> {table.toLocaleString('ru')} JG <small>Блайнды {table/20}/{table/10}</small></label>{/each}</fieldset>
+      <button class="primary" data-testid="holdem-start" on:click={start} disabled={busy}>{busy ? 'Подключаемся…' : mode === 'pvp' ? 'Найти соперника' : 'Начать раздачу'}</button>
+    </section>
+  {:else if view.phase === 'waiting'}
+    <section class="search" role="status"><h3>Поиск соперника</h3><p>Стол {view.buyIn} JG · {seconds} с</p><p>Вход списывается при начале раздачи.</p><button data-testid="holdem-cancel" on:click={() => action('cancel')} disabled={busy}>Отменить поиск</button></section>
+  {:else if view.phase === 'cancelled'}
+    <p role="status">Поиск завершён. Вход не списан.</p><button on:click={lobby}>Выбрать стол</button>
+  {:else}
+    <div inert={showIntro}><HandTable {view} {hero} busy={busy || !!pendingAction} {seconds} {live} onAction={action} /></div>
+    {#if view.phase === 'settled'}<button on:click={lobby}>Выбрать стол</button>{/if}
+    {#if showIntro && hero}<section class="intro" data-testid="holdem-intro" aria-label="Ваш соперник"><img src={`${base}/holdem/${hero.intro}`} alt="" /><div><h3>{hero.name}</h3><p>{hero.title}</p><button use:focusIntro on:click={() => showIntro=false}>К столу</button></div></section>{/if}
+  {/if}
+  <details class="sources"><summary>Источники изображений</summary><p>© SEGA / Ryu Ga Gotoku Studio. Некоммерческий фанатский интерфейс по решению владельца. Общая лицензия на изображения не заявляется.</p><a href={`${base}/holdem/sources.json`} target="_blank" rel="noreferrer">Источники персонажей и сцены</a><p>Шрифт Permanent Marker — Google Fonts.</p></details>
 </div>
-
 <style>
-  .game-room { position: relative; z-index: 1; display: grid; gap: 18px; } .room-intro { display: flex; justify-content: space-between; gap: 18px; } .room-kicker { color: #ce86f2; font-size: 9px; font-weight: 800; letter-spacing: 0.13em; } h2 { margin: 6px 0 5px; font-size: clamp(27px, 8vw, 38px); letter-spacing: -0.06em; } p { max-width: 250px; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.45; } .bet-chip { height: fit-content; padding: 7px 9px; border: 1px solid rgb(206 134 242 / 35%); border-radius: 999px; color: #e0a8ff; font-size: 10px; font-weight: 800; white-space: nowrap; }
-  .poker-table { position: relative; display: grid; align-content: space-between; justify-items: center; min-height: 368px; overflow: hidden; padding: 28px 20px; border: 1px solid rgb(206 134 242 / 34%); border-radius: 48% / 22%; background: radial-gradient(ellipse at center, #3c1f53, #1b162d 72%); box-shadow: inset 0 0 44px rgb(0 0 0 / 42%), 0 18px 42px rgb(0 0 0 / 25%); } .poker-rail { position: absolute; inset: 14px; border: 1px solid rgb(206 134 242 / 14%); border-radius: 48% / 22%; } .player { position: relative; z-index: 1; display: flex; align-items: center; gap: 9px; width: 100%; color: var(--ivory); } .player.opponent { justify-content: flex-start; } .player.hero { justify-content: flex-end; } .avatar { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid rgb(206 134 242 / 45%); border-radius: 50%; background: rgb(206 134 242 / 15%); color: #e0a8ff; } .player span:not(.avatar) { display: grid; gap: 2px; } .player b { font-size: 10px; letter-spacing: 0.1em; } .player small, .player i { color: var(--muted); font-size: 9px; font-style: normal; } .player i { margin-left: auto; } .hero i { margin-right: auto; margin-left: 0; color: #e0a8ff; } .pot { position: relative; z-index: 1; display: grid; justify-items: center; color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: 0.15em; } .pot strong { color: var(--brass-300); font-size: 30px; letter-spacing: -0.08em; } .pot small { color: var(--brass-300); font-size: 9px; letter-spacing: 0.08em; } .community-cards { position: relative; z-index: 1; display: flex; gap: 5px; } .community-cards span { display: grid; place-items: center; width: 43px; height: 58px; border: 1px solid rgb(255 247 237 / 16%); border-radius: 7px; background: rgb(255 247 237 / 6%); color: var(--muted); font-size: 14px; font-weight: 800; } .community-cards span.revealed { border-color: rgb(231 187 112 / 45%); background: #fff8ee; color: #3b2430; animation: revealCard 420ms var(--ease-spring) var(--card-delay) both; transform-style: preserve-3d; backface-visibility: hidden; will-change: transform, opacity; } .action-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; } .action-grid button { min-height: 52px; border: 1px solid var(--line); border-radius: 13px; background: rgb(255 247 237 / 6%); color: var(--ivory); font: inherit; font-size: 10px; font-weight: 850; cursor: pointer; transition: border-color 220ms var(--ease-smooth), transform 220ms var(--ease-smooth); will-change: transform; } .action-grid button:hover { border-color: rgb(206 134 242 / 65%); transform: translateY(-2px); } .action-grid button:disabled { opacity: 0.48; cursor: wait; } .action-grid .action-primary { border-color: rgb(206 134 242 / 55%); background: rgb(206 134 242 / 13%); color: #e0a8ff; } .action-grid small { display: block; margin-top: 3px; color: var(--muted); font-size: 8px; font-weight: 500; }
-  @keyframes revealCard { from { opacity: 0; transform: translate3d(0, -16px, 0) rotateY(90deg); } to { opacity: 1; transform: translate3d(0, 0, 0) rotateY(0); } }
+  .poker-room{position:relative;display:grid;gap:16px;background:#171313;color:#f3ede2;padding:16px;border:1px solid #c9a24a55;padding-bottom:max(16px,env(safe-area-inset-bottom))}header>span{font-size:10px;letter-spacing:.16em;color:#c9a24a}h2{font:32px Georgia,serif;margin:8px 0}p{font-size:12px;line-height:1.5;margin:4px 0;color:inherit}.lobby{display:grid;gap:16px}fieldset{display:grid;gap:8px;border:1px solid #c9a24a55;padding:12px}legend{color:#e9cd84;font-size:12px}label{padding:8px;font-size:14px}label small{display:block;margin:4px 0 0 22px;color:#ccc3b4;font-size:11px}input{accent-color:#b8141f}button{min-height:44px;border:1px solid #c9a24a;background:#321014;color:#f3ede2;padding:8px 16px;font:inherit;cursor:pointer}button:disabled{opacity:.5;cursor:default}button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #fff1b8;outline-offset:3px}.primary{background:#7a0b13}.error{padding:12px;border:1px solid #ea8e8e;font-size:13px}.error button{margin-top:8px}.search{text-align:center;padding:24px 8px}.sources{font-size:11px;color:#d4cbbd}.sources summary{min-height:44px;display:flex;align-items:center;cursor:pointer}.sources a{color:#e9cd84}.intro{position:absolute;z-index:4;inset:0;display:grid;align-content:center;background:#0c0a0af5;overflow:hidden;padding:16px}.intro>img{width:100%;aspect-ratio:4/5;object-fit:cover;filter:grayscale(1);mask-image:linear-gradient(transparent,#000 15%,#000 80%,transparent)}.intro>div{margin-top:-80px;z-index:1;text-align:center}.intro h3,.intro p{font-family:Permanent Marker,cursive;color:#b8141f;-webkit-text-stroke:1px #fff;paint-order:stroke fill;text-shadow:2px 2px #000}.intro h3{font-size:clamp(24px,7vw,42px);margin:8px 0}.intro p{font-size:16px;margin:8px 0}.intro button{margin-top:16px}@media(min-width:768px){.lobby fieldset:last-of-type{grid-template-columns:repeat(3,1fr)}.intro>img{max-height:520px;object-fit:contain}.poker-room{max-width:720px;margin:auto;width:100%;box-sizing:border-box}}@media(prefers-reduced-motion:reduce){.intro{display:none}}
 </style>
