@@ -48,7 +48,7 @@
       description: 'Три барабана, чёткий payline и короткий раунд.',
       accent: '#e7bb70',
       icon: '✦',
-      rulesetVersion: 'slot-skeleton-1'
+      rulesetVersion: 'slot-siege-demo-1'
     },
     {
       gameType: 'blackjack' as const,
@@ -77,9 +77,9 @@
   };
 
   const demoSlotReels = [
-    ['♣', '◆', '7', '✦', '♠', 'A', '♦'],
-    ['7', '♠', '✦', '✦', '◆', 'Q', '♣'],
-    ['◆', '7', '♣', '✦', 'A', '♠', '♦']
+    ['D1', 'D2', 'D3', 'D4', 'A1', 'A2', 'A3'],
+    ['D2', 'A1', 'D1', 'D4', 'W', 'A3', 'D3'],
+    ['D3', 'W', 'A1', 'D4', 'D1', 'A2', 'D2']
   ];
 
   const DEMO_BLACKJACK_RULESET = 'blackjack-demo-1';
@@ -636,7 +636,7 @@
   {#if selectedGame && roomState.snapshot}
     <RoomShell room={roomState.snapshot} connection={session.connection} motion={roomState.motion} onBack={backToRooms} onResync={resync}>
       {#if selectedGame === 'slot'}
-        <SlotRoom motion={roomState.motion} result={roomState.result} onAction={runAction} resultSource={liveApiEnabled ? 'live' : 'demo'} />
+        <SlotRoom motion={roomState.motion} result={roomState.result} onAction={runAction} resultSource={liveApiEnabled ? 'live' : 'demo'} rulesetVersion={roomState.snapshot.rulesetVersion} publicState={roomState.snapshot.publicState} />
       {:else if selectedGame === 'blackjack'}
         <BlackjackRoom
           snapshot={roomState.snapshot}
