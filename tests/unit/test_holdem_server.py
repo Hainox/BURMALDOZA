@@ -29,7 +29,7 @@ import asyncio
 from datetime import timedelta
 
 import pytest_asyncio
-from app.db.models import Base, GamePlayer, GameRoom, HoldemHeroBag, LedgerEntry, User
+from app.db.models import Base, GameAction, GamePlayer, GameRoom, HoldemHeroBag, LedgerEntry, User
 from app.services.event_bus import EventBus
 from app.services.holdem_service import _HERO_POOLS, HoldemService
 from app.services.room_service import RoomAccessError
@@ -37,7 +37,7 @@ from app.services.wallet_service import WalletService
 from burmaldoza_contracts.rooms import ActionRequest
 from burmaldoza_domain.core import StateVersionConflictError
 from burmaldoza_domain.rng import SeededRandomSource
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 
@@ -549,3 +549,122 @@ async def test_tie_refunds_both_full_stacks_and_bot_hand_completes(holdem_db):
         bot = await read(factory, service, bot.room_id, 3)
     assert bot.status.value == "settled"
     assert bot.public_state["last_result"]["outcome"] in ("fold", "showdown")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("purpose", ["stake", "payout"])
+async def test_foreign_grant_at_derived_game_key_cannot_replace_game_ledger(holdem_db, purpose):
+    from uuid import NAMESPACE_URL, uuid5
+
+    from app.db.models import GameRound
+
+    factory, service, _, _ = holdem_db
+    key = uuid4()
+    snapshot = None
+    if purpose == "payout":
+        snapshot = await create(factory, service)
+    collision = uuid5(NAMESPACE_URL, f"holdem:{key}:{purpose}:1")
+    async with factory() as session:
+        grant = await WalletService(session).claim_daily_bonus(1, datetime.now(UTC), collision)
+    async with factory() as session:
+        before = (await WalletService(session).get_or_create(1)).balance
+    with pytest.raises(RoomServiceError, match="ledger"):
+        if purpose == "stake":
+            await create(factory, service, action_id=key)
+        else:
+            await move(factory, service, snapshot, 1, "fold", action_id=key)
+    async with factory() as session:
+        assert (await WalletService(session).get_or_create(1)).balance == before
+    async with factory() as session:
+        entries = (await session.scalars(select(LedgerEntry))).all()
+        assert any(
+            entry.operation_id == grant.operation_id and entry.reason == "daily_bonus"
+            for entry in entries
+        )
+        assert sum(entry.reason == "game_payout" for entry in entries) == 0
+        assert sum(entry.reason == "game_stake" for entry in entries) == (
+            1 if purpose == "payout" else 0
+        )
+        assert await session.scalar(select(func.count()).select_from(GameRound)) == (
+            1 if purpose == "payout" else 0
+        )
+    if snapshot:
+        # Fresh ID still finishes the original unchanged hand.
+        assert (await read(factory, service, snapshot.room_id, 1)).status.value == "active"
+        await move(factory, service, snapshot, 1, "fold")
+    else:
+        await create(factory, service)
+
+
+@pytest.mark.asyncio
+async def test_insolvent_queue_candidate_is_cancelled_and_does_not_poison_matching(holdem_db):
+    from app.db.models import Wallet
+
+    factory, service, _, _ = holdem_db
+    async with factory() as session, session.begin():
+        wallet = await session.get(Wallet, 3)
+        wallet.balance = 0
+    with pytest.raises(RoomServiceError, match="insufficient"):
+        await create(factory, service, user=3, mode="pvp")
+    first = await create(factory, service, user=1, mode="pvp")
+    async with factory() as session, session.begin():
+        wallet = await session.get(Wallet, 1)
+        wallet.balance = 0
+    funded = await create(factory, service, user=2, mode="pvp")
+    assert funded.status.value == "waiting"
+    assert (await read(factory, service, first.room_id, 1)).status.value == "closed"
+    async with factory() as session, session.begin():
+        wallet = await session.get(Wallet, 3)
+        wallet.balance = 1000
+    joined = await create(factory, service, user=3, mode="pvp")
+    assert joined.room_id == funded.room_id and joined.status.value == "active"
+    async with factory() as session:
+        stakes = (
+            await session.scalars(select(LedgerEntry).where(LedgerEntry.reason == "game_stake"))
+        ).all()
+        assert {entry.wallet_id for entry in stakes} == {2, 3}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("purpose", ["stake", "payout"])
+async def test_second_pvp_wallet_collision_rolls_back_first_wallet_delta(holdem_db, purpose):
+    from uuid import NAMESPACE_URL, uuid5
+
+    factory, service, _, _ = holdem_db
+    first = await create(factory, service, mode="pvp")
+    key = uuid4()
+    if purpose == "payout":
+        await create(factory, service, user=2, mode="pvp")
+        first = await read(factory, service, first.room_id, 1)
+    collision = uuid5(NAMESPACE_URL, f"holdem:{key}:{purpose}:2")
+    async with factory() as session:
+        await WalletService(session).claim_daily_bonus(2, datetime.now(UTC), collision)
+    async with factory() as session:
+        before1 = (await WalletService(session).get_or_create(1)).balance
+    async with factory() as session:
+        before2 = (await WalletService(session).get_or_create(2)).balance
+    with pytest.raises(RoomServiceError, match="ledger"):
+        if purpose == "stake":
+            await create(factory, service, user=2, mode="pvp", action_id=key)
+        else:
+            await move(factory, service, first, 1, "fold", action_id=key)
+    async with factory() as session:
+        assert (await WalletService(session).get_or_create(1)).balance == before1
+    async with factory() as session:
+        assert (await WalletService(session).get_or_create(2)).balance == before2
+    async with factory() as session:
+        assert (
+            await session.scalar(
+                select(func.count())
+                .select_from(LedgerEntry)
+                .where(LedgerEntry.reason == "game_payout")
+            )
+            == 0
+        )
+        assert await session.get(GameAction, key) is None
+    first = await read(factory, service, first.room_id, 1)
+    assert first.status.value == ("waiting" if purpose == "stake" else "active")
+    if purpose == "stake":
+        await create(factory, service, user=2, mode="pvp")
+    else:
+        await move(factory, service, first, 1, "fold")

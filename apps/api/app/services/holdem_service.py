@@ -39,6 +39,7 @@ from sqlalchemy import select, text
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.db.models import GameAction, GamePlayer, GameRoom, GameRound, HoldemHeroBag
+from app.services.wallet_service import LedgerResult, WalletServiceError
 
 if TYPE_CHECKING:
     from app.services.room_service import RoomService
@@ -105,6 +106,7 @@ class HoldemService:
             )
         self.require_database()
         event = None
+        cancelled_events = []
         async with _QUEUE_LOCK, self.session.begin():
             await self.queue_lock()
             replay = await self.session.get(GameAction, action_id)
@@ -147,6 +149,7 @@ class HoldemService:
                                 GameRoom.state_json["buy_in"].as_integer() == buy_in,
                             )
                             .order_by(GameRoom.created_at, GameRoom.id)
+                            .limit(100)
                             .with_for_update()
                         )
                     ).all()
@@ -154,12 +157,56 @@ class HoldemService:
                 if mode == "pvp"
                 else []
             )
-            # Expired own searches cannot match and are closed by the scheduler.
-            if candidates:
-                room = candidates[0]
-                members = await self.members(room.id)
-                if user_id in members.values():
+            owners = (
+                dict(
+                    (
+                        await self.session.execute(
+                            select(GamePlayer.room_id, GamePlayer.user_id).where(
+                                GamePlayer.room_id.in_([candidate.id for candidate in candidates]),
+                                GamePlayer.seat == 0,
+                            )
+                        )
+                    ).all()
+                )
+                if candidates
+                else {}
+            )
+            # Acquire the entire bounded batch in one global order. Locking the caller
+            # first, or a new candidate after the previous pair, can invert wallet locks.
+            balances = {}
+            for member_id in sorted({user_id, *owners.values()}):
+                balances[member_id] = (
+                    await self.wallet.get_or_create_in_transaction(member_id)
+                ).balance
+            if balances[user_id] < buy_in:
+                raise RoomServiceError("insufficient balance for Hold'em buy-in")
+            selected = None
+            for candidate in candidates:
+                owner_id = owners[candidate.id]
+                if owner_id == user_id:
                     raise RoomServiceError("player cannot match themselves")
+                if balances[owner_id] < buy_in:
+                    candidate.status = "closed"
+                    candidate.deadline_at = None
+                    candidate.state_json = {
+                        **candidate.state_json,
+                        "phase": "cancelled",
+                        "search_deadline": None,
+                        "cancel_reason": "insufficient_balance",
+                    }
+                    cancelled_events.append(
+                        await self.record(
+                            candidate,
+                            owner_id,
+                            uuid5(candidate.id, f"queue-balance:{candidate.state_version}"),
+                            "search_balance_unavailable",
+                        )
+                    )
+                    continue
+                selected = candidate
+                break
+            if selected is not None:
+                room = selected
                 self.session.add(GamePlayer(room_id=room.id, user_id=user_id, seat=1, stack=buy_in))
                 await self.session.flush()
                 await self.start(room, action_id)
@@ -192,6 +239,8 @@ class HoldemService:
                 room, user_id, action_id, "create", creation={"mode": mode, "buy_in": buy_in}
             )
             snapshot = await self.project_snapshot(room, user_id)
+        for cancelled_event in cancelled_events:
+            await self.rooms.event_bus.publish(cancelled_event)
         await self.rooms.event_bus.publish(event)
         return snapshot
 
@@ -225,13 +274,45 @@ class HoldemService:
             if buy_in is not None and wallet.balance < buy_in:
                 raise RoomServiceError("insufficient balance for Hold'em buy-in")
 
+    async def apply_game_delta(
+        self,
+        *,
+        user_id: int,
+        delta: int,
+        reason: LedgerReason,
+        reference_id: UUID,
+        idempotency_key: UUID,
+    ) -> LedgerResult:
+        from app.services.room_service import RoomServiceError
+
+        try:
+            result = await self.wallet.apply_delta_in_transaction(
+                user_id=user_id,
+                delta=delta,
+                reason=reason,
+                reference_id=reference_id,
+                idempotency_key=idempotency_key,
+            )
+        except WalletServiceError as error:
+            raise RoomServiceError("Hold'em ledger operation conflict") from error
+        # WalletService replay may return a grant recorded under the same UUID.
+        # A mismatched operation must roll back the whole game transaction.
+        if (result.user_id, result.delta, result.reason, result.reference_id) != (
+            user_id,
+            delta,
+            reason,
+            reference_id,
+        ):
+            raise RoomServiceError("Hold'em ledger operation conflict")
+        return result
+
     async def start(self, room: GameRoom, action_id: UUID) -> None:
         buy_in = room.state_json["buy_in"]
         members = await self.members(room.id)
         await self.lock_wallets(members, buy_in)
         entry_balances = {}
         for user_id in sorted(members.values()):
-            stake = await self.wallet.apply_delta_in_transaction(
+            stake = await self.apply_game_delta(
                 user_id=user_id,
                 delta=-buy_in,
                 reason=LedgerReason.GAME_STAKE,
@@ -319,7 +400,7 @@ class HoldemService:
             balances = {}
             for seat, user_id in sorted(members.items(), key=lambda item: item[1]):
                 if payouts[seat]:
-                    await self.wallet.apply_delta_in_transaction(
+                    await self.apply_game_delta(
                         user_id=user_id,
                         delta=payouts[seat],
                         reason=LedgerReason.GAME_PAYOUT,

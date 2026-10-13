@@ -23,25 +23,30 @@ async def test_room_reconnect_reads_latest_snapshot_and_replay_does_not_duplicat
     async with session_factory() as session:
         session.add(User(id=user_id, telegram_user_id=user_id, display_name="Test User"))
         await session.commit()
+        await WalletService(session=session).claim_welcome_grant(user_id, uuid4())
         service = RoomService(session=session, event_bus=EventBus())
-        created = await service.create_room(user_id, GameType.HOLDEM, "heads-up")
+        # Hold'em is a real server game now: a bot table needs a mode, a buy-in and a creation id.
+        created = await service.create_room(
+            user_id, GameType.HOLDEM, "bot", buy_in=100, action_id=uuid4()
+        )
+        assert "call" in created.public_state["legal_actions"]
         request = ActionRequest(
             action_id=action_id,
             expected_state_version=created.state_version,
-            payload={"action": "check"},
+            payload={"action": "call"},
         )
         first = await service.apply_action(created.room_id, user_id, request)
+        actions_after_first = await session.scalar(select(func.count(GameAction.id)))
 
     async with session_factory() as session:
         reconnected_service = RoomService(session=session, event_bus=EventBus())
         snapshot = await reconnected_service.snapshot(created.room_id, user_id)
         replay = await reconnected_service.apply_action(created.room_id, user_id, request)
-        action_count = await session.scalar(select(func.count(GameAction.id)))
+        actions_after_replay = await session.scalar(select(func.count(GameAction.id)))
 
-    assert snapshot.state_version == first.state_version == 1
-    assert snapshot.public_state["last_action"] == "check"
+    assert snapshot.state_version >= first.state_version > created.state_version
     assert replay == first
-    assert action_count == 1
+    assert actions_after_replay == actions_after_first
 
 
 @pytest.mark.asyncio
