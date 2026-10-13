@@ -93,17 +93,15 @@
   .lobby .note { color: var(--muted-dark); }
 
   /* table: cinematic dark */
-  .tableview { position: relative; padding: 104px 14px 16px; background:
+  .tableview { position: relative; padding: 120px 14px 16px; background:
       radial-gradient(55% 38% at 50% 0%, rgb(255 120 100 / 18%), transparent 70%),
       radial-gradient(90% 30% at 50% 100%, rgb(150 120 100 / 22%), transparent 70%), var(--sumi); }
   .tableview::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 120px; pointer-events: none; opacity: .6;
     background: radial-gradient(50% 60% at 30% 100%, rgb(200 180 160 / 20%), transparent 70%), radial-gradient(50% 60% at 75% 100%, rgb(200 180 160 / 16%), transparent 70%); }
-  .gate { position: absolute; left: -4%; right: -4%; top: 0; height: 230px; z-index: 0; pointer-events: none; opacity: .62; filter: blur(.6px); }
-  .gate svg { width: 100%; height: 100%; }
-  .gate .bulbs circle { animation: bulbs 2.4s ease-in-out infinite; }
-  .gate .bulbs circle:nth-child(3n) { animation-delay: .8s; } .gate .bulbs circle:nth-child(3n+1) { animation-delay: 1.6s; }
-  @keyframes bulbs { 50% { opacity: .45; } }
-  .tableview > *:not(.gate):not(.intro):not(.stamp) { position: relative; z-index: 1; }
+  .scene { position: absolute; left: 0; right: 0; top: 0; height: 250px; z-index: 0; pointer-events: none; overflow: hidden; }
+  .scene img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 0%; filter: saturate(1.05) brightness(.82); }
+  .scene::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgb(12 10 10 / 10%) 0%, rgb(12 10 10 / 35%) 45%, var(--sumi) 100%); }
+  .tableview > *:not(.scene):not(.intro):not(.stamp) { position: relative; z-index: 1; }
   .opp { display: grid; grid-template-columns: 92px 1fr; gap: 12px; align-items: end; }
   .opp .pic { position: relative; width: 92px; height: 112px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px rgb(255 255 255 / 15%); }
   .opp .pic img { width: 100%; height: 100%; object-fit: cover; }
@@ -294,26 +292,7 @@
           <div class="frame"><img id="introImg" alt=""><div class="name"><b id="introName">—</b><span id="introSub">—</span></div></div>
           <div class="meta"><i id="introKanji">幹部</i><span id="introTable">Стол 500</span></div>
         </div>
-        <div class="gate" aria-hidden="true">
-          <svg viewBox="0 0 400 250" preserveAspectRatio="xMidYMin slice">
-            <defs>
-              <linearGradient id="gpost" x1="0" x2="1"><stop offset="0" stop-color="#3a0507"/><stop offset=".5" stop-color="#8e0f16"/><stop offset="1" stop-color="#3a0507"/></linearGradient>
-              <radialGradient id="glow" cx=".5" cy=".3" r=".6"><stop offset="0" stop-color="rgb(255 70 60 / 55%)"/><stop offset="1" stop-color="rgb(255 70 60 / 0%)"/></radialGradient>
-            </defs>
-            <ellipse cx="200" cy="70" rx="210" ry="120" fill="url(#glow)"/>
-            <rect x="52" y="54" width="16" height="200" fill="url(#gpost)"/>
-            <rect x="332" y="54" width="16" height="200" fill="url(#gpost)"/>
-            <path d="M30 70 Q200 6 370 70 L370 88 Q200 26 30 88 Z" fill="#9c121a" stroke="#ff5a4e" stroke-width="1.2"/>
-            <rect x="122" y="36" width="156" height="34" rx="3" fill="#120203" stroke="#ff5a4e" stroke-width="1.4"/>
-            <text x="200" y="61" text-anchor="middle" font-family="Yuji Syuku, serif" font-size="22" fill="#ffe7c7" letter-spacing="6">神室町</text>
-            <text x="200" y="82" text-anchor="middle" font-family="Oswald, sans-serif" font-size="8" fill="#ffb3a8" letter-spacing="5">KAMUROCHO</text>
-            <g class="bulbs" fill="#ffd9a0">
-              <circle cx="44" cy="76" r="2"/><circle cx="70" cy="62" r="2"/><circle cx="98" cy="51" r="2"/><circle cx="128" cy="43" r="2"/><circle cx="160" cy="38" r="2"/>
-              <circle cx="240" cy="38" r="2"/><circle cx="272" cy="43" r="2"/><circle cx="302" cy="51" r="2"/><circle cx="330" cy="62" r="2"/><circle cx="356" cy="76" r="2"/>
-            </g>
-            <g fill="#ffd9a0" opacity=".55"><rect x="58" y="110" width="4" height="6"/><rect x="58" y="140" width="4" height="6"/><rect x="338" y="110" width="4" height="6"/><rect x="338" y="140" width="4" height="6"/></g>
-          </svg>
-        </div>
+        <div class="scene" aria-hidden="true"><img src="scene/kamurocho-gate.webp" alt=""></div>
         <div class="stamp" id="stamp" aria-hidden="true">勝<small>ПОБЕДА</small></div>
         <div class="opp">
           <div class="pic"><img id="oppImg" alt=""><svg class="ring" viewBox="0 0 30 30" aria-hidden="true"><circle class="track" cx="15" cy="15" r="13"/><circle class="prog" id="oppRing" cx="15" cy="15" r="13" style="stroke-dashoffset:81.7"/></svg></div>
@@ -380,7 +359,7 @@
       <section class="doc">
         <h2>Права <em>権</em></h2>
         <ul>
-          <li>Yakuza / Like a Dragon и Judgment — игры SEGA / Ryu Ga Gotoku Studio. Аватары героев — кадры профилей персонажей из вики-галерей серии, обрезанные по найденному лицу до 256×256; исходник, ссылка и SHA-256 каждого — в <code>sources.json</code>. Логотипов серии нет; стол, колода, печати и интерфейс нарисованы с нуля.</li>
+          <li>Yakuza / Like a Dragon и Judgment — игры SEGA / Ryu Ga Gotoku Studio. Аватары героев — кадры профилей персонажей из вики-галерей серии, обрезанные по найденному лицу до 256×256; исходник, ссылка и SHA-256 каждого — в <code>sources.json</code>. Логотипов серии нет; стол, колода, печати и интерфейс нарисованы с нуля; фон стола — кадр ворот Камуро-тё из игры, присланный владельцем.</li>
           <li>Решение владельца 13.10.2026: герои серии в некоммерческом фанатском превью с атрибуцией, как GFL в Blackjack. Общая лицензия не заявляется.</li>
           <li>Исключён Минору Дайдодзи — его кадр в больничной койке не подходит для стола.</li>
         </ul>

@@ -2525,5 +2525,15 @@
    "face_detected": true,
    "intro": "intro/Yuzo_Okuda.webp"
   }
+ ],
+ "scene": [
+  {
+   "file": "scene/kamurocho-gate.webp",
+   "what": "Kamurocho Tenkaichi Street gate, in-game photo mode screenshot (Yakuza series)",
+   "provided_by": "project owner, 13.10.2026",
+   "source_sha256": "eb8ab5fd7aa5fe4aacff8ce4c49ec1886746e1a8b91d2ec10bc1ff06c0c5ee34",
+   "processing": "cropped 708x362 (photo-mode UI strip removed), WebP",
+   "rights_note": "Copyright SEGA / Ryu Ga Gotoku Studio. Used with attribution in a non-commercial fan design preview per owner decision; no general reuse license is asserted."
+  }
  ]
 }
