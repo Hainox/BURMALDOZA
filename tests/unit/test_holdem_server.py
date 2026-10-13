@@ -668,3 +668,27 @@ async def test_second_pvp_wallet_collision_rolls_back_first_wallet_delta(holdem_
         await create(factory, service, user=2, mode="pvp")
     else:
         await move(factory, service, first, 1, "fold")
+
+
+@pytest.mark.asyncio
+async def test_search_cancel_is_durable_idempotent_and_cannot_cancel_matched_hand(holdem_db):
+    factory, service, _, bus = holdem_db
+    waiting = await create(factory, service, mode="pvp")
+    key = uuid4()
+    async with bus.subscribe(waiting.room_id) as events:
+        cancelled = await move(factory, service, waiting, 1, "cancel", action_id=key)
+        assert cancelled.payload["public_state"]["phase"] == "cancelled"
+        assert cancelled.payload["public_state"]["search_deadline"] is None
+        assert await events.get()
+        assert await move(factory, service, waiting, 1, "cancel", action_id=key) == cancelled
+        assert events.empty()
+    assert (await read(factory, service, waiting.room_id, 1)).status.value == "closed"
+    async with factory() as session:
+        assert (await WalletService(session).get_or_create(1)).balance == 1000
+    other = await create(factory, service, user=2, mode="pvp")
+    assert other.room_id != waiting.room_id
+    joined = await create(factory, service, mode="pvp")
+    assert joined.room_id == other.room_id
+    with pytest.raises(RoomServiceError):
+        await move(factory, service, joined, 1, "cancel")
+    assert (await read(factory, service, joined.room_id, 1)).status.value == "active"
