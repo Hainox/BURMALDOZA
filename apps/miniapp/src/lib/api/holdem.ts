@@ -22,13 +22,16 @@ function pair(value: unknown): number[] {
   if (!Array.isArray(value) || value.length !== 2) throw new Error('Некорректные места Hold’em');
   return value.map(integer);
 }
+// Домен пишет масть словом (общая карта с Blackjack); стол рисует по букве.
+const SUIT_CODES: Record<string, string> = { spades: 'S', hearts: 'H', diamonds: 'D', clubs: 'C' };
 function cards(value: unknown, count: number | null): HoldemCard[] {
   if (!Array.isArray(value) || (count !== null && value.length !== count) || value.length > 5) throw new Error('Некорректные карты Hold’em');
   return value.map(card => {
     if (typeof card !== 'object' || !card) throw new Error('Некорректная карта Hold’em');
     if (card.hidden === true) return { hidden: true };
-    if (!['2','3','4','5','6','7','8','9','10','J','Q','K','A'].includes(card.rank) || !['S','H','D','C'].includes(card.suit)) throw new Error('Некорректная карта Hold’em');
-    return { rank: card.rank, suit: card.suit };
+    const suit = SUIT_CODES[card.suit] ?? card.suit;
+    if (!['2','3','4','5','6','7','8','9','10','J','Q','K','A'].includes(card.rank) || !['S','H','D','C'].includes(suit)) throw new Error('Некорректная карта Hold’em');
+    return { rank: card.rank, suit };
   });
 }
 export function parseHoldem(p: Record<string, unknown>): HoldemView {
