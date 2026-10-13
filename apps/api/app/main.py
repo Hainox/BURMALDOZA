@@ -30,15 +30,9 @@ async def _holdem_timer(application: FastAPI) -> None:
                     await HoldemService(
                         RoomService(session=session, event_bus=application.state.event_bus)
                     ).expire_due()
-        except (
-            SQLAlchemyError,
-            OSError,
-            TimeoutError,
-            ValueError,
-            KeyError,
-            TypeError,
-            RuntimeError,
-        ) as error:
+        except Exception as error:  # noqa: BLE001 - supervisor loop must survive any tick failure
+            # Driver errors (e.g. asyncpg auth failures) are not all SQLAlchemyError/OSError;
+            # an uncaught one would stop deadline expiry for good and resurface on shutdown.
             # Bounded static message: DB exceptions can contain connection credentials.
             logging.getLogger(__name__).error(
                 "holdem_deadline_tick_failed", extra={"error_type": type(error).__name__}
