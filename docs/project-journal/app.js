@@ -176,7 +176,7 @@
       list.append(card);
     });
     if (!list.children.length) {
-      list.append(node('p', 'section-note', 'Нет открытых передач. Текущая работа Codex — PR #48; новые назначения сверяйте в штабе #19.'));
+      list.append(node('p', 'section-note', 'Нет открытых передач в этом списке. Актуальные назначения — в открытых issues с метками to:* и в штабе #19.'));
     }
   }
 

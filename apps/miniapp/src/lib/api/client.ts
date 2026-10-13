@@ -42,6 +42,28 @@ export interface ApiLedgerResult {
   reason: string;
 }
 
+export interface ApiLedgerEntry {
+  id: string;
+  operation_id: string;
+  amount_delta: number;
+  balance_after: number;
+  reason: string;
+  reference_type: string;
+  reference_id: string | null;
+  created_at: string;
+}
+
+function isLedgerEntry(value: unknown): value is ApiLedgerEntry {
+  if (typeof value !== 'object' || value === null) return false;
+  const entry = value as Record<string, unknown>;
+  return typeof entry.id === 'string' && typeof entry.operation_id === 'string'
+    && Number.isSafeInteger(entry.amount_delta) && Number.isSafeInteger(entry.balance_after)
+    && (entry.balance_after as number) >= 0 && typeof entry.reason === 'string'
+    && typeof entry.reference_type === 'string'
+    && (entry.reference_id === null || typeof entry.reference_id === 'string')
+    && typeof entry.created_at === 'string' && Number.isFinite(Date.parse(entry.created_at));
+}
+
 export interface ApiCurrentUser {
   user_id: number;
   telegram_user_id: number;
@@ -146,6 +168,14 @@ export class ApiClient {
 
   async getWallet(): Promise<ApiWalletSnapshot> {
     return this.get<ApiWalletSnapshot>('/api/v1/wallet');
+  }
+
+  async getWalletLedger(): Promise<ApiLedgerEntry[]> {
+    const entries = await this.get<unknown>('/api/v1/wallet/ledger');
+    if (!Array.isArray(entries) || entries.length > 100 || !entries.every(isLedgerEntry)) {
+      throw new Error('Некорректный ответ истории операций');
+    }
+    return entries;
   }
 
   /** Daily faucet; the server answers 409 while the 24h cooldown is active. */
