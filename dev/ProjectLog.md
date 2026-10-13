@@ -470,3 +470,12 @@
 - Новый `docs/Manual-QA-Checklist.md` для этапа 5: бот, первый вход, Daily/Relief, Slot, Blackjack, Hold'em как известное ограничение (#53), сеть и повторные нажатия, экран и reduced motion, шаблон issue. Тексты ожидаемых результатов сверены с `apps/miniapp` и `apps/bot` в `main`; новых требований нет.
 - Ссылки на чеклист добавлены в этап 5 `docs/Development-Roadmap.md` и в условия публичного запуска `docs/Launch-Checkpoint.md`.
 - Проверки: `git diff --check` — passed.
+
+## 2026-10-13 — правки после review PR #48 (#55)
+
+- Claude Code (claude-opus-5-5, effort не отображается), ветка `claude/journal-followups-48` от `main` `5785e30`. Закрыты четыре некритичных замечания из review PR #48.
+- Журнал: сообщение пустой очереди больше не ссылается на конкретный PR, а направляет к открытым issues с метками `to:*` и штабу #19; `test-offline.cjs` проверяет, что в сообщении нет номера PR (на прежнем тексте проверка падает).
+- `docs/Launch-Checkpoint.md`: актуальная очередь — задачи #51–#57 по исполнителям, PR #48 слит, локальный узел штаба включён.
+- `docs/project-journal/README.md`: dev-серверы по умолчанию только на localhost; `--host 0.0.0.0` — только для облачного контейнера.
+- `ChangeLog.md`: убрана пустая строка внутри списка `## Unreleased`.
+- Проверки: `node docs/project-journal/test-offline.cjs` — passed; `node --check` app.js и test-offline.cjs — passed; `git diff --check` — passed.
