@@ -184,3 +184,5 @@ UI до конца его показа использует operation_id рез�
 5. Провести юридический/security review перед любым платным контуром.
 
 Визуальный motion-слой передаётся в Command Code только по [зафиксированному workflow](../docs/Command-Code-Workflow.md), с моделью, effort, ограничением файлов и тестами.
+
+Для production arena нужно отдельно передать три SLOT_EVENT_* переменные в environment контейнера API: текущий docker-compose.prod.yml их не передаёт, одной записи в host .env недостаточно. Compose не входит в allowlist #76 и не менялся. Для календарной ротации новые env не нужны.
