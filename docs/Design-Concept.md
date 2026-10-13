@@ -63,5 +63,5 @@ Native mobile-first lounge: тёмный ink-фон, винные поверхн
 - утверждённые исходники нового логотипа и avatar crops;
 - 3–6 визуальных референсов с правами использования;
 - финальный copy/тон для трёх комнат;
-- решение по звуку, haptic feedback и публичному share;
+- решение по звуку, haptic feedback и публичному share (звук и вибрация — предложение в [Sound-Design.md](./Sound-Design.md), #65);
 - таблицы выплат и лимитов для каждой themed ruleset version.
