@@ -470,3 +470,11 @@
 - Новый `docs/Manual-QA-Checklist.md` для этапа 5: бот, первый вход, Daily/Relief, Slot, Blackjack, Hold'em как известное ограничение (#53), сеть и повторные нажатия, экран и reduced motion, шаблон issue. Тексты ожидаемых результатов сверены с `apps/miniapp` и `apps/bot` в `main`; новых требований нет.
 - Ссылки на чеклист добавлены в этап 5 `docs/Development-Roadmap.md` и в условия публичного запуска `docs/Launch-Checkpoint.md`.
 - Проверки: `git diff --check` — passed.
+
+## 2026-10-13 — саунд-дизайн комнат (#65)
+
+- Claude Code (claude-opus-5-5, effort не отображается), ветка `claude/sound-design`. Поручение владельца: продумать звук; CCode недоступен.
+- `docs/Sound-Design.md`: принципы (звук только после подтверждения сервером, без «почти выиграл», выплата меньше ставки не звучит как победа, громкость по размеру выигрыша, звук по умолчанию выключен — предложение), карта звуков и вибрации Telegram для интерфейса, Slot «Siege» и Hold'em «Камуро-тё», настройки и технический план.
+- `assets/design/sound/preview.html`: 26 звуков и две сцены, синтез Web Audio без аудиофайлов и без звуков из игр.
+- Найдено: `apps/miniapp/src/lib/telegram/webapp.ts` ожидает `WebApp.haptic`, которого в Telegram нет (настоящий API — `WebApp.HapticFeedback`), поэтому вибрация сейчас не срабатывает; исправление — при встраивании звука.
+- Проверки: Playwright Chromium 390 и 1280 px — все кнопки и сцены без ошибок консоли, горизонтальной прокрутки нет; `git diff --check` — passed.
