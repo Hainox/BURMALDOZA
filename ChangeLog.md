@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added the Siege slot visual theme with operation-specific operator portraits, immutable spin appearance, post-stop winning beams, next-operation announcements and image attribution. Legacy skeleton rooms remain supported; Siege Free Spins stay deferred. Reconnect snapshots can no longer reveal winning effects before the reels stop.
+
 - Telegram haptic feedback now works: the Mini App adapter uses `WebApp.HapticFeedback` instead of a non-existent `WebApp.haptic`.
 - Added an index on ledger entries by time and reason for the weekly leaderboard; requires database migration 20261013_0006.
 - Wallet history now orders a settlement payout before its stake when timestamps are equal, keeping the newest entries first.

@@ -1,5 +1,8 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
+  import { base } from '$app/paths';
+  import OperationBanner from '$lib/components/slot/OperationBanner.svelte';
+  import { displayOperation, operatorForSymbol, knownOperation } from '$lib/components/slot/operations';
 
   import ResultBand from '$lib/components/ResultBand.svelte';
   import {
@@ -25,12 +28,24 @@
   export let result: RoomResult | null = null;
   export let onAction: (action: string) => void = () => undefined;
   export let resultSource: 'demo' | 'live' = 'demo';
+  export let rulesetVersion = 'slot-skeleton-1';
+  export let publicState:Record<string,unknown> = {};
 
-  const reelBases = [
+  const legacyBases = [
     ['♣', '◆', '7', '✦', '♠', 'A', '♦'],
     ['7', '♠', '✦', 'K', '◆', 'Q', '♣'],
     ['◆', '7', '♣', '✦', 'A', '♠', '♦']
   ];
+  const siegeBases = [
+    ['D1','D2','D3','D4','A1','A2','A3'],
+    ['D2','A1','D1','D4','W','A3','D3'],
+    ['D3','W','A1','D4','D1','A2','D2']
+  ];
+  let frozenOperation = 'op1';
+  let frozenMetadata:Record<string,unknown> = {};
+  $: isSiege = rulesetVersion === 'slot-siege-1' || rulesetVersion === 'slot-siege-demo-1';
+  $: reelBases = isSiege ? siegeBases : legacyBases;
+  $: operationId = displayOperation(publicState,Boolean(result?.slotOutcome),isSpinning,frozenOperation);
 
   let slotPhase: SlotPhase = 'idle';
   let elapsedMs = 0;
@@ -41,6 +56,8 @@
   let ticker: number | null = null;
 
   $: slotOutcome = result?.slotOutcome ?? null;
+  $: lastResult = publicState.last_result;
+  $: bannerState = slotOutcome && typeof lastResult === 'object' && lastResult !== null ? lastResult as Record<string,unknown> : isSpinning ? frozenMetadata : publicState;
   $: confirmedReels = slotOutcome?.reels?.length === 3 ? slotOutcome.reels : reelBases;
   $: reelTracks = reelBases.map((base, reelIndex) =>
     buildReelTrack(base, confirmedReels[reelIndex] ?? base)
@@ -50,7 +67,9 @@
   );
   $: stoppedReels = reelPhases.filter((phase) => phase === 'landed').length;
   $: winningRows = slotOutcome?.winningRows ?? [];
-  $: showConfirmedGrid = Boolean(slotOutcome) && (slotPhase === 'settled' || motion === 'outcome' || motion === 'settle');
+  // A reconnect snapshot may restore parent motion while the local reels still travel.
+  $: showConfirmedGrid = Boolean(slotOutcome) && (slotPhase === 'settled' || (spinSeq === 0 && (motion === 'outcome' || motion === 'settle')));
+  $: if (spinSeq === 0 && slotOutcome && (motion === 'outcome' || motion === 'settle')) renderFrame(SLOT_SPIN_DURATION);
   $: sectionReelPhase = slotPhase === 'settled' ? 'outcome' : slotPhase;
   $: isSpinning = slotPhase !== 'idle' && slotPhase !== 'settled';
 
@@ -82,6 +101,8 @@
   function startSpin() {
     cancelTicker();
     spinSeq += 1;
+    frozenOperation = knownOperation(publicState.operation_id) ? publicState.operation_id : 'op1';
+    frozenMetadata = {...publicState};
     reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     startedAt = performance.now();
     elapsedMs = 0;
@@ -127,15 +148,16 @@
   onDestroy(cancelTicker);
 </script>
 
-<div class="game-room slot-room">
+<div class="game-room slot-room" class:siege={isSiege}>
   <div class="room-intro">
     <div>
-      <span class="room-kicker">THREE REELS · SEVEN ROWS</span>
-      <h2>Однорукий бандит</h2>
+      <span class="room-kicker">{isSiege ? 'SIEGE · 3×7' : 'THREE REELS · SEVEN ROWS'}</span>
+      <h2>{isSiege ? 'Siege' : 'Однорукий бандит'}</h2>
       <p>{isLive ? 'Полная прокрутка барабанов. Сервер подтверждает сетку, клиент показывает движение.' : 'Демо-прокрутка барабанов. Клиент показывает сетку и движение; сервер не подтверждает исход.'}</p>
     </div>
     <span class="bet-chip">10 JG</span>
   </div>
+  {#if isSiege}<OperationBanner {operationId} publicState={bannerState} />{/if}
 
   <section
     class="slot-machine"
@@ -181,15 +203,23 @@
                   class:tone-brass={getSymbolToneIndex(reelIndex, symbolIndex) % 2 === 1}
                   class:tone-pink={getSymbolToneIndex(reelIndex, symbolIndex) % 3 === 2}
                   class:winning={isWinningSymbol(reelIndex, symbolIndex)}
-                >{symbol}</div>
+                  data-symbol={symbol}
+                >{#if isSiege && operatorForSymbol(operationId,symbol)}<img class="operator-face" src={`${base}/slot/faces/${operatorForSymbol(operationId,symbol)}.webp`} alt={operatorForSymbol(operationId,symbol) ?? symbol} />{:else}{symbol}{/if}</div>
               {/each}
             </div>
           </div>
         </div>
       {/each}
+      {#if isSiege && showConfirmedGrid && slotOutcome?.winningLines?.length}
+        <svg class="beams" viewBox="0 0 300 700" preserveAspectRatio="none" aria-hidden="true" data-testid="slot-winning-beams">
+          {#each slotOutcome.winningLines as line}<polyline points={line.rows.map((row,i)=>`${50+i*100},${50+row*100}`).join(' ')} />{/each}
+        </svg>
+      {:else if isSiege && showConfirmedGrid && winningRows.length}
+        <svg class="beams" viewBox="0 0 300 700" preserveAspectRatio="none" aria-hidden="true" data-testid="slot-winning-beams">{#each winningRows as row}<polyline points={`50,${50+row*100} 150,${50+row*100} 250,${50+row*100}`} />{/each}</svg>
+      {/if}
     </div>
 
-    <div class="payline" class:visible={showConfirmedGrid} data-testid="slot-payline" aria-hidden="true"></div>
+    <div class="payline" class:visible={showConfirmedGrid && !isSiege} data-testid="slot-payline" aria-hidden="true"></div>
     {#if showConfirmedGrid}
       <div class="confirmed-grid" data-testid="slot-confirmed-grid" aria-live="polite">
         <span>{isLive ? 'SERVER GRID CONFIRMED' : 'DEMO GRID · CLIENT RESULT'}</span>
@@ -205,12 +235,12 @@
   </div>
 
   <div class="slot-meta">
-    <span><b>RTP</b> skeleton-1</span>
+    <span><b>RULESET</b> {isSiege ? 'Siege' : 'skeleton-1'}</span>
     <span><b>LINES</b> 3 active</span>
     <span><b>MOTION</b> wave · 60 fps</span>
   </div>
 
-  {#if slotOutcome && hasFreeSpins(slotOutcome) && showConfirmedGrid}
+  {#if !isSiege && slotOutcome && hasFreeSpins(slotOutcome) && showConfirmedGrid}
     <section class="free-spins-panel" data-testid="slot-free-spins" aria-label="Доступны бесплатные вращения">
       <div>
         <span class="free-spins-kicker">{isLive ? 'BONUS STATE · SERVER CONFIRMED' : 'DEMO BONUS STATE · CLIENT RESULT'}</span>
@@ -227,10 +257,13 @@
     {isSpinning ? 'Барабаны останавливаются…' : motion === 'resolving' ? (isLive ? 'Ждём сервер…' : 'Готовим демо…') : 'Крутить за 10 JG'}
   </button>
   <ResultBand {result} {motion} source={resultSource} />
+  {#if isSiege}<details class="sources"><summary>Источники изображений</summary><p>© Ubisoft Entertainment. Некоммерческий фанатский интерфейс по решению владельца; общая лицензия не заявляется.</p><a href={`${base}/slot/sources.json`} target="_blank" rel="noreferrer">Оперативники и источники портретов</a></details>{/if}
 </div>
 
 <style>
+  .siege{--siege-ice:#bed0dc;background:#0c1115;padding:12px;color:#e9eff3;border:1px solid #748a97;padding-bottom:max(12px,env(safe-area-inset-bottom))}.siege h2{font-weight:300;letter-spacing:.12em;text-transform:uppercase}.siege .room-kicker,.siege .bet-chip,.siege .slot-status strong{color:var(--siege-ice)}.siege .slot-machine{border-color:#687c87;border-radius:4px;background:radial-gradient(ellipse at 50% 0,#8babb633,transparent 65%),linear-gradient(110deg,#ffffff09,transparent 30%,#ffffff09 65%,transparent),#10171c;box-shadow:inset 0 -80px 60px -60px #c3d5de44}.siege .machine-rim,.siege .reel{border-color:#748794;border-radius:2px}.siege .symbol{border-radius:2px;background:#070d11;overflow:hidden}.operator-face{width:100%;height:100%;object-fit:contain;filter:grayscale(1);transition:filter .2s}.winning .operator-face{filter:none}.siege .symbol.winning{background:#344a56;color:#fff;box-shadow:0 0 12px #d5e8f266}.siege .primary-action{border-radius:3px;background:#d1dce3;color:#10171c;box-shadow:none}.siege .machine-lights i{background:#b9d1de}.beams{position:absolute;top:62px;left:10px;width:calc(100% - 20px);height:calc(7 * (clamp(34px,8vw,52px) + 6px) - 6px);pointer-events:none;filter:drop-shadow(0 0 5px #deefff);z-index:2}.beams polyline{fill:none;stroke:#ecf6fc;stroke-width:2;stroke-dasharray:700;stroke-dashoffset:700;animation:beam .6s ease forwards}.sources{font-size:11px;color:#d1dce3}.sources summary{min-height:44px;display:flex;align-items:center;cursor:pointer}.sources a{color:#c7e5f4}.sources p{margin:8px 0}.siege button:focus-visible,.sources a:focus-visible,.sources summary:focus-visible{outline:3px solid #fff;outline-offset:3px}@keyframes beam{to{stroke-dashoffset:0}}@media(prefers-reduced-motion:reduce){.beams polyline{animation:none;stroke-dashoffset:0}.operator-face{transition:none}}
   .game-room { position: relative; z-index: 1; display: grid; gap: 18px; }
+  .siege .reel-grid{position:relative}.siege .symbol.tone-brass,.siege .symbol.tone-pink{background:#070d11;color:#e9eff3}.siege .symbol.winning{background:#344a56}.siege .beams{top:8px;left:0;width:100%}
   .room-intro { display: flex; justify-content: space-between; gap: 18px; }
   .room-kicker { color: var(--brass-300); font-size: 9px; font-weight: 800; letter-spacing: 0.14em; }
   h2 { margin: 6px 0 5px; font-size: clamp(25px, 7vw, 36px); letter-spacing: -0.06em; }

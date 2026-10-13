@@ -1,0 +1,305 @@
+{
+ "note": "Copyright Ubisoft Entertainment; original operator-list portraits from the official Rainbow Six Siege operators page, cropped to centred faces. The project owner approves this non-commercial fan design preview with attribution; no general reuse license is asserted.",
+ "operators": [
+  {
+   "operator": "Ash",
+   "side": "attack",
+   "file": "faces/Ash.webp",
+   "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/QOEBDfqjtUxVBc31l8L9f/4d9b112565baf81d56d69279b95cd463/r6-operators-list-ash_317253.png",
+   "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+   "source_sha256": "8b7da5d431622e2d4d6f3979d6ac1236a4b9826ddd5add549893206bfb442367",
+   "processing": "face-centred crop, 272x160 WebP with alpha",
+   "centred_by": "silhouette"
+  },
+  {
+   "operator": "Buck",
+   "side": "attack",
+   "file": "faces/Buck.webp",
+   "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/3k68pZu62GPbCAFOSCej9a/3c3d3da1f7109a396fb59dcf06c5c4c8/r6-operators-list-buck.png",
+   "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+   "source_sha256": "462cce80fe60804ee142abb1734fc9508530c0111ddd75e38a15f551b26f1b4d",
+   "processing": "face-centred crop, 272x160 WebP with alpha",
+   "centred_by": "silhouette"
+  },
+  {
+   "operator": "Capitao",
+   "side": "attack",
+   "file": "faces/Capitao.webp",
+   "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/3AZlhNFA21aKL2MdAIEwa8/abfce9018a7a08c120d707fbc28ae709/r6-operators-list-capitao.png",
+   "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+   "source_sha256": "7619e6b49baa99bfbb20ea746dfac094da350996b3f717de4d4c9bb67940e837",
+   "processing": "face-centred crop, 272x160 WebP with alpha",
+   "centred_by": "silhouette"
+  },
+  {
+   "operator": "Dokkaebi",
+   "side": "attack",
+   "file": "faces/Dokkaebi.webp",
+   "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/7fjUupLXClpcdTyqdvPv24/9f10b31029960d396405ec8f985bfb13/r6s-operators-list-dokkaebi.png",
+   "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+   "source_sha256": "ce544dae4dbf29a4e0cf580b8539a29a1608b36aceda8d0f608dd020ca4100f4",
+   "processing": "face-centred crop, 272x160 WebP with alpha",
+   "centred_by": "silhouette"
+  },
+  {
+   "operator": "Gridlock",
+   "side": "attack",
+   "file": "faces/Gridlock.webp",
+   "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/27gUsHtPmP86NRs4cPug1o/31ea0005ad1afc68a8ebcc477934ded6/r6-operators-list-gridlock.png",
+   "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+   "source_sha256": "b46e99ca7fefdab88805ea5c1ab266fcfa89a9d54a1cc1f8746fc3f30e87b21e",
+   "processing": "face-centred crop, 272x160 WebP with alpha",
+   "centred_by": "silhouette"
+  },
+  {
+   "operator": "Hibana",
+   "side": "attack",
+   "file": "faces/Hibana.webp",
+   "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/7mAs4mz2zA4wjPZsNg6tys/e4fbdbfe20406c2655b56ba420b839aa/r6-operators-list-hibana.png",
+   "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+   "source_sha256": "95463bca90a67241b89ab48daf354a37a89f21debfc48032403c811af1dc6c1e",
+   "processing": "face-centred crop, 272x160 WebP with alpha",
+   "centred_by": "silhouette"
+  },
+  {
+   "operator": "Iana",
+   "side": "attack",
+   "file": "faces/Iana.webp",
+   "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/6vES8lEllMwW9OaBYRT7YX/39b5fe90684d7ce637a7d025cdd1ec96/r6s-operator-list-iana.png",
+   "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+   "source_sha256": "c5b5c6b6170b98d217ddef373c6cb93dc95d24d759eb18fefdfee9fa4d32eaef",
+   "processing": "face-centred crop, 272x160 WebP with alpha",
+   "centred_by": "silhouette"
+  },
+  {
+   "operator": "Kali",
+   "side": "attack",
+   "file": "faces/Kali.webp",
+   "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/41NACeIbkdnIWgnwq0HzD4/9713f8e58b9a8c253b7507b59169bb3c/r6-operators-list-kali_358317.png",
+   "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+   "source_sha256": "3a2edff8344f740d33f6e3bf2d766c0ee9a98a9ec4433eff6ae5d005b8d8eaad",
+   "processing": "face-centred crop, 272x160 WebP with alpha",
+   "centred_by": "silhouette"
+  },
+  {
+   "operator": "Maverick",
+   "side": "attack",
+   "file": "faces/Maverick.webp",
+   "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/1MmaEupq7KOe6it1trqIWP/3f4246349a36e28f4d9299f9368612c1/r6-operators-list-maverick.png",
+   "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+   "source_sha256": "9d0ae2cb2aefe60c0cb70da279d9850994334be68f5532b9d7ab7aa6dc95c1f6",
+   "processing": "face-centred crop, 272x160 WebP with alpha",
+   "centred_by": "silhouette"
+  },
+  {
+   "operator": "Nomad",
+   "side": "attack",
+   "file": "faces/Nomad.webp",
+   "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/3VHhiyMOUkBOW1u1Zh5eGH/9e603d3e6926fc26ebee494b3040eba7/r6-operators-list-nomad.png",
+   "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+   "source_sha256": "e3880a7211c9eec2d145a75ecdc53fc6b321bff576a9acbd6dadc6a905530bef",
+   "processing": "face-centred crop, 272x160 WebP with alpha",
+   "centred_by": "silhouette"
+  },
+  {
+   "operator": "Osa",
+   "side": "attack",
+   "file": "faces/Osa.webp",
+   "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/3Dg95rvyhPtw588r60vIPM/75e609068a0b205cc4dbc7bf3e517f51/r6s-operators-list-osa.png",
+   "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+   "source_sha256": "cb8aad4377fe7cd5751e2b528adaa5025123298370a384466f226af9966ca422",
+   "processing": "face-centred crop, 272x160 WebP with alpha",
+   "centred_by": "silhouette"
+  },
+  {
+   "operator": "Zero",
+   "side": "attack",
+   "file": "faces/Zero.webp",
+   "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/24jDQIfDdVMLX5K54pKNe5/58dec3b1e7d32a637bc76560e0cf0385/r6s-operator-list-zero.png",
+   "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+   "source_sha256": "d8a0e55a3da497b245277161c043aac3930f1a9716ec152f316b321481669499",
+   "processing": "face-centred crop, 272x160 WebP with alpha",
+   "centred_by": "silhouette"
+  },
+  {
+   "operator": "Zofia",
+   "side": "attack",
+   "file": "faces/Zofia.webp",
+   "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/z60t1OJxJoHqm2zp0t5dL/4acc0904444f43b12a17f6a578322cf9/r6-operators-list-zofia.png",
+   "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+   "source_sha256": "91b26992e4f6c58bf0decce9e2c9bff4b76d207267d6e88f6fce809f24292c77",
+   "processing": "face-centred crop, 272x160 WebP with alpha",
+   "centred_by": "silhouette"
+  },
+  {
+   "operator": "Amaru",
+   "side": "attack",
+   "file": "faces/Amaru.webp",
+   "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/5jumFHxGXFA7HehPNn0uGD/e00f3d67802944d0c7aba72455e1ba6a/r6-operators-list-amaru.png",
+   "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+   "source_sha256": "a617d9ef8573df2cb9ca4940d4116267786598ba1a417e65248ffa89ab2ab413",
+   "processing": "face-centred crop, 272x160 WebP with alpha",
+   "centred_by": "silhouette"
+  },
+  {
+   "operator": "Flores",
+   "side": "attack",
+   "file": "faces/Flores.webp",
+   "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/3hXRjYHsrlFOocJjyxyYZY/29eb8f1ad9eab150518a053b775c336f/r6s-operators-list-flores.png",
+   "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+   "source_sha256": "f8b0284a923e087f2021158f7e824346c7688456055eb3f33954631c534d7991",
+   "processing": "face-centred crop, 272x160 WebP with alpha",
+   "centred_by": "silhouette"
+  },
+  {
+   "operator": "Aruni",
+   "side": "defense",
+   "file": "faces/Aruni.webp",
+   "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/4yfuWCW8O4ja2VqR9tXqaE/c8dd123a6405959cf4f091c3854c9d96/r6s-operators-list-aruni.png",
+   "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+   "source_sha256": "0381ce923a8b942cfd6c6140c09a311e1571a8ea7d7d9452de2a95127855303e",
+   "processing": "face-centred crop, 272x160 WebP with alpha",
+   "centred_by": "silhouette"
+  },
+  {
+   "operator": "Clash",
+   "side": "defense",
+   "file": "faces/Clash.webp",
+   "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/3tTgRbA9GdeLTmI1mPObsp/449b741eaa4f6dd810b8914145de75bb/r6s-operators-list-clash.png",
+   "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+   "source_sha256": "c747faaa9e95dd107c40c1d369af62037b371ef6dfd255b2382f5a01e07b64a9",
+   "processing": "face-centred crop, 272x160 WebP with alpha",
+   "centred_by": "silhouette"
+  },
+  {
+   "operator": "Goyo",
+   "side": "defense",
+   "file": "faces/Goyo.webp",
+   "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/1ylXIr2TxRcFMSKfRhXJXh/5202b0fdfbf43545e8c40a8232a438c3/r6-operators-list-goyo.png",
+   "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+   "source_sha256": "05f3387f0ec6c19ba7ab33f1df5e32097c0e83979f05a7a919c64aa5ed1d430f",
+   "processing": "face-centred crop, 272x160 WebP with alpha",
+   "centred_by": "silhouette"
+  },
+  {
+   "operator": "Kaid",
+   "side": "defense",
+   "file": "faces/Kaid.webp",
+   "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/9ATWPlasUTzxyJMNlV9SM/16dd669d06990b12088660ffc77bd6b3/r6-operators-list-kaid.png",
+   "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+   "source_sha256": "7e4304cfec05c1bf23c7a100f9079be01c72577bc6d01650707e95f875951fc4",
+   "processing": "face-centred crop, 272x160 WebP with alpha",
+   "centred_by": "silhouette"
+  },
+  {
+   "operator": "Maestro",
+   "side": "defense",
+   "file": "faces/Maestro.webp",
+   "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/6QNXf9qRkqzOdsprj2SWgI/0c4cc3b9423cada4fed0ba5ae2c9c722/r6-operators-list-maestro.png",
+   "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+   "source_sha256": "669391a4736a8553220dc673c9d3db9030428ad574ad915156db8c3e817abe6c",
+   "processing": "face-centred crop, 272x160 WebP with alpha",
+   "centred_by": "silhouette"
+  },
+  {
+   "operator": "Melusi",
+   "side": "defense",
+   "file": "faces/Melusi.webp",
+   "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/1yoVAGw5rEQ8zPPHoQSDJb/b16a570fadb3342416c5c44847cc651a/r6s-operator-list-melusi.png",
+   "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+   "source_sha256": "51eb517aa16fe5a62c2b01aec3a19912b12f34f9d14b8f1bec4334656323f6da",
+   "processing": "face-centred crop, 272x160 WebP with alpha",
+   "centred_by": "silhouette"
+  },
+  {
+   "operator": "Oryx",
+   "side": "defense",
+   "file": "faces/Oryx.webp",
+   "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/3JBOp3MXgGeuEwyoYrkuMi/b7aa3c4a3fa6f165135954aa30252838/r6s-operator-list-oryx.png",
+   "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+   "source_sha256": "7e849595ca8f0e892d4f1430f2017c4570f4937dd1085dd10bb1914beaec17de",
+   "processing": "face-centred crop, 272x160 WebP with alpha",
+   "centred_by": "silhouette"
+  },
+  {
+   "operator": "Pulse",
+   "side": "defense",
+   "file": "faces/Pulse.webp",
+   "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/1YQb5phSD3uYbWrqhCBJRU/06e5f689777224bf8ca6c7c5cad9db9d/r6-operators-list-pulse.png",
+   "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+   "source_sha256": "10c8eeaabb44825f8eab0c23aad797fcbd0b54f9ed9cc2b0e6d0d24cf5003022",
+   "processing": "face-centred crop, 272x160 WebP with alpha",
+   "centred_by": "silhouette"
+  },
+  {
+   "operator": "Thorn",
+   "side": "defense",
+   "file": "faces/Thorn.webp",
+   "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/7LbjnSD3wKQXWhoxSXv3vu/238defac906026c3763e93041e3d96f9/r6s-operators-list-thorn.png",
+   "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+   "source_sha256": "51f135346170ff3802d54713379af8af619329825f4868e302d2937d5263235a",
+   "processing": "face-centred crop, 272x160 WebP with alpha",
+   "centred_by": "silhouette"
+  },
+  {
+   "operator": "Valkyrie",
+   "side": "defense",
+   "file": "faces/Valkyrie.webp",
+   "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/7xN3HJXPLVEmWA9PDnQzTV/613b19a897503161f2cf6fe7bbe3408e/r6-operators-list-valkyrie.png",
+   "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+   "source_sha256": "5f220bc8aef3a60a53fa1b38dedf78f81eb869acf0f7231b05f8c5bdbb33e815",
+   "processing": "face-centred crop, 272x160 WebP with alpha",
+   "centred_by": "silhouette"
+  },
+  {
+   "operator": "Wamai",
+   "side": "defense",
+   "file": "faces/Wamai.webp",
+   "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/2ZSUcKWczIo1w2WwzNan5B/98938e59a958117b46901c57fce98ae7/r6-operators-list-wamai_358318.png",
+   "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+   "source_sha256": "d569c17779032dd3a9e3205a39850d6ffb60f01b4458ec108672067bbd6726fe",
+   "processing": "face-centred crop, 272x160 WebP with alpha",
+   "centred_by": "silhouette"
+  },
+  {
+   "operator": "Warden",
+   "side": "defense",
+   "file": "faces/Warden.webp",
+   "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/72pEJEYxwPGoW221XvdmAJ/ea79dbd58064cbc99a1514e1b1641586/r6-operators-list-warden.png",
+   "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+   "source_sha256": "55e668074eba64dd5db0b47224fbb265a96ae6dddb0b0b7a30585f70173c5f35",
+   "processing": "face-centred crop, 272x160 WebP with alpha",
+   "centred_by": "silhouette"
+  },
+  {
+   "operator": "Caveira",
+   "side": "defense",
+   "file": "faces/Caveira.webp",
+   "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/4RZ2Vwk7HozKMCtS5gFMp7/e1b930e3c80590a316939d9df0d88660/r6-operators-list-caveira.png",
+   "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+   "source_sha256": "368aa695afc1be096edb9b242dbe86819f6a1949a4056c29d370a3a4c395540b",
+   "processing": "face-centred crop, 272x160 WebP with alpha",
+   "centred_by": "silhouette"
+  },
+  {
+   "operator": "Alibi",
+   "side": "defense",
+   "file": "faces/Alibi.webp",
+   "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/11nzEgSwdAXLow3kPl0wom/3fdf2b0aa1c1af7ef785d28cf5d80114/r6-operators-list-alibi.png",
+   "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+   "source_sha256": "534c75cb585d70f49fe0c0cb7b63f4f36b82d13c8c9cf43fec4c7c665d21293d",
+   "processing": "face-centred crop, 272x160 WebP with alpha",
+   "centred_by": "silhouette"
+  },
+  {
+   "operator": "Tachanka",
+   "side": "defense",
+   "file": "faces/Tachanka.webp",
+   "source": "https://staticctf.ubisoft.com/J3yJr34U2pZ2Ieem48Dwy9uqj5PNUQTn/5P9kGyOrnsu7lRyr9xC71t/53981da03fa36adf99adf61bc098bd4a/r6s-operators-list-tachanka.png",
+   "source_page": "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators",
+   "source_sha256": "07ce644ab2727a1093bf166093a129802f315a0d2bc13a497f5bf97124cd6c40",
+   "processing": "face-centred crop, 272x160 WebP with alpha",
+   "centred_by": "silhouette"
+  }
+ ]
+}

@@ -32,10 +32,8 @@ test.describe('Mini App shell', () => {
     await expect(page.getByTestId('confirmed-balance')).toHaveCount(0);
     await expect(page.getByTestId('slot-confirmed-grid')).toContainText('DEMO GRID · CLIENT RESULT');
     await expect(page.getByTestId('slot-confirmed-grid')).not.toContainText('SERVER GRID CONFIRMED');
-    await expect(page.getByTestId('slot-free-spins')).toContainText('DEMO BONUS STATE · CLIENT RESULT');
-    await expect(page.getByTestId('slot-free-spins')).not.toContainText('SERVER CONFIRMED');
+    await expect(page.getByTestId('slot-free-spins')).toHaveCount(0);
     await expect(page.getByTestId('slot-status')).toContainText('SETTLED · DEMO GRID');
-    await expect(page.getByTestId('slot-free-spins')).toContainText('5');
   });
 
   test('labels an in-progress slot demo result as demo', async ({ page }) => {
@@ -98,7 +96,7 @@ test.describe('Mini App shell', () => {
     await expect(page.getByTestId('slot-reel-2')).toHaveAttribute('data-launch-delay', '220');
     await expect(page.getByTestId('slot-machine')).toHaveAttribute('data-reel-phase', 'outcome', { timeout: 5000 });
     await expect(page.getByTestId('slot-confirmed-grid')).toBeVisible();
-    await expect(page.getByTestId('slot-payline')).toBeVisible();
+    await expect(page.getByTestId('slot-winning-beams')).toBeVisible();
   });
 
   test('keeps the reel transform moving during the travel phase', async ({ page }) => {
