@@ -81,6 +81,7 @@ Monte Carlo evidence:
 python -m devtools.monte_carlo.slot --trials 100000 --bet 10 --seed 42 --json
 python -m devtools.monte_carlo.blackjack --trials 100000 --bet 25 --seed 42 --json
 python -m devtools.monte_carlo.holdem --trials 100000 --seed 42 --json
+python -m devtools.monte_carlo.holdem_bot --trials 5000 --seed 53 --json  # reports/monte-carlo/holdem-bot-v1.json
 ```
 
 CI повторяет Python lint/tests, Mini App check/test/build, PostgreSQL/Redis services и сохраняет три JSON-отчёта как artifact.
