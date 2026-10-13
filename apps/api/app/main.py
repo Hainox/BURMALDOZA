@@ -1,5 +1,7 @@
 import asyncio
+import logging
 from collections.abc import Callable
+from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,10 +14,45 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.config import cors_origin, settings
 from app.db.session import SessionFactory
-from app.routers import auth, internal, rooms, wallet
+from app.routers import auth, internal, leaderboard, rooms, wallet
 from app.services.event_bus import EventBus
 
-app = FastAPI(title="Burmaldoza API", version="0.1.0")
+
+async def _holdem_timer(application: FastAPI) -> None:
+    from app.services.holdem_service import HoldemService
+    from app.services.room_service import RoomService
+
+    while True:
+        delay = 1
+        try:
+            async with asyncio.timeout(5):
+                async with application.state.session_factory() as session:
+                    await HoldemService(
+                        RoomService(session=session, event_bus=application.state.event_bus)
+                    ).expire_due()
+        except Exception as error:  # noqa: BLE001 - supervisor loop must survive any tick failure
+            # Driver errors (e.g. asyncpg auth failures) are not all SQLAlchemyError/OSError;
+            # an uncaught one would stop deadline expiry for good and resurface on shutdown.
+            # Bounded static message: DB exceptions can contain connection credentials.
+            logging.getLogger(__name__).error(
+                "holdem_deadline_tick_failed", extra={"error_type": type(error).__name__}
+            )
+            delay = 5
+        await asyncio.sleep(delay)
+
+
+@asynccontextmanager
+async def lifespan(application: FastAPI):
+    timer = asyncio.create_task(_holdem_timer(application), name="holdem-deadlines")
+    try:
+        yield
+    finally:
+        timer.cancel()
+        with suppress(asyncio.CancelledError):
+            await timer
+
+
+app = FastAPI(title="Burmaldoza API", version="0.1.0", lifespan=lifespan)
 app.state.settings = settings
 app.state.event_bus = EventBus()
 app.state.session_factory = SessionFactory
@@ -33,6 +70,7 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(wallet.router)
+app.include_router(leaderboard.router)
 app.include_router(rooms.router)
 app.include_router(internal.router)
 
@@ -84,9 +122,7 @@ async def _check_redis(redis_client_factory: Callable[..., Redis], redis_url: st
 @app.get("/health/ready", tags=["system"], response_model=None)
 async def health_ready(request: Request) -> dict[str, object] | JSONResponse:
     session_factory = getattr(request.app.state, "session_factory", SessionFactory)
-    redis_client_factory = getattr(
-        request.app.state, "redis_client_factory", Redis.from_url
-    )
+    redis_client_factory = getattr(request.app.state, "redis_client_factory", Redis.from_url)
     database_ok, redis_ok = await asyncio.gather(
         _check_database(session_factory),
         _check_redis(redis_client_factory, request.app.state.settings.redis_url),

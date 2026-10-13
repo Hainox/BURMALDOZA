@@ -38,6 +38,7 @@ class GameRoom(Base):
     state_version: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     state_json: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     private_state_json: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    deadline_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -87,3 +88,12 @@ class GameAction(Base):
     payload_json: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     sequence_no: Mapped[int] = mapped_column(Integer, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class HoldemHeroBag(Base):
+    __tablename__ = "holdem_hero_bags"
+    __table_args__ = (CheckConstraint("buy_in IN (100, 500, 1000)", name="ck_holdem_hero_bags_buy_in"),)
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    buy_in: Mapped[int] = mapped_column(Integer, primary_key=True)
+    remaining_json: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)

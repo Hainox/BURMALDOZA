@@ -5,6 +5,8 @@
   import RoomCard from '$lib/components/RoomCard.svelte';
   import RoomShell from '$lib/components/RoomShell.svelte';
   import WalletGrantControls from '$lib/components/WalletGrantControls.svelte';
+  import Leaderboard from '$lib/components/Leaderboard.svelte';
+  import LedgerHistory from '$lib/components/LedgerHistory.svelte';
   import type { ApiLedgerResult } from '$lib/api/client';
   import { getTelegramWebApp } from '$lib/telegram/webapp';
   import BlackjackRoom from '$lib/rooms/BlackjackRoom.svelte';
@@ -114,6 +116,8 @@
   let demoFreeSpinsRemaining = 0;
   let apiClient: ApiClient | null = null;
   let liveApiEnabled = false;
+  let ledgerReady = false;
+  let ledgerRevision = 0;
   let apiLoading = false;
   let apiError: string | null = null;
   let closeRoomStream: (() => void) | null = null;
@@ -150,6 +154,7 @@
       roomId,
       (snapshot) => {
         if (roomState.snapshot?.roomId !== roomId) return;
+        ledgerRevision += 1;
         roomState.setSnapshot(snapshot);
         updateBalanceFromPublicState(snapshot.publicState);
         const snapshotResult = mapApiPublicStateResult(snapshot.publicState, snapshot.gameType);
@@ -161,6 +166,7 @@
       (event) => {
         if (roomState.snapshot?.roomId !== roomId) return;
         if (event.state_version < roomState.snapshot.stateVersion) return;
+        ledgerRevision += 1;
         const publicState = publicStateFromEvent(event);
         const nextSnapshot = {
           ...roomState.snapshot,
@@ -456,6 +462,7 @@
       if (roomState.snapshot?.roomId !== roomId) return false;
       roomState.setSnapshot(snapshot, true);
       updateBalanceFromPublicState(snapshot.publicState);
+      ledgerRevision += 1;
       const snapshotResult = mapApiPublicStateResult(snapshot.publicState, snapshot.gameType);
       if (snapshotResult) {
         roomState.restoreConfirmedResult(snapshotResult);
@@ -492,6 +499,7 @@
         actionId,
         actionPayload
       );
+      ledgerRevision += 1;
 
       if (!selectedGame || roomState.snapshot?.roomId !== roomAtStart.roomId) return;
       const event = response.event;
@@ -538,6 +546,7 @@
   function applyConfirmedGrant(confirmed: ApiLedgerResult) {
     if (!Number.isInteger(confirmed.balance_after) || confirmed.balance_after < 0) return;
     session.setBalance(confirmed.balance_after);
+    ledgerRevision += 1;
   }
 
   function runAction(action: string, fields: Record<string, unknown> = {}) {
@@ -595,6 +604,8 @@
       }).catch((error) => {
         session.setConnection('offline');
         apiError = error instanceof Error ? error.message : 'Не удалось подключиться к API';
+      }).finally(() => {
+        ledgerReady = true;
       });
     }
 
@@ -685,6 +696,8 @@
       </footer>
     </main>
   {/if}
+  <Leaderboard apiClient={ledgerReady ? apiClient : null} live={liveApiEnabled} revision={ledgerRevision} />
+  <LedgerHistory apiClient={ledgerReady ? apiClient : null} live={liveApiEnabled} revision={ledgerRevision} />
 </div>
 
 <style>

@@ -471,6 +471,61 @@
 - Ссылки на чеклист добавлены в этап 5 `docs/Development-Roadmap.md` и в условия публичного запуска `docs/Launch-Checkpoint.md`.
 - Проверки: `git diff --check` — passed.
 
+## 2026-10-13 — история операций в Mini App (#51)
+
+- Codex (точный вариант и effort не отображаются) реализовал задачу в ветке `codex/miniapp-ledger-history`; на финальных проверках у Codex закончился лимит. Claude Code (claude-opus-5-5, effort не отображается) замещает Codex: довёл ветку, проверил и открыл PR. Command Code недоступен, задача передана Codex владельцем.
+- Сделано: `ApiClient.getWalletLedger()` читает `GET /api/v1/wallet/ledger` и отклоняет некорректный ответ; компонент `LedgerHistory.svelte` показывает причину, время МСК, изменение и баланс после, состояния загрузки, ошибки с повтором и пустого списка. В DEMO запросов нет, записи не выдумываются. История перечитывается с сервера после подтверждённого гранта, ответа на действие, события и снимка комнаты. Сервер не менялся.
+- Правка Claude Code: при повторной загрузке последний подтверждённый список остаётся на экране, без мигания «Загружаем историю…»; временный конфиг Playwright Codex удалён.
+- Проверки: `pnpm miniapp:check` — 0 errors / 0 warnings; `pnpm miniapp:test` — 27 passed; `pnpm miniapp:build` — passed; полный Playwright — 31 passed в трёх прогонах подряд (на порту 4175, так как 4173 занят посторонним локальным сервером).
+- Риск: тест `slot-stop.spec.ts` «renders the live canonical grid…» изредка падает при параллельном прогоне — так же и на `main` без этой задачи (1 из 4 прогонов), к истории операций не относится.
+
+## 2026-10-13 — правки после review PR #48 (#55)
+
+- Claude Code (claude-opus-5-5, effort не отображается), ветка `claude/journal-followups-48` от `main` `5785e30`. Закрыты четыре некритичных замечания из review PR #48.
+- Журнал: сообщение пустой очереди больше не ссылается на конкретный PR, а направляет к открытым issues с метками `to:*` и штабу #19; `test-offline.cjs` проверяет, что в сообщении нет номера PR (на прежнем тексте проверка падает).
+- `docs/Launch-Checkpoint.md`: актуальная очередь — задачи #51–#57 по исполнителям, PR #48 слит, локальный узел штаба включён.
+- `docs/project-journal/README.md`: dev-серверы по умолчанию только на localhost; `--host 0.0.0.0` — только для облачного контейнера.
+- `ChangeLog.md`: убрана пустая строка внутри списка `## Unreleased`.
+- Проверки: `node docs/project-journal/test-offline.cjs` — passed; `node --check` app.js и test-offline.cjs — passed; `git diff --check` — passed.
+
+## 2026-10-13 — review Codex и синхронизация PR #60 после merge #58
+
+- По прямому разрешению владельца Codex слил PR #58 обычным merge commit `8ddfe3c`, затем синхронизировал ветку `codex/miniapp-ledger-history` с этой базой для PR #60. Единственный конфликт — в этом журнале; обе записи #51/#55 сохранены. Mini App при синхронизации не менялся.
+- Перед merge проверены точные head: #58 `4cddba5`, #60 `4094e04`; Verify зелёный, блокирующих review нет. Независимая проверка #60: check 0/0, unit 27 passed, build passed, Chromium E2E 31 passed; регрессии обоих PR подтверждены mutation checks в изолированных копиях. Review опубликован в каждом PR.
+- После разрешения конфликта: offline regression журнала, `node --check` app.js и `git diff --cached --check` — passed. На новом head PR #60 требуется новый Verify перед merge. Сервер и hooks/poller не затрагивались; публикация Pages при merge #60 разрешена владельцем вместе с merge.
+
+## 2026-10-13 — проект раздела Hold'em v1 в BuildSpec (#53)
+
+- Claude Code (claude-opus-5-5, effort не отображается) по поручению владельца, пока Codex недоступен по лимиту. Ветка `claude/holdem-buildspec` от `main`.
+- В `dev/BuildSpec.md` добавлен раздел «Hold’em v1»: утверждённые владельцем режимы (бот и живой соперник), столы 100 / 500 / 1 000 JOKERGEM и тайм-аут 20 секунд; предложения на утверждение — блайнды 5 % / 10 % входа, check-или-fold по тайм-ауту, без тайм-аута в режиме против бота, поиск соперника 60 секунд, бот «от дома» с обязательным Monte Carlo.
+- Технические требования для реализации: снимки и события по месту игрока (закрытые карты только своему месту), бот без доступа к картам игрока и колоде, ledger `game_stake`/`game_payout` с idempotency.
+- Код не менялся. Проверки: `git diff --check` — passed.
+- Решение владельца 13.10.2026: пункты 1–5 раздела Hold’em v1 утверждены (блайнды 5 % / 10 %, check-или-fold по тайм-ауту, без тайм-аута против бота, поиск 60 с, бот «от дома» с обязательным Monte Carlo). Добавлены герой-соперник на каждую раздачу из пула стола и аватар Telegram в живом режиме (#53, PR #63).
+- Решение владельца 13.10.2026: пункты 1–5 раздела Hold’em v1 утверждены (блайнды 5 % / 10 %, check-или-fold по тайм-ауту, без тайм-аута против бота, поиск 60 с, бот «от дома» с обязательным Monte Carlo). Добавлены герой-соперник на каждую раздачу из пула стола и аватар Telegram в живом режиме (#53, PR #63).
+
+## 2026-10-13 — порядок записей ledger (#67)
+
+- Codex, точный вариант модели/effort не отображаются. В API истории при равном timestamp операции группируются по operation_id, внутри одного settlement выплата идёт перед ставкой (последние операции первыми), UUID остаётся только последним tie-break. Суммы, баланс, limit 100 и авторизация не менялись; миграция и правка существующего ledger не нужны.
+- Регрессия создаёт ставку/выплату с одинаковым timestamp и UUID в обратном порядке: до фикса падает, после — проходит. Проверяет серверные balance_after, изоляцию другого пользователя и отказ без авторизации.
+- Проверки: `uv run --locked ruff check .` — passed; `uv run --locked pytest -q` — 140 passed, 10 skipped (PostgreSQL TEST_DATABASE_URL не задан). Ветка `codex/ledger-entry-order`; merge/deploy не выполнялись. Нужны CI PostgreSQL и независимый review перед merge.
+
+## 2026-10-13 — рейтинг Mini App за календарную неделю МСК (#52)
+
+- Решение владельца: топ-15 по сумме `game_stake` + `game_payout` за текущую неделю МСК, понедельник 00:00 включительно — следующий понедельник 00:00 исключительно. Welcome/daily/relief и admin исключены; участвуют игроки с игровыми операциями в этом интервале. Равные результаты сортируются стабильно по внутреннему id, который не выходит в ответ; места порядковые.
+- Утверждённое расширение scope: nullable `User.username`, миграция `20261013_0004` после `20260923_0003`, обновление/удаление ника только из проверенного Telegram initData. Старые строки остаются с NULL до следующего входа. Без ника — «Игрок без ника»; имя и идентификаторы не раскрываются. Точное решение записано в BuildSpec.
+- Новый авторизованный `/api/v1/leaderboard`, отдельный контракт с периодом и максимум 15 строк; Mini App проверяет ответ на границе, показывает загрузку/ошибку/повтор/пустую неделю и период МСК. Повторное чтение после серверных игровых действий; DEMO без выдуманного рейтинга и запроса API.
+- Проверки: `uv run --locked ruff check .` — passed; `uv run --locked pytest -q` — 143 passed, 11 skipped (нет локального PostgreSQL / TEST_DATABASE_URL), две предупреждающие записи зависимостей. Добавлен отдельный PostgreSQL тест для CI и обратимый SQLite тест миграции с существующим пользователем. `pnpm miniapp:check` — 0 errors, 0 warnings; `pnpm miniapp:test` — 33 passed; production build выполнялся webServer Playwright и passed. Первичный `pnpm miniapp:e2e` с 6 workers — 31 passed / 4 timeout старых room-click кейсов (снимок оставался на dashboard до hydration). Повтор всего suite с `CI=true pnpm --dir apps/miniapp exec playwright test --workers=2` — 35 passed; исходные тесты не менялись. Все четыре новых E2E прошли в обоих запусках, включая 320/1440 px и reduced motion.
+- TDD: backend тест упал на отсутствующем router до реализации, 6 frontend transport тестов упали на отсутствующем getLeaderboard до реализации; затем passed.
+- Ручная приёмка после deploy: в Telegram открыть Mini App с @username; сравнить сумму игровых ledger за неделю и показанный результат; удалить ник и повторно войти — «Игрок без ника»; на телефоне проверить список/повтор загрузки при отключении сети и новую неделю в понедельник. Telegram WebView/iOS/Android и production PostgreSQL локально не проверены. Docker daemon локально недоступен; CI должен проверить PostgreSQL и Compose build. Новый endpoint использует ту же auth dependency, что wallet; общего rate limiting в соседних endpoints нет.
+- Осталось: независимый Claude Code review API/миграции, CI Verify на текущем head, приёмка владельцем. Merge, Pages-публикация и серверный deploy не выполнялись; перед серверным запуском нужна штатная `alembic upgrade head`.
+
+## 2026-10-13 — Slot Siege ruleset (#64)
+
+- Codex, точный вариант/effort не отображаются. Новые API-комнаты Slot получают `slot-siege-1` из утверждённого предложения: 8 кодов, 3×7, 3 линии, W wild, ленты по 30 позиций. JSON упакован в domain; skeleton-файл не менялся. Registry принимает только известные версии; CLI Monte Carlo получил --ruleset, старый default skeleton сохранён.
+- Ранее созданные комнаты сохраняют их persisted ruleset для spins, snapshots и events. Метаданные games/rulesets приведены к новому default; старый endpoint версии сохранён. Правка supporting router необходима, чтобы каталог не противоречил выбору RoomService. Изменения Mini App/портретов, ротации операций и Free Spins не входят в #64.
+- Регрессия API выбора версии сначала падала на старом default, после фикса проходит. Unit и SQLite HTTP-тесты проверяют восстановленную skeleton-комнату через новый сервис; старые deterministic tests получили явный skeleton_config, чтобы продолжать проверять прежнюю конфигурацию.
+- Проверки: Ruff passed; полный pytest 211 passed / 10 PostgreSQL skipped; после добавления durable HTTP регрессии focused API/room suite 23 passed. Domain payout/strip/registry/CLI tests прошли. MC: seed42,200000,bet10 — RTP0.977405,hit_rate0.311505; точное перечисление символов даёт25989/27000=0.9625555555555556. Отчёт slot-siege-1.json получен CLI, не правился вручную. PostgreSQL/Compose локально недоступны (Docker daemon не запущен), CI и внешний review нужны до merge.
+
 ## 2026-10-13 — превью направлений Slot и Hold'em (#62)
 
 - Claude Code (claude-opus-5-5, effort не отображается); дизайн-задача Command Code, переданная владельцем на время недоступности CCode. Ветка `claude/design-slot-holdem`.

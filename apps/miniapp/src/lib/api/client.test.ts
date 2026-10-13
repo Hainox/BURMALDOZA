@@ -35,6 +35,25 @@ const roomPayload = {
 };
 
 describe('ApiClient room transport', () => {
+  it('reads ledger entries with Telegram authentication and preserves server values', async () => {
+    const entries = [{ id: 'entry', operation_id: 'operation', amount_delta: -25, balance_after: 912,
+      reason: 'game_stake', reference_type: 'game_round', reference_id: null,
+      created_at: '2026-10-13T00:00:00Z' }];
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify(entries)));
+    const client = new ApiClient('https://api.example.test', 'verified', fetcher);
+    expect(await client.getWalletLedger()).toEqual(entries);
+    expect(fetcher).toHaveBeenCalledWith('https://api.example.test/api/v1/wallet/ledger',
+      expect.objectContaining({ method: 'GET', headers: { 'X-Telegram-Init-Data': 'verified' } }));
+  });
+
+  it('rejects malformed ledger responses instead of displaying invented values', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify([
+      { amount_delta: '25', balance_after: 1000, reason: 'game_payout' }
+    ])));
+    const client = new ApiClient('', 'verified', fetcher);
+    await expect(client.getWalletLedger()).rejects.toThrow('Некорректный ответ истории операций');
+  });
+
   it('creates a room with Telegram init data and maps the server snapshot', async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(JSON.stringify(roomPayload), { status: 200 })

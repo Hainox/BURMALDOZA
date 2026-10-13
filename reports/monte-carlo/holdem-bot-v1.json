@@ -1,0 +1,53 @@
+{
+  "bot_policy_version": "visible-heuristic-v1",
+  "bot_seat": 1,
+  "button_seat": 0,
+  "limitations": "Finite seeded sample of this baseline only; not exact RTP or optimal-play expectation.",
+  "net_formula": "ending_player_stack + player_pot_share - table_buy_in",
+  "player_baseline": "seat 0: check when legal, otherwise call; never fold or raise",
+  "ruleset_version": "holdem-v1",
+  "tables": [
+    {
+      "buy_in": 100,
+      "loss_rate": 0.4862,
+      "mean_player_net_per_hand_buy_ins": -0.04304,
+      "mean_player_net_per_hand_jokergem": -4.304,
+      "net_variance_buy_ins_squared": 0.0428635584,
+      "net_variance_jokergem_squared": 428.635584,
+      "positive_net_rate": 0.4746,
+      "positive_wallet_payout_rate": 1.0,
+      "samples": 5000,
+      "seed": 53,
+      "tie_rate": 0.0392,
+      "win_rate": 0.4746
+    },
+    {
+      "buy_in": 500,
+      "loss_rate": 0.4862,
+      "mean_player_net_per_hand_buy_ins": -0.04826,
+      "mean_player_net_per_hand_jokergem": -24.13,
+      "net_variance_buy_ins_squared": 0.0541769724,
+      "net_variance_jokergem_squared": 13544.2431,
+      "positive_net_rate": 0.4746,
+      "positive_wallet_payout_rate": 1.0,
+      "samples": 5000,
+      "seed": 53,
+      "tie_rate": 0.0392,
+      "win_rate": 0.4746
+    },
+    {
+      "buy_in": 1000,
+      "loss_rate": 0.4862,
+      "mean_player_net_per_hand_buy_ins": -0.04986,
+      "mean_player_net_per_hand_jokergem": -49.86,
+      "net_variance_buy_ins_squared": 0.0630479804,
+      "net_variance_jokergem_squared": 63047.9804,
+      "positive_net_rate": 0.4746,
+      "positive_wallet_payout_rate": 1.0,
+      "samples": 5000,
+      "seed": 53,
+      "tie_rate": 0.0392,
+      "win_rate": 0.4746
+    }
+  ]
+}

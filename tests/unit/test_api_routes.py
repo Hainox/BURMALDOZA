@@ -272,3 +272,87 @@ async def test_wallet_request_id_from_another_user_is_a_conflict_in_database() -
         assert second.json()["detail"] == "idempotency key belongs to another wallet"
         assert first_wallet.json()["balance"] == 1250
         assert second_wallet.json()["balance"] == 1000
+
+
+@pytest.mark.asyncio
+async def test_ledger_orders_settlement_payout_before_stake_with_equal_timestamps() -> None:
+    from uuid import UUID
+
+    from app.db.models import LedgerEntry
+
+    async with _sqlite_api() as session_factory:
+        transport = ASGITransport(app=app)
+        headers = _auth_headers(67001)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            wallet = (await client.get("/api/v1/wallet", headers=headers)).json()
+            other = (await client.get("/api/v1/wallet", headers=_auth_headers(67002))).json()
+            async with session_factory() as session:
+                settlement = await WalletService(session).settle_game_round(
+                    wallet["user_id"], uuid4(), stake=10, payout=30, idempotency_key=uuid4()
+                )
+                entries = (await session.scalars(select(LedgerEntry).where(
+                    LedgerEntry.operation_id == settlement.operation_id
+                ))).all()
+                timestamp = datetime.now(UTC) + timedelta(seconds=1)
+                for entry in entries:
+                    entry.created_at = timestamp
+                    # UUID ordering intentionally puts the earlier debit first.
+                    entry.id = UUID(int=2 if entry.reason == "game_stake" else 1)
+                await session.commit()
+            for _ in range(50):
+                async with session_factory() as session:
+                    await WalletService(session).settle_game_round(
+                        wallet["user_id"], uuid4(), stake=1, payout=1, idempotency_key=uuid4()
+                    )
+            response = await client.get("/api/v1/wallet/ledger", headers=headers)
+            outsider = await client.get("/api/v1/wallet/ledger", headers=_auth_headers(67002))
+            unauthenticated = await client.get("/api/v1/wallet/ledger")
+
+        assert response.status_code == 200
+        assert [entry["reason"] for entry in response.json()[:2]] == ["game_payout", "game_stake"]
+        assert [entry["balance_after"] for entry in response.json()[:2]] == [1020, 990]
+        assert len(response.json()) == 100
+        assert [entry["reason"] for entry in outsider.json()] == ["welcome"]
+        assert other["balance"] == 1000
+        assert unauthenticated.status_code == 401
+
+
+def test_slot_catalog_exposes_siege_and_keeps_skeleton_metadata() -> None:
+    app.dependency_overrides[get_current_user] = lambda: CurrentUser(1, 1, "Player")
+    try:
+        with TestClient(app) as client:
+            games = client.get("/api/v1/games").json()
+            assert next(game for game in games if game["game_type"] == "slot")["ruleset_version"] == "slot-siege-1"
+            for version in ("slot-skeleton-1", "slot-siege-1"):
+                response = client.get(f"/api/v1/rulesets/slot/{version}")
+                assert response.status_code == 200
+                assert response.json()["version"] == version
+            assert client.get("/api/v1/rulesets/slot/unknown").status_code == 404
+    finally:
+        app.dependency_overrides.clear()
+
+
+@pytest.mark.asyncio
+async def test_persisted_skeleton_room_uses_old_rules_after_api_upgrade() -> None:
+    from burmaldoza_domain.games.slot_ruleset import load_skeleton_config
+
+    async with _sqlite_api() as session_factory:
+        transport = ASGITransport(app=app)
+        headers = _auth_headers(64001)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            wallet = (await client.get("/api/v1/wallet", headers=headers)).json()
+            async with session_factory() as session:
+                old = await RoomService(session=session, slot_config=load_skeleton_config()).create_room(
+                    wallet["user_id"], "slot", "solo"
+                )
+            new = (await client.post("/api/v1/rooms", headers=headers,
+                json={"game_type": "slot", "mode": "solo"})).json()
+            assert new["ruleset_version"] == "slot-siege-1"
+            for room_id, version in ((str(old.room_id), "slot-skeleton-1"), (new["room_id"], "slot-siege-1")):
+                action_id = str(uuid4())
+                response = await client.post(f"/api/v1/rooms/{room_id}/actions", headers=headers,
+                    json={"action_id": action_id, "expected_state_version": 0,
+                          "payload": {"action": "spin", "bet": 10}})
+                assert response.status_code == 200
+                assert response.json()["event"]["ruleset_version"] == version
+                assert response.json()["event"]["payload"]["result"]["ruleset_version"] == version

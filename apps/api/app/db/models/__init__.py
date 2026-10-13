@@ -9,7 +9,7 @@ class Base(DeclarativeBase):
 
 from .audit import AdminAuditLog
 from .economy import LedgerEntry, Wallet, WalletOperation
-from .games import GameAction, GamePlayer, GameRoom, GameRound
+from .games import GameAction, GamePlayer, GameRoom, GameRound, HoldemHeroBag
 from .identity import AdminRole, ChatSettings, Community, User
 
 __all__ = [
@@ -22,6 +22,7 @@ __all__ = [
     "GamePlayer",
     "GameRoom",
     "GameRound",
+    "HoldemHeroBag",
     "LedgerEntry",
     "User",
     "Wallet",
