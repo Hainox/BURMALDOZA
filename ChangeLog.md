@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Allow players to cancel a waiting Hold'em opponent search with an idempotent action, without charging the buy-in.
+
 - Telegram haptic feedback now works: the Mini App adapter uses `WebApp.HapticFeedback` instead of a non-existent `WebApp.haptic`.
 - Added an index on ledger entries by time and reason for the weekly leaderboard; requires database migration 20261013_0006.
 - Wallet history now orders a settlement payout before its stake when timestamps are equal, keeping the newest entries first.
