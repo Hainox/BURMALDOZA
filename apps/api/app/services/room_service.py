@@ -533,7 +533,11 @@ class RoomService:
         if game_type is GameType.SLOT:
             config = self.slot_config
             if ruleset_version is not None and ruleset_version != config.ruleset_version:
-                config = load_slot_config(ruleset_version)
+                try:
+                    config = load_slot_config(ruleset_version)
+                except ValueError as error:
+                    # A stored room with an unregistered ruleset is a room error, not a 500.
+                    raise RoomServiceError("slot room uses an unknown ruleset") from error
             if action != "spin":
                 raise RoomServiceError(f"action {action!r} is not supported by the slot room")
 

@@ -365,3 +365,19 @@ async def test_new_slot_rooms_use_siege_but_old_rooms_keep_their_ruleset() -> No
         symbols = {symbol for reel in event.payload["result"]["grid"] for symbol in reel}
         allowed = {"A", "B", "C", "W"} if snapshot is old else {"D1", "D2", "D3", "D4", "A1", "A2", "A3", "W"}
         assert symbols <= allowed
+
+
+@pytest.mark.asyncio
+async def test_slot_room_with_unregistered_ruleset_is_a_room_error() -> None:
+    wallet = WalletService(store=MemoryWalletStore())
+    await wallet.claim_welcome_grant(12345, uuid4())
+    store = MemoryRoomStore()
+    service = RoomService(store=store, wallet_service=wallet)
+    created = await service.create_room(12345, GameType.SLOT, "solo")
+    store.rooms[created.room_id].ruleset_version = "slot-retired-0"
+    request = ActionRequest(
+        action_id=uuid4(), expected_state_version=created.state_version, payload={"action": "spin"}
+    )
+
+    with pytest.raises(RoomServiceError, match="unknown ruleset"):
+        await service.apply_action(created.room_id, 12345, request)
