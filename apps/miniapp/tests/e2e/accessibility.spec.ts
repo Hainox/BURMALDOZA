@@ -51,15 +51,16 @@ test.describe('Mini App shell', () => {
     await page.goto('/');
     await openRoom(page, 'holdem');
     const pokerRoom = page.locator('.poker-room');
-    await expect(pokerRoom).toContainText('Демо-действия выполняются на клиенте; серверного подтверждения нет.');
+    await expect(pokerRoom).toContainText('DEMO · записанная демонстрационная раздача. Баланс не меняется.');
     await expect(pokerRoom).not.toContainText('только подтверждённые действия');
-    await page.getByRole('button', { name: 'CHECK' }).click();
+    await page.getByTestId('holdem-start').click();
+    await page.getByRole('button', { name: 'К столу' }).click();
+    await page.getByTestId('holdem-call').click();
 
-    const resultBand = page.getByTestId('result-band');
-    await expect(resultBand).toContainText('RESOLVING · DEMO RESULT', { timeout: 2_000 });
-    await expect(resultBand).toContainText('DEMO ROUND · БЕЗ СЕРВЕРНОГО ПОДТВЕРЖДЕНИЯ', { timeout: 2_000 });
+    const resultBand = page.getByTestId('holdem-result');
+    await expect(resultBand).toContainText('Демонстрационная раздача');
     await expect(resultBand).not.toContainText('SERVER CONFIRMED');
-    await expect(resultBand).toContainText('Демо-исход: сервер не подтверждал этот результат.');
+    await expect(resultBand).not.toContainText('Итог подтверждён сервером');
     await expect(page.getByTestId('confirmed-balance')).toHaveCount(0);
   });
 
@@ -78,10 +79,11 @@ test.describe('Mini App shell', () => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
     await openRoom(page, 'holdem');
-    await page.getByRole('button', { name: 'CHECK' }).click();
+    await page.getByTestId('holdem-start').click();
+    await page.getByTestId('holdem-call').click();
 
-    const resultBand = page.getByTestId('result-band');
-    await expect(resultBand).toContainText('Рука подтверждена');
+    const resultBand = page.getByTestId('holdem-result');
+    await expect(resultBand).toContainText('Демонстрационная раздача');
     await expect(resultBand).not.toContainText('подтверждённого действия');
   });
 

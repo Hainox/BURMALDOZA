@@ -1,0 +1,1376 @@
+{
+  "Sota_Kume": {
+    "name": "Sota Kume",
+    "avatar": "roster/Sota_Kume.webp",
+    "intro": "intro/Sota_Kume.webp",
+    "title": "From Yakuza: Like a Dragon"
+  },
+  "Kyohei_Hamura": {
+    "name": "Kyohei Hamura",
+    "avatar": "roster/Kyohei_Hamura.webp",
+    "intro": "intro/Kyohei_Hamura.webp",
+    "title": "From Judgment"
+  },
+  "Nishida": {
+    "name": "Nishida",
+    "avatar": "roster/Nishida.webp",
+    "intro": "intro/Nishida.webp",
+    "title": "From Pirate Yakuza in Hawaii"
+  },
+  "Homare_Nishitani_III": {
+    "name": "Homare Nishitani III",
+    "avatar": "roster/Homare_Nishitani_III.webp",
+    "intro": "intro/Homare_Nishitani_III.webp",
+    "title": "From Like a Dragon Gaiden"
+  },
+  "Kamoji": {
+    "name": "Kamoji",
+    "avatar": "roster/Kamoji.webp",
+    "intro": "intro/Kamoji.webp",
+    "title": "From Yakuza 0"
+  },
+  "Masumi_Arakawa": {
+    "name": "Masumi Arakawa",
+    "avatar": "roster/Masumi_Arakawa.webp",
+    "intro": "intro/Masumi_Arakawa.webp",
+    "title": "Patriarch of the Arakawa Family"
+  },
+  "Hanae_Ida": {
+    "name": "Hanae Ida",
+    "avatar": "roster/Hanae_Ida.webp",
+    "intro": "intro/Hanae_Ida.webp",
+    "title": "From Judgment"
+  },
+  "Big_Lo": {
+    "name": "Big Lo",
+    "avatar": "roster/Big_Lo.webp",
+    "intro": "intro/Big_Lo.webp",
+    "title": "From Yakuza 6"
+  },
+  "Yutaka_Yamai": {
+    "name": "Yutaka Yamai",
+    "avatar": "roster/Yutaka_Yamai.webp",
+    "intro": "intro/Yutaka_Yamai.webp",
+    "title": "From Infinite Wealth"
+  },
+  "Tsuyoshi_Nagumo": {
+    "name": "Tsuyoshi Nagumo",
+    "avatar": "roster/Tsuyoshi_Nagumo.webp",
+    "intro": "intro/Tsuyoshi_Nagumo.webp",
+    "title": "From Yakuza 6"
+  },
+  "Jun_Sadamoto": {
+    "name": "Jun Sadamoto",
+    "avatar": "roster/Jun_Sadamoto.webp",
+    "intro": "intro/Jun_Sadamoto.webp",
+    "title": "From Lost Judgment"
+  },
+  "Tsuneo_Iwami": {
+    "name": "Tsuneo Iwami",
+    "avatar": "roster/Tsuneo_Iwami.webp",
+    "intro": "intro/Tsuneo_Iwami.webp",
+    "title": "From Yakuza 6"
+  },
+  "Yukio_Terada": {
+    "name": "Yukio Terada",
+    "avatar": "roster/Yukio_Terada.webp",
+    "intro": "intro/Yukio_Terada.webp",
+    "title": "From Yakuza Kiwami 2"
+  },
+  "Kyoko_Amasawa": {
+    "name": "Kyoko Amasawa",
+    "avatar": "roster/Kyoko_Amasawa.webp",
+    "intro": "intro/Kyoko_Amasawa.webp",
+    "title": "From Lost Judgment"
+  },
+  "Issei_Hoshino": {
+    "name": "Issei Hoshino",
+    "avatar": "roster/Issei_Hoshino.webp",
+    "intro": "intro/Issei_Hoshino.webp",
+    "title": "From Judgment"
+  },
+  "Shigeru_Kajihira": {
+    "name": "Shigeru Kajihira",
+    "avatar": "roster/Shigeru_Kajihira.webp",
+    "intro": "intro/Shigeru_Kajihira.webp",
+    "title": "From Judgment"
+  },
+  "Hiroshi_Horie": {
+    "name": "Hiroshi Horie",
+    "avatar": "roster/Hiroshi_Horie.webp",
+    "intro": "intro/Hiroshi_Horie.webp",
+    "title": "From Yakuza 5"
+  },
+  "Tadashi": {
+    "name": "Tadashi",
+    "avatar": "roster/Tadashi.webp",
+    "intro": "intro/Tadashi.webp",
+    "title": "From Yakuza 4"
+  },
+  "Hiroaki_Arai": {
+    "name": "Hiroaki Arai",
+    "avatar": "roster/Hiroaki_Arai.webp",
+    "intro": "intro/Hiroaki_Arai.webp",
+    "title": "From Yakuza 4"
+  },
+  "Kanji_Koshimizu": {
+    "name": "Kanji Koshimizu",
+    "avatar": "roster/Kanji_Koshimizu.webp",
+    "intro": "intro/Kanji_Koshimizu.webp",
+    "title": "From Yakuza 6"
+  },
+  "Shigeki_Baba": {
+    "name": "Shigeki Baba",
+    "avatar": "roster/Shigeki_Baba.webp",
+    "intro": "intro/Shigeki_Baba.webp",
+    "title": "From Yakuza 5"
+  },
+  "Mitsuo": {
+    "name": "Mitsuo",
+    "avatar": "roster/Mitsuo.webp",
+    "intro": "intro/Mitsuo.webp",
+    "title": "From Yakuza 3"
+  },
+  "Heizo_Iwami": {
+    "name": "Heizo Iwami",
+    "avatar": "roster/Heizo_Iwami.webp",
+    "intro": "intro/Heizo_Iwami.webp",
+    "title": "From Yakuza 6"
+  },
+  "Tsukino_Saotome": {
+    "name": "Tsukino Saotome",
+    "avatar": "roster/Tsukino_Saotome.webp",
+    "intro": "intro/Tsukino_Saotome.webp",
+    "title": "From Judgment"
+  },
+  "Shintaro_Kazama": {
+    "name": "Shintaro Kazama",
+    "avatar": "roster/Shintaro_Kazama.webp",
+    "intro": "intro/Shintaro_Kazama.webp",
+    "title": "Patriarch of the Kazama Family"
+  },
+  "Toranosuke_Sengoku": {
+    "name": "Toranosuke Sengoku",
+    "avatar": "roster/Toranosuke_Sengoku.webp",
+    "intro": "intro/Toranosuke_Sengoku.webp",
+    "title": "From Yakuza Kiwami 2"
+  },
+  "Osamu_Kashiwagi": {
+    "name": "Osamu Kashiwagi",
+    "avatar": "roster/Osamu_Kashiwagi.webp",
+    "intro": "intro/Osamu_Kashiwagi.webp",
+    "title": "Captain of the Kazama Family"
+  },
+  "Isao_Katsuragi": {
+    "name": "Isao Katsuragi",
+    "avatar": "roster/Isao_Katsuragi.webp",
+    "intro": "intro/Isao_Katsuragi.webp",
+    "title": "From Yakuza 4"
+  },
+  "Reiji_Ishioda": {
+    "name": "Reiji Ishioda",
+    "avatar": "roster/Reiji_Ishioda.webp",
+    "intro": "intro/Reiji_Ishioda.webp",
+    "title": "From Yakuza: Like a Dragon"
+  },
+  "Yuki": {
+    "name": "Yuki",
+    "avatar": "roster/Yuki.webp",
+    "intro": "intro/Yuki.webp",
+    "title": "From Yakuza 0"
+  },
+  "Noah_Rich": {
+    "name": "Noah Rich",
+    "avatar": "roster/Noah_Rich.webp",
+    "intro": "intro/Noah_Rich.webp",
+    "title": "From Pirate Yakuza in Hawaii"
+  },
+  "Pocket_Circuit_Fighter": {
+    "name": "Pocket Circuit Fighter",
+    "avatar": "roster/Pocket_Circuit_Fighter.webp",
+    "intro": "intro/Pocket_Circuit_Fighter.webp",
+    "title": "From Yakuza Kiwami"
+  },
+  "Rodriguez": {
+    "name": "Rodriguez",
+    "avatar": "roster/Rodriguez.webp",
+    "intro": "intro/Rodriguez.webp",
+    "title": "From Pirate Yakuza in Hawaii"
+  },
+  "Chitose_Fujinomiya": {
+    "name": "Chitose Fujinomiya",
+    "avatar": "roster/Chitose_Fujinomiya.webp",
+    "intro": "intro/Chitose_Fujinomiya.webp",
+    "title": "From Infinite Wealth"
+  },
+  "Jiro_Kawara": {
+    "name": "Jiro Kawara",
+    "avatar": "roster/Jiro_Kawara.webp",
+    "intro": "intro/Jiro_Kawara.webp",
+    "title": "From Yakuza Kiwami 2"
+  },
+  "Kyohei_Jingu": {
+    "name": "Kyohei Jingu",
+    "avatar": "roster/Kyohei_Jingu.webp",
+    "intro": "intro/Kyohei_Jingu.webp",
+    "title": "From Yakuza Kiwami"
+  },
+  "Ed": {
+    "name": "Ed",
+    "avatar": "roster/Ed.webp",
+    "intro": "intro/Ed.webp",
+    "title": "From Yakuza 6"
+  },
+  "Kei_Ibuchi": {
+    "name": "Kei Ibuchi",
+    "avatar": "roster/Kei_Ibuchi.webp",
+    "intro": "intro/Kei_Ibuchi.webp",
+    "title": "From Yakuza Kiwami 2"
+  },
+  "Katsumi_Sugai": {
+    "name": "Katsumi Sugai",
+    "avatar": "roster/Katsumi_Sugai.webp",
+    "intro": "intro/Katsumi_Sugai.webp",
+    "title": "From Yakuza 6"
+  },
+  "Tsukasa_Sagawa": {
+    "name": "Tsukasa Sagawa",
+    "avatar": "roster/Tsukasa_Sagawa.webp",
+    "intro": "intro/Tsukasa_Sagawa.webp",
+    "title": "From Yakuza 0"
+  },
+  "Akira_Murase": {
+    "name": "Akira Murase",
+    "avatar": "roster/Akira_Murase.webp",
+    "intro": "intro/Akira_Murase.webp",
+    "title": "From Judgment"
+  },
+  "Yu_Morinaga": {
+    "name": "Yu Morinaga",
+    "avatar": "roster/Yu_Morinaga.webp",
+    "intro": "intro/Yu_Morinaga.webp",
+    "title": "From Yakuza 5"
+  },
+  "Iroha_Yanagi": {
+    "name": "Iroha Yanagi",
+    "avatar": "roster/Iroha_Yanagi.webp",
+    "intro": "intro/Iroha_Yanagi.webp",
+    "title": "From Yakuza: Like a Dragon"
+  },
+  "Jiro_Kasuga": {
+    "name": "Jiro Kasuga",
+    "avatar": "roster/Jiro_Kasuga.webp",
+    "intro": "intro/Jiro_Kasuga.webp",
+    "title": "From Yakuza: Like a Dragon"
+  },
+  "Satoshi_Hisai": {
+    "name": "Satoshi Hisai",
+    "avatar": "roster/Satoshi_Hisai.webp",
+    "intro": "intro/Satoshi_Hisai.webp",
+    "title": "From Yakuza 4"
+  },
+  "Ko_Hattori": {
+    "name": "Ko Hattori",
+    "avatar": "roster/Ko_Hattori.webp",
+    "intro": "intro/Ko_Hattori.webp",
+    "title": "From Judgment"
+  },
+  "Miss_Tatsu": {
+    "name": "Miss Tatsu",
+    "avatar": "roster/Miss_Tatsu.webp",
+    "intro": "intro/Miss_Tatsu.webp",
+    "title": "From Yakuza 0"
+  },
+  "Shigeru_Nakahara": {
+    "name": "Shigeru Nakahara",
+    "avatar": "roster/Shigeru_Nakahara.webp",
+    "intro": "intro/Shigeru_Nakahara.webp",
+    "title": "From Yakuza 3"
+  },
+  "Kanji_Manabe": {
+    "name": "Kanji Manabe",
+    "avatar": "roster/Kanji_Manabe.webp",
+    "intro": "intro/Kanji_Manabe.webp",
+    "title": "From Yakuza 5"
+  },
+  "Toru_Hirose": {
+    "name": "Toru Hirose",
+    "avatar": "roster/Toru_Hirose.webp",
+    "intro": "intro/Toru_Hirose.webp",
+    "title": "From Yakuza 6"
+  },
+  "Eri_Kamataki": {
+    "name": "Eri Kamataki",
+    "avatar": "roster/Eri_Kamataki.webp",
+    "intro": "intro/Eri_Kamataki.webp",
+    "title": "From Yakuza: Like a Dragon"
+  },
+  "Joongi_Han": {
+    "name": "Joongi Han",
+    "avatar": "roster/Joongi_Han.webp",
+    "intro": "intro/Joongi_Han.webp",
+    "title": "From Yakuza 6"
+  },
+  "Masayoshi_Tanimura_Remastered": {
+    "name": "Masayoshi Tanimura (Remastered)",
+    "avatar": "roster/Masayoshi_Tanimura_Remastered.webp",
+    "intro": "intro/Masayoshi_Tanimura_Remastered.webp",
+    "title": "From Yakuza 4"
+  },
+  "Raymond_Law": {
+    "name": "Raymond Law",
+    "avatar": "roster/Raymond_Law.webp",
+    "intro": "intro/Raymond_Law.webp",
+    "title": "From Pirate Yakuza in Hawaii"
+  },
+  "Taiyo_Amon": {
+    "name": "Taiyo Amon",
+    "avatar": "roster/Taiyo_Amon.webp",
+    "intro": "intro/Taiyo_Amon.webp",
+    "title": "From Pirate Yakuza in Hawaii"
+  },
+  "Tianyou_Zhao": {
+    "name": "Tianyou Zhao",
+    "avatar": "roster/Tianyou_Zhao.webp",
+    "intro": "intro/Tianyou_Zhao.webp",
+    "title": "From Yakuza: Like a Dragon"
+  },
+  "Kihei_Hanawa": {
+    "name": "Kihei Hanawa",
+    "avatar": "roster/Kihei_Hanawa.webp",
+    "intro": "intro/Kihei_Hanawa.webp",
+    "title": "From Infinite Wealth"
+  },
+  "Akame": {
+    "name": "Akame",
+    "avatar": "roster/Akame.webp",
+    "intro": "intro/Akame.webp",
+    "title": "From Like a Dragon Gaiden"
+  },
+  "Hiroshi_Kugihara": {
+    "name": "Hiroshi Kugihara",
+    "avatar": "roster/Hiroshi_Kugihara.webp",
+    "intro": "intro/Hiroshi_Kugihara.webp",
+    "title": "From Yakuza 5"
+  },
+  "Naoki_Katsuya": {
+    "name": "Naoki Katsuya",
+    "avatar": "roster/Naoki_Katsuya.webp",
+    "intro": "intro/Naoki_Katsuya.webp",
+    "title": "From Yakuza 5"
+  },
+  "Tsuyoshi_Kanda": {
+    "name": "Tsuyoshi Kanda",
+    "avatar": "roster/Tsuyoshi_Kanda.webp",
+    "intro": "intro/Tsuyoshi_Kanda.webp",
+    "title": "From Yakuza 3"
+  },
+  "Kazuma_Kiryu": {
+    "name": "Kazuma Kiryu",
+    "avatar": "roster/Kazuma_Kiryu.webp",
+    "intro": "intro/Kazuma_Kiryu.webp",
+    "title": "The Dragon of Dojima"
+  },
+  "Jo_Sawashiro": {
+    "name": "Jo Sawashiro",
+    "avatar": "roster/Jo_Sawashiro.webp",
+    "intro": "intro/Jo_Sawashiro.webp",
+    "title": "From Yakuza: Like a Dragon"
+  },
+  "Shinpei_Okubo": {
+    "name": "Shinpei Okubo",
+    "avatar": "roster/Shinpei_Okubo.webp",
+    "intro": "intro/Shinpei_Okubo.webp",
+    "title": "From Judgment"
+  },
+  "Jack_the_Collector": {
+    "name": "Jack the Collector",
+    "avatar": "roster/Jack_the_Collector.webp",
+    "intro": "intro/Jack_the_Collector.webp",
+    "title": "From Pirate Yakuza in Hawaii"
+  },
+  "Sadao_Takano": {
+    "name": "Sadao Takano",
+    "avatar": "roster/Sadao_Takano.webp",
+    "intro": "intro/Sadao_Takano.webp",
+    "title": "From Lost Judgment"
+  },
+  "Jason_Rich": {
+    "name": "Jason Rich",
+    "avatar": "roster/Jason_Rich.webp",
+    "intro": "intro/Jason_Rich.webp",
+    "title": "From Pirate Yakuza in Hawaii"
+  },
+  "Kunihiko_Morita": {
+    "name": "Kunihiko Morita",
+    "avatar": "roster/Kunihiko_Morita.webp",
+    "intro": "intro/Kunihiko_Morita.webp",
+    "title": "From Judgment"
+  },
+  "Mitsugu_Matsugane": {
+    "name": "Mitsugu Matsugane",
+    "avatar": "roster/Mitsugu_Matsugane.webp",
+    "intro": "intro/Mitsugu_Matsugane.webp",
+    "title": "From Judgment"
+  },
+  "Akira_Nishikiyama": {
+    "name": "Akira Nishikiyama",
+    "avatar": "roster/Akira_Nishikiyama.webp",
+    "intro": "intro/Akira_Nishikiyama.webp",
+    "title": "Of the Dojima Family"
+  },
+  "Hidemi_Bando": {
+    "name": "Hidemi Bando",
+    "avatar": "roster/Hidemi_Bando.webp",
+    "intro": "intro/Hidemi_Bando.webp",
+    "title": "From Lost Judgment"
+  },
+  "Yosuke_Tendo": {
+    "name": "Yosuke Tendo",
+    "avatar": "roster/Yosuke_Tendo.webp",
+    "intro": "intro/Yosuke_Tendo.webp",
+    "title": "From Yakuza: Like a Dragon"
+  },
+  "Izumi": {
+    "name": "Izumi",
+    "avatar": "roster/Izumi.webp",
+    "intro": "intro/Izumi.webp",
+    "title": "From Yakuza 3"
+  },
+  "Ryo_Aoki": {
+    "name": "Ryo Aoki",
+    "avatar": "roster/Ryo_Aoki.webp",
+    "intro": "intro/Ryo_Aoki.webp",
+    "title": "From Yakuza: Like a Dragon"
+  },
+  "Seonhee": {
+    "name": "Seonhee",
+    "avatar": "roster/Seonhee.webp",
+    "intro": "intro/Seonhee.webp",
+    "title": "From Yakuza: Like a Dragon"
+  },
+  "Makoto_Tsukumo": {
+    "name": "Makoto Tsukumo",
+    "avatar": "roster/Makoto_Tsukumo.webp",
+    "intro": "intro/Makoto_Tsukumo.webp",
+    "title": "From Judgment"
+  },
+  "Moana_Rich": {
+    "name": "Moana Rich",
+    "avatar": "roster/Moana_Rich.webp",
+    "intro": "intro/Moana_Rich.webp",
+    "title": "From Pirate Yakuza in Hawaii"
+  },
+  "Juzo_Amon": {
+    "name": "Juzo Amon",
+    "avatar": "roster/Juzo_Amon.webp",
+    "intro": "intro/Juzo_Amon.webp",
+    "title": "From Lost Judgment"
+  },
+  "Hana": {
+    "name": "Hana",
+    "avatar": "roster/Hana.webp",
+    "intro": "intro/Hana.webp",
+    "title": "From Yakuza 4"
+  },
+  "Tetsu_Amon": {
+    "name": "Tetsu Amon",
+    "avatar": "roster/Tetsu_Amon.webp",
+    "intro": "intro/Tetsu_Amon.webp",
+    "title": "From Like a Dragon Gaiden"
+  },
+  "Yoshimura": {
+    "name": "Yoshimura",
+    "avatar": "roster/Yoshimura.webp",
+    "intro": "intro/Yoshimura.webp",
+    "title": "From Like a Dragon Gaiden"
+  },
+  "Masaru_Sera": {
+    "name": "Masaru Sera",
+    "avatar": "roster/Masaru_Sera.webp",
+    "intro": "intro/Masaru_Sera.webp",
+    "title": "From Yakuza 0"
+  },
+  "Koichi_Takasugi": {
+    "name": "Koichi Takasugi",
+    "avatar": "roster/Koichi_Takasugi.webp",
+    "intro": "intro/Koichi_Takasugi.webp",
+    "title": "From Yakuza 5"
+  },
+  "Masaharu_Kaito": {
+    "name": "Masaharu Kaito",
+    "avatar": "roster/Masaharu_Kaito.webp",
+    "intro": "intro/Masaharu_Kaito.webp",
+    "title": "Of the Yagami Detective Agency"
+  },
+  "Koichi_Adachi": {
+    "name": "Koichi Adachi",
+    "avatar": "roster/Koichi_Adachi.webp",
+    "intro": "intro/Koichi_Adachi.webp",
+    "title": "From Yakuza: Like a Dragon"
+  },
+  "Shiro": {
+    "name": "Shiro",
+    "avatar": "roster/Shiro.webp",
+    "intro": "intro/Shiro.webp",
+    "title": "From Yakuza 3"
+  },
+  "Seiji_Kosaka": {
+    "name": "Seiji Kosaka",
+    "avatar": "roster/Seiji_Kosaka.webp",
+    "intro": "intro/Seiji_Kosaka.webp",
+    "title": "From Yakuza 5"
+  },
+  "Kenta_Kasai": {
+    "name": "Kenta Kasai",
+    "avatar": "roster/Kenta_Kasai.webp",
+    "intro": "intro/Kenta_Kasai.webp",
+    "title": "From Judgment"
+  },
+  "Bryce_Fairchild": {
+    "name": "Bryce Fairchild",
+    "avatar": "roster/Bryce_Fairchild.webp",
+    "intro": "intro/Bryce_Fairchild.webp",
+    "title": "From Infinite Wealth"
+  },
+  "Yasuko_Saejima": {
+    "name": "Yasuko Saejima",
+    "avatar": "roster/Yasuko_Saejima.webp",
+    "intro": "intro/Yasuko_Saejima.webp",
+    "title": "From Yakuza 4"
+  },
+  "Jimmy_Lo": {
+    "name": "Jimmy Lo",
+    "avatar": "roster/Jimmy_Lo.webp",
+    "intro": "intro/Jimmy_Lo.webp",
+    "title": "From Yakuza 6"
+  },
+  "Mortimer": {
+    "name": "Mortimer",
+    "avatar": "roster/Mortimer.webp",
+    "intro": "intro/Mortimer.webp",
+    "title": "From Pirate Yakuza in Hawaii"
+  },
+  "Eiji_Mitamura": {
+    "name": "Eiji Mitamura",
+    "avatar": "roster/Eiji_Mitamura.webp",
+    "intro": "intro/Eiji_Mitamura.webp",
+    "title": "From Infinite Wealth"
+  },
+  "Masaru_Watase": {
+    "name": "Masaru Watase",
+    "avatar": "roster/Masaru_Watase.webp",
+    "intro": "intro/Masaru_Watase.webp",
+    "title": "From Yakuza 5"
+  },
+  "Yasutaka_Shirakaba": {
+    "name": "Yasutaka Shirakaba",
+    "avatar": "roster/Yasutaka_Shirakaba.webp",
+    "intro": "intro/Yasutaka_Shirakaba.webp",
+    "title": "From Lost Judgment"
+  },
+  "Hamako": {
+    "name": "Hamako",
+    "avatar": "roster/Hamako.webp",
+    "intro": "intro/Hamako.webp",
+    "title": "From Yakuza: Like a Dragon"
+  },
+  "Bacchus": {
+    "name": "Bacchus",
+    "avatar": "roster/Bacchus.webp",
+    "intro": "intro/Bacchus.webp",
+    "title": "From Yakuza 0"
+  },
+  "Nick_Ogata": {
+    "name": "Nick Ogata",
+    "avatar": "roster/Nick_Ogata.webp",
+    "intro": "intro/Nick_Ogata.webp",
+    "title": "From Yakuza: Like a Dragon"
+  },
+  "Yuta_Usami": {
+    "name": "Yuta Usami",
+    "avatar": "roster/Yuta_Usami.webp",
+    "intro": "intro/Yuta_Usami.webp",
+    "title": "From Yakuza 6"
+  },
+  "Tatsuo_Shinada": {
+    "name": "Tatsuo Shinada",
+    "avatar": "roster/Tatsuo_Shinada.webp",
+    "intro": "intro/Tatsuo_Shinada.webp",
+    "title": "From Yakuza 5"
+  },
+  "Ryuzo_Genda": {
+    "name": "Ryuzo Genda",
+    "avatar": "roster/Ryuzo_Genda.webp",
+    "intro": "intro/Ryuzo_Genda.webp",
+    "title": "From Judgment"
+  },
+  "Sana_Mihama": {
+    "name": "Sana Mihama",
+    "avatar": "roster/Sana_Mihama.webp",
+    "intro": "intro/Sana_Mihama.webp",
+    "title": "From Judgment"
+  },
+  "Koyuki": {
+    "name": "Koyuki",
+    "avatar": "roster/Koyuki.webp",
+    "intro": "intro/Koyuki.webp",
+    "title": "From Yakuza Kiwami 2"
+  },
+  "Gai_Amon": {
+    "name": "Gai Amon",
+    "avatar": "roster/Gai_Amon.webp",
+    "intro": "intro/Gai_Amon.webp",
+    "title": "From Like a Dragon Gaiden"
+  },
+  "Aika": {
+    "name": "Aika",
+    "avatar": "roster/Aika.webp",
+    "intro": "intro/Aika.webp",
+    "title": "From Yakuza Kiwami 2"
+  },
+  "Reiko_Kusumoto": {
+    "name": "Reiko Kusumoto",
+    "avatar": "roster/Reiko_Kusumoto.webp",
+    "intro": "intro/Reiko_Kusumoto.webp",
+    "title": "From Lost Judgment"
+  },
+  "Tetsuo_Tamashiro": {
+    "name": "Tetsuo Tamashiro",
+    "avatar": "roster/Tetsuo_Tamashiro.webp",
+    "intro": "intro/Tetsuo_Tamashiro.webp",
+    "title": "From Yakuza 3"
+  },
+  "Dwight_Mendez": {
+    "name": "Dwight Mendez",
+    "avatar": "roster/Dwight_Mendez.webp",
+    "intro": "intro/Dwight_Mendez.webp",
+    "title": "From Infinite Wealth"
+  },
+  "Mikio_Aragaki": {
+    "name": "Mikio Aragaki",
+    "avatar": "roster/Mikio_Aragaki.webp",
+    "intro": "intro/Mikio_Aragaki.webp",
+    "title": "From Yakuza 3"
+  },
+  "Masataka_Ebina": {
+    "name": "Masataka Ebina",
+    "avatar": "roster/Masataka_Ebina.webp",
+    "intro": "intro/Masataka_Ebina.webp",
+    "title": "From Infinite Wealth"
+  },
+  "Akane_Kishida": {
+    "name": "Akane Kishida",
+    "avatar": "roster/Akane_Kishida.webp",
+    "intro": "intro/Akane_Kishida.webp",
+    "title": "From Infinite Wealth"
+  },
+  "Shin_Amon": {
+    "name": "Shin Amon",
+    "avatar": "roster/Shin_Amon.webp",
+    "intro": "intro/Shin_Amon.webp",
+    "title": "From Judgment"
+  },
+  "Jin_Kuwana": {
+    "name": "Jin Kuwana",
+    "avatar": "roster/Jin_Kuwana.webp",
+    "intro": "intro/Jin_Kuwana.webp",
+    "title": "From Lost Judgment"
+  },
+  "Sohei_Dojima": {
+    "name": "Sohei Dojima",
+    "avatar": "roster/Sohei_Dojima.webp",
+    "intro": "intro/Sohei_Dojima.webp",
+    "title": "Patriarch of the Dojima Family"
+  },
+  "Jinwu_Kang": {
+    "name": "Jinwu Kang",
+    "avatar": "roster/Jinwu_Kang.webp",
+    "intro": "intro/Jinwu_Kang.webp",
+    "title": "From Yakuza Kiwami 2"
+  },
+  "Toru_Higashi": {
+    "name": "Toru Higashi",
+    "avatar": "roster/Toru_Higashi.webp",
+    "intro": "intro/Toru_Higashi.webp",
+    "title": "From Judgment"
+  },
+  "Mikiko_Sadamoto": {
+    "name": "Mikiko Sadamoto",
+    "avatar": "roster/Mikiko_Sadamoto.webp",
+    "intro": "intro/Mikiko_Sadamoto.webp",
+    "title": "From Lost Judgment"
+  },
+  "Goh_Hamazaki": {
+    "name": "Goh Hamazaki",
+    "avatar": "roster/Goh_Hamazaki.webp",
+    "intro": "intro/Goh_Hamazaki.webp",
+    "title": "From Yakuza 3"
+  },
+  "Akira_Mabuchi": {
+    "name": "Akira Mabuchi",
+    "avatar": "roster/Akira_Mabuchi.webp",
+    "intro": "intro/Akira_Mabuchi.webp",
+    "title": "From Yakuza: Like a Dragon"
+  },
+  "Kosei_Shishido": {
+    "name": "Kosei Shishido",
+    "avatar": "roster/Kosei_Shishido.webp",
+    "intro": "intro/Kosei_Shishido.webp",
+    "title": "From Like a Dragon Gaiden"
+  },
+  "Shusuke_Kenmochi": {
+    "name": "Shusuke Kenmochi",
+    "avatar": "roster/Shusuke_Kenmochi.webp",
+    "intro": "intro/Shusuke_Kenmochi.webp",
+    "title": "From Lost Judgment"
+  },
+  "Shoyo_Toma": {
+    "name": "Shoyo Toma",
+    "avatar": "roster/Shoyo_Toma.webp",
+    "intro": "intro/Shoyo_Toma.webp",
+    "title": "From Yakuza 3"
+  },
+  "Jane_Rich": {
+    "name": "Jane Rich",
+    "avatar": "roster/Jane_Rich.webp",
+    "intro": "intro/Jane_Rich.webp",
+    "title": "From Pirate Yakuza in Hawaii"
+  },
+  "Keigo_Izumida": {
+    "name": "Keigo Izumida",
+    "avatar": "roster/Keigo_Izumida.webp",
+    "intro": "intro/Keigo_Izumida.webp",
+    "title": "From Judgment"
+  },
+  "Ichiban_Kasuga": {
+    "name": "Ichiban Kasuga",
+    "avatar": "roster/Ichiban_Kasuga.webp",
+    "intro": "intro/Ichiban_Kasuga.webp",
+    "title": "Of the Arakawa Family"
+  },
+  "Mayumi_Madarame": {
+    "name": "Mayumi Madarame",
+    "avatar": "roster/Mayumi_Madarame.webp",
+    "intro": "intro/Mayumi_Madarame.webp",
+    "title": "From Yakuza 5"
+  },
+  "Yuzo_Okuda": {
+    "name": "Yuzo Okuda",
+    "avatar": "roster/Yuzo_Okuda.webp",
+    "intro": "intro/Yuzo_Okuda.webp",
+    "title": "From Lost Judgment"
+  },
+  "Kan_Ogita": {
+    "name": "Kan Ogita",
+    "avatar": "roster/Kan_Ogita.webp",
+    "intro": "intro/Kan_Ogita.webp",
+    "title": "From Yakuza 5"
+  },
+  "Kazufumi_Kamaguchi": {
+    "name": "Kazufumi Kamaguchi",
+    "avatar": "roster/Kazufumi_Kamaguchi.webp",
+    "intro": "intro/Kazufumi_Kamaguchi.webp",
+    "title": "From Judgment"
+  },
+  "Makoto_Date": {
+    "name": "Makoto Date",
+    "avatar": "roster/Makoto_Date.webp",
+    "intro": "intro/Makoto_Date.webp",
+    "title": "Detective, Tokyo Metropolitan Police"
+  },
+  "Yoshitaka_Mine": {
+    "name": "Yoshitaka Mine",
+    "avatar": "roster/Yoshitaka_Mine.webp",
+    "intro": "intro/Yoshitaka_Mine.webp",
+    "title": "From Yakuza 3"
+  },
+  "Kyoya_Sadamoto": {
+    "name": "Kyoya Sadamoto",
+    "avatar": "roster/Kyoya_Sadamoto.webp",
+    "intro": "intro/Kyoya_Sadamoto.webp",
+    "title": "From Lost Judgment"
+  },
+  "Mafuyu_Fujii": {
+    "name": "Mafuyu Fujii",
+    "avatar": "roster/Mafuyu_Fujii.webp",
+    "intro": "intro/Mafuyu_Fujii.webp",
+    "title": "From Judgment"
+  },
+  "Minoru_Aoyama": {
+    "name": "Minoru Aoyama",
+    "avatar": "roster/Minoru_Aoyama.webp",
+    "intro": "intro/Minoru_Aoyama.webp",
+    "title": "From Yakuza 5"
+  },
+  "Matsuhisa_Koga": {
+    "name": "Matsuhisa Koga",
+    "avatar": "roster/Matsuhisa_Koga.webp",
+    "intro": "intro/Matsuhisa_Koga.webp",
+    "title": "From Judgment"
+  },
+  "Shun_Akiyama": {
+    "name": "Shun Akiyama",
+    "avatar": "roster/Shun_Akiyama.webp",
+    "intro": "intro/Shun_Akiyama.webp",
+    "title": "President of Sky Finance"
+  },
+  "Masato_Arakawa": {
+    "name": "Masato Arakawa",
+    "avatar": "roster/Masato_Arakawa.webp",
+    "intro": "intro/Masato_Arakawa.webp",
+    "title": "From Yakuza: Like a Dragon"
+  },
+  "Tsubasa_Kurosawa": {
+    "name": "Tsubasa Kurosawa",
+    "avatar": "roster/Tsubasa_Kurosawa.webp",
+    "intro": "intro/Tsubasa_Kurosawa.webp",
+    "title": "From Yakuza 5"
+  },
+  "Kaoru_Sayama": {
+    "name": "Kaoru Sayama",
+    "avatar": "roster/Kaoru_Sayama.webp",
+    "intro": "intro/Kaoru_Sayama.webp",
+    "title": "From Yakuza Kiwami 2"
+  },
+  "Naomi_Rich": {
+    "name": "Naomi Rich",
+    "avatar": "roster/Naomi_Rich.webp",
+    "intro": "intro/Naomi_Rich.webp",
+    "title": "From Pirate Yakuza in Hawaii"
+  },
+  "Hasebe": {
+    "name": "Hasebe",
+    "avatar": "roster/Hasebe.webp",
+    "intro": "intro/Hasebe.webp",
+    "title": "From Yakuza Kiwami 3"
+  },
+  "Yui_Mamiya": {
+    "name": "Yui Mamiya",
+    "avatar": "roster/Yui_Mamiya.webp",
+    "intro": "intro/Yui_Mamiya.webp",
+    "title": "From Lost Judgment"
+  },
+  "Kiyomi_Kasahara": {
+    "name": "Kiyomi Kasahara",
+    "avatar": "roster/Kiyomi_Kasahara.webp",
+    "intro": "intro/Kiyomi_Kasahara.webp",
+    "title": "From Yakuza 6"
+  },
+  "Tsutomu_Bessho": {
+    "name": "Tsutomu Bessho",
+    "avatar": "roster/Tsutomu_Bessho.webp",
+    "intro": "intro/Tsutomu_Bessho.webp",
+    "title": "From Yakuza Kiwami 2"
+  },
+  "Wen_Hai_Lee": {
+    "name": "Wen Hai Lee",
+    "avatar": "roster/Wen_Hai_Lee.webp",
+    "intro": "intro/Wen_Hai_Lee.webp",
+    "title": "From Yakuza 0"
+  },
+  "Kunio_Ichinose": {
+    "name": "Kunio Ichinose",
+    "avatar": "roster/Kunio_Ichinose.webp",
+    "intro": "intro/Kunio_Ichinose.webp",
+    "title": "From Judgment"
+  },
+  "Tetta_Chiyoda": {
+    "name": "Tetta Chiyoda",
+    "avatar": "roster/Tetta_Chiyoda.webp",
+    "intro": "intro/Tetta_Chiyoda.webp",
+    "title": "From Lost Judgment"
+  },
+  "Taichi": {
+    "name": "Taichi",
+    "avatar": "roster/Taichi.webp",
+    "intro": "intro/Taichi.webp",
+    "title": "From Yakuza 3"
+  },
+  "The_Florist_of_Sai": {
+    "name": "The Florist of Sai",
+    "avatar": "roster/The_Florist_of_Sai.webp",
+    "intro": "intro/The_Florist_of_Sai.webp",
+    "title": "From Yakuza Kiwami"
+  },
+  "Junji_Sugiuchi": {
+    "name": "Junji Sugiuchi",
+    "avatar": "roster/Junji_Sugiuchi.webp",
+    "intro": "intro/Junji_Sugiuchi.webp",
+    "title": "From Yakuza 4"
+  },
+  "Seishiro_Munakata": {
+    "name": "Seishiro Munakata",
+    "avatar": "roster/Seishiro_Munakata.webp",
+    "intro": "intro/Seishiro_Munakata.webp",
+    "title": "From Yakuza 4"
+  },
+  "Daigo_Dojima": {
+    "name": "Daigo Dojima",
+    "avatar": "roster/Daigo_Dojima.webp",
+    "intro": "intro/Daigo_Dojima.webp",
+    "title": "Sixth Chairman of the Tojo Clan"
+  },
+  "Andre_Richardson": {
+    "name": "Andre Richardson",
+    "avatar": "roster/Andre_Richardson.webp",
+    "intro": "intro/Andre_Richardson.webp",
+    "title": "From Yakuza 3"
+  },
+  "Kazuo_Shibata": {
+    "name": "Kazuo Shibata",
+    "avatar": "roster/Kazuo_Shibata.webp",
+    "intro": "intro/Kazuo_Shibata.webp",
+    "title": "From Yakuza 4"
+  },
+  "Queen_Michele": {
+    "name": "Queen Michele",
+    "avatar": "roster/Queen_Michele.webp",
+    "intro": "intro/Queen_Michele.webp",
+    "title": "From Pirate Yakuza in Hawaii"
+  },
+  "Reina": {
+    "name": "Reina",
+    "avatar": "roster/Reina.webp",
+    "intro": "intro/Reina.webp",
+    "title": "From Yakuza 0"
+  },
+  "Yuya": {
+    "name": "Yuya",
+    "avatar": "roster/Yuya.webp",
+    "intro": "intro/Yuya.webp",
+    "title": "From Yakuza Kiwami"
+  },
+  "Masafumi_Narasaki": {
+    "name": "Masafumi Narasaki",
+    "avatar": "roster/Masafumi_Narasaki.webp",
+    "intro": "intro/Masafumi_Narasaki.webp",
+    "title": "From Infinite Wealth"
+  },
+  "Masato_Aizawa": {
+    "name": "Masato Aizawa",
+    "avatar": "roster/Masato_Aizawa.webp",
+    "intro": "intro/Masato_Aizawa.webp",
+    "title": "From Yakuza 5"
+  },
+  "Yoko": {
+    "name": "Yoko",
+    "avatar": "roster/Yoko.webp",
+    "intro": "intro/Yoko.webp",
+    "title": "From Yakuza 5"
+  },
+  "Daisaku_Minami": {
+    "name": "Daisaku Minami",
+    "avatar": "roster/Daisaku_Minami.webp",
+    "intro": "intro/Daisaku_Minami.webp",
+    "title": "From Yakuza 4"
+  },
+  "Ryuzo_Tamiya": {
+    "name": "Ryuzo Tamiya",
+    "avatar": "roster/Ryuzo_Tamiya.webp",
+    "intro": "intro/Ryuzo_Tamiya.webp",
+    "title": "From Yakuza 3"
+  },
+  "Koji_Shindo": {
+    "name": "Koji Shindo",
+    "avatar": "roster/Koji_Shindo.webp",
+    "intro": "intro/Koji_Shindo.webp",
+    "title": "From Yakuza Kiwami"
+  },
+  "Taiga_Saejima": {
+    "name": "Taiga Saejima",
+    "avatar": "roster/Taiga_Saejima.webp",
+    "intro": "intro/Taiga_Saejima.webp",
+    "title": "The Tiger of the Saejima Family"
+  },
+  "Haruka_Sawamura": {
+    "name": "Haruka Sawamura",
+    "avatar": "roster/Haruka_Sawamura.webp",
+    "intro": "intro/Haruka_Sawamura.webp",
+    "title": "Kiryu's adopted daughter"
+  },
+  "Koji_Masuzoe": {
+    "name": "Koji Masuzoe",
+    "avatar": "roster/Koji_Masuzoe.webp",
+    "intro": "intro/Koji_Masuzoe.webp",
+    "title": "From Yakuza 6"
+  },
+  "Takayuki_Yagami": {
+    "name": "Takayuki Yagami",
+    "avatar": "roster/Takayuki_Yagami.webp",
+    "intro": "intro/Takayuki_Yagami.webp",
+    "title": "Private Detective, Yagami Detective Agency"
+  },
+  "Tetsu_Tachibana": {
+    "name": "Tetsu Tachibana",
+    "avatar": "roster/Tetsu_Tachibana.webp",
+    "intro": "intro/Tetsu_Tachibana.webp",
+    "title": "From Yakuza 0"
+  },
+  "Hideki_Sasai": {
+    "name": "Hideki Sasai",
+    "avatar": "roster/Hideki_Sasai.webp",
+    "intro": "intro/Hideki_Sasai.webp",
+    "title": "From Yakuza 4"
+  },
+  "Mami_Koda": {
+    "name": "Mami Koda",
+    "avatar": "roster/Mami_Koda.webp",
+    "intro": "intro/Mami_Koda.webp",
+    "title": "From Lost Judgment"
+  },
+  "Hibiki_Otsuki": {
+    "name": "Hibiki Otsuki",
+    "avatar": "roster/Hibiki_Otsuki.webp",
+    "intro": "intro/Hibiki_Otsuki.webp",
+    "title": "From Yakuza 0"
+  },
+  "Daimu_Akutsu": {
+    "name": "Daimu Akutsu",
+    "avatar": "roster/Daimu_Akutsu.webp",
+    "intro": "intro/Daimu_Akutsu.webp",
+    "title": "From Lost Judgment"
+  },
+  "Masaru_Fujita": {
+    "name": "Masaru Fujita",
+    "avatar": "roster/Masaru_Fujita.webp",
+    "intro": "intro/Masaru_Fujita.webp",
+    "title": "From Pirate Yakuza in Hawaii"
+  },
+  "Yayoi_Dojima": {
+    "name": "Yayoi Dojima",
+    "avatar": "roster/Yayoi_Dojima.webp",
+    "intro": "intro/Yayoi_Dojima.webp",
+    "title": "From Yakuza Kiwami"
+  },
+  "Kazuya_Ayabe": {
+    "name": "Kazuya Ayabe",
+    "avatar": "roster/Kazuya_Ayabe.webp",
+    "intro": "intro/Kazuya_Ayabe.webp",
+    "title": "From Judgment"
+  },
+  "Saori_Shirosaki": {
+    "name": "Saori Shirosaki",
+    "avatar": "roster/Saori_Shirosaki.webp",
+    "intro": "intro/Saori_Shirosaki.webp",
+    "title": "From Judgment"
+  },
+  "Eric_Tomizawa": {
+    "name": "Eric Tomizawa",
+    "avatar": "roster/Eric_Tomizawa.webp",
+    "intro": "intro/Eric_Tomizawa.webp",
+    "title": "From Infinite Wealth"
+  },
+  "Goro_Majima": {
+    "name": "Goro Majima",
+    "avatar": "roster/Goro_Majima.webp",
+    "intro": "intro/Goro_Majima.webp",
+    "title": "The Mad Dog of Shimano"
+  },
+  "Homare_Nishitani": {
+    "name": "Homare Nishitani",
+    "avatar": "roster/Homare_Nishitani.webp",
+    "intro": "intro/Homare_Nishitani.webp",
+    "title": "From Yakuza 0"
+  },
+  "Kazuto_Arase": {
+    "name": "Kazuto Arase",
+    "avatar": "roster/Kazuto_Arase.webp",
+    "intro": "intro/Kazuto_Arase.webp",
+    "title": "From Yakuza Kiwami"
+  },
+  "Akira_Mirozogi": {
+    "name": "Akira Mirozogi",
+    "avatar": "roster/Akira_Mirozogi.webp",
+    "intro": "intro/Akira_Mirozogi.webp",
+    "title": "From Like a Dragon Gaiden"
+  },
+  "Yu_Nanba": {
+    "name": "Yu Nanba",
+    "avatar": "roster/Yu_Nanba.webp",
+    "intro": "intro/Yu_Nanba.webp",
+    "title": "From Yakuza: Like a Dragon"
+  },
+  "Tesso": {
+    "name": "Tesso",
+    "avatar": "roster/Tesso.webp",
+    "intro": "intro/Tesso.webp",
+    "title": "From Lost Judgment"
+  },
+  "Futoshi_Shimano": {
+    "name": "Futoshi Shimano",
+    "avatar": "roster/Futoshi_Shimano.webp",
+    "intro": "intro/Futoshi_Shimano.webp",
+    "title": "Patriarch of the Shimano Family"
+  },
+  "Haruto_Sawamura": {
+    "name": "Haruto Sawamura",
+    "avatar": "roster/Haruto_Sawamura.webp",
+    "intro": "intro/Haruto_Sawamura.webp",
+    "title": "From Yakuza 6"
+  },
+  "Joji_Kazama": {
+    "name": "Joji Kazama",
+    "avatar": "roster/Joji_Kazama.webp",
+    "intro": "intro/Joji_Kazama.webp",
+    "title": "From Yakuza 3"
+  },
+  "Yutaka_Ogikubo": {
+    "name": "Yutaka Ogikubo",
+    "avatar": "roster/Yutaka_Ogikubo.webp",
+    "intro": "intro/Yutaka_Ogikubo.webp",
+    "title": "From Yakuza: Like a Dragon"
+  },
+  "Makoto_Makimura": {
+    "name": "Makoto Makimura",
+    "avatar": "roster/Makoto_Makimura.webp",
+    "intro": "intro/Makoto_Makimura.webp",
+    "title": "From Yakuza 0"
+  },
+  "Yuki_Tsuruno": {
+    "name": "Yuki Tsuruno",
+    "avatar": "roster/Yuki_Tsuruno.webp",
+    "intro": "intro/Yuki_Tsuruno.webp",
+    "title": "From Like a Dragon Gaiden"
+  },
+  "Mitsuru_Kusumoto": {
+    "name": "Mitsuru Kusumoto",
+    "avatar": "roster/Mitsuru_Kusumoto.webp",
+    "intro": "intro/Mitsuru_Kusumoto.webp",
+    "title": "From Lost Judgment"
+  },
+  "Mitsuru_Kuroiwa": {
+    "name": "Mitsuru Kuroiwa",
+    "avatar": "roster/Mitsuru_Kuroiwa.webp",
+    "intro": "intro/Mitsuru_Kuroiwa.webp",
+    "title": "From Judgment"
+  },
+  "Kazuki_Soma": {
+    "name": "Kazuki Soma",
+    "avatar": "roster/Kazuki_Soma.webp",
+    "intro": "intro/Kazuki_Soma.webp",
+    "title": "From Lost Judgment"
+  },
+  "Keith": {
+    "name": "Keith",
+    "avatar": "roster/Keith.webp",
+    "intro": "intro/Keith.webp",
+    "title": "From Pirate Yakuza in Hawaii"
+  },
+  "Fumiya_Sugiura": {
+    "name": "Fumiya Sugiura",
+    "avatar": "roster/Fumiya_Sugiura.webp",
+    "intro": "intro/Fumiya_Sugiura.webp",
+    "title": "From Judgment"
+  },
+  "Jun_Oda": {
+    "name": "Jun Oda",
+    "avatar": "roster/Jun_Oda.webp",
+    "intro": "intro/Jun_Oda.webp",
+    "title": "From Yakuza 0"
+  },
+  "Etsuko": {
+    "name": "Etsuko",
+    "avatar": "roster/Etsuko.webp",
+    "intro": "intro/Etsuko.webp",
+    "title": "From Yakuza Kiwami 2"
+  },
+  "Takumi_Someya": {
+    "name": "Takumi Someya",
+    "avatar": "roster/Takumi_Someya.webp",
+    "intro": "intro/Takumi_Someya.webp",
+    "title": "From Yakuza 6"
+  },
+  "Hiroki_Awano": {
+    "name": "Hiroki Awano",
+    "avatar": "roster/Hiroki_Awano.webp",
+    "intro": "intro/Hiroki_Awano.webp",
+    "title": "From Yakuza 0"
+  },
+  "Daisaku_Kuze": {
+    "name": "Daisaku Kuze",
+    "avatar": "roster/Daisaku_Kuze.webp",
+    "intro": "intro/Daisaku_Kuze.webp",
+    "title": "From Yakuza 0"
+  },
+  "Yuki_Sawada": {
+    "name": "Yuki Sawada",
+    "avatar": "roster/Yuki_Sawada.webp",
+    "intro": "intro/Yuki_Sawada.webp",
+    "title": "From Yakuza 5"
+  },
+  "Ayako": {
+    "name": "Ayako",
+    "avatar": "roster/Ayako.webp",
+    "intro": "intro/Ayako.webp",
+    "title": "From Yakuza 3"
+  },
+  "Miracle_Johnson": {
+    "name": "Miracle Johnson",
+    "avatar": "roster/Miracle_Johnson.webp",
+    "intro": "intro/Miracle_Johnson.webp",
+    "title": "From Yakuza 0"
+  },
+  "Yoji_Shono": {
+    "name": "Yoji Shono",
+    "avatar": "roster/Yoji_Shono.webp",
+    "intro": "intro/Yoji_Shono.webp",
+    "title": "From Judgment"
+  },
+  "Spade_Tucker": {
+    "name": "Spade Tucker",
+    "avatar": "roster/Spade_Tucker.webp",
+    "intro": "intro/Spade_Tucker.webp",
+    "title": "From Pirate Yakuza in Hawaii"
+  },
+  "Mamoru_Takabe": {
+    "name": "Mamoru Takabe",
+    "avatar": "roster/Mamoru_Takabe.webp",
+    "intro": "intro/Mamoru_Takabe.webp",
+    "title": "From Yakuza: Like a Dragon"
+  },
+  "Ryuhei_Hoshino": {
+    "name": "Ryuhei Hoshino",
+    "avatar": "roster/Ryuhei_Hoshino.webp",
+    "intro": "intro/Ryuhei_Hoshino.webp",
+    "title": "From Yakuza: Like a Dragon"
+  },
+  "Mirei_Park": {
+    "name": "Mirei Park",
+    "avatar": "roster/Mirei_Park.webp",
+    "intro": "intro/Mirei_Park.webp",
+    "title": "From Yakuza 5"
+  },
+  "Teruhiko_Shigaki": {
+    "name": "Teruhiko Shigaki",
+    "avatar": "roster/Teruhiko_Shigaki.webp",
+    "intro": "intro/Teruhiko_Shigaki.webp",
+    "title": "From Pirate Yakuza in Hawaii"
+  },
+  "Satoshi_Shioya": {
+    "name": "Satoshi Shioya",
+    "avatar": "roster/Satoshi_Shioya.webp",
+    "intro": "intro/Satoshi_Shioya.webp",
+    "title": "From Judgment"
+  },
+  "Keiji_Shibusawa": {
+    "name": "Keiji Shibusawa",
+    "avatar": "roster/Keiji_Shibusawa.webp",
+    "intro": "intro/Keiji_Shibusawa.webp",
+    "title": "From Yakuza 0"
+  },
+  "Jin_Goda": {
+    "name": "Jin Goda",
+    "avatar": "roster/Jin_Goda.webp",
+    "intro": "intro/Jin_Goda.webp",
+    "title": "From Yakuza Kiwami 2"
+  },
+  "Ryo_Takashima": {
+    "name": "Ryo Takashima",
+    "avatar": "roster/Ryo_Takashima.webp",
+    "intro": "intro/Ryo_Takashima.webp",
+    "title": "From Yakuza Kiwami 2"
+  },
+  "Wong_Tou": {
+    "name": "Wong Tou",
+    "avatar": "roster/Wong_Tou.webp",
+    "intro": "intro/Wong_Tou.webp",
+    "title": "From Infinite Wealth"
+  },
+  "Lao_Gui": {
+    "name": "Lao Gui",
+    "avatar": "roster/Lao_Gui.webp",
+    "intro": "intro/Lao_Gui.webp",
+    "title": "From Yakuza 0"
+  },
+  "Junichi_Sudo": {
+    "name": "Junichi Sudo",
+    "avatar": "roster/Junichi_Sudo.webp",
+    "intro": "intro/Junichi_Sudo.webp",
+    "title": "From Yakuza 4"
+  },
+  "Saeko_Mukoda": {
+    "name": "Saeko Mukoda",
+    "avatar": "roster/Saeko_Mukoda.webp",
+    "intro": "intro/Saeko_Mukoda.webp",
+    "title": "From Yakuza: Like a Dragon"
+  },
+  "Rikiya_Shimabukuro": {
+    "name": "Rikiya Shimabukuro",
+    "avatar": "roster/Rikiya_Shimabukuro.webp",
+    "intro": "intro/Rikiya_Shimabukuro.webp",
+    "title": "From Yakuza 3"
+  },
+  "Lani_Mililani": {
+    "name": "Lani Mililani",
+    "avatar": "roster/Lani_Mililani.webp",
+    "intro": "intro/Lani_Mililani.webp",
+    "title": "From Infinite Wealth"
+  },
+  "Masamichi_Shintani": {
+    "name": "Masamichi Shintani",
+    "avatar": "roster/Masamichi_Shintani.webp",
+    "intro": "intro/Masamichi_Shintani.webp",
+    "title": "From Judgment"
+  },
+  "Lau_Ka_Long": {
+    "name": "Lau Ka Long",
+    "avatar": "roster/Lau_Ka_Long.webp",
+    "intro": "intro/Lau_Ka_Long.webp",
+    "title": "From Yakuza Kiwami"
+  },
+  "Yumi_Sawamura": {
+    "name": "Yumi Sawamura",
+    "avatar": "roster/Yumi_Sawamura.webp",
+    "intro": "intro/Yumi_Sawamura.webp",
+    "title": "From Yakuza Kiwami"
+  },
+  "Kazuki": {
+    "name": "Kazuki",
+    "avatar": "roster/Kazuki.webp",
+    "intro": "intro/Kazuki.webp",
+    "title": "From Yakuza Kiwami"
+  },
+  "Yoko_Sawa": {
+    "name": "Yoko Sawa",
+    "avatar": "roster/Yoko_Sawa.webp",
+    "intro": "intro/Yoko_Sawa.webp",
+    "title": "From Lost Judgment"
+  },
+  "Ryuji_Goda": {
+    "name": "Ryuji Goda",
+    "avatar": "roster/Ryuji_Goda.webp",
+    "intro": "intro/Ryuji_Goda.webp",
+    "title": "The Dragon of Kansai"
+  },
+  "Takaaki_Matsunaga": {
+    "name": "Takaaki Matsunaga",
+    "avatar": "roster/Takaaki_Matsunaga.webp",
+    "intro": "intro/Takaaki_Matsunaga.webp",
+    "title": "From Yakuza 6"
+  },
+  "Shinji_Tanaka": {
+    "name": "Shinji Tanaka",
+    "avatar": "roster/Shinji_Tanaka.webp",
+    "intro": "intro/Shinji_Tanaka.webp",
+    "title": "From Yakuza 0"
+  },
+  "Akihiro_Ehara": {
+    "name": "Akihiro Ehara",
+    "avatar": "roster/Akihiro_Ehara.webp",
+    "intro": "intro/Akihiro_Ehara.webp",
+    "title": "From Lost Judgment"
+  },
+  "Takeshi_Kido": {
+    "name": "Takeshi Kido",
+    "avatar": "roster/Takeshi_Kido.webp",
+    "intro": "intro/Takeshi_Kido.webp",
+    "title": "From Yakuza 4"
+  },
+  "Wataru_Kurahashi": {
+    "name": "Wataru Kurahashi",
+    "avatar": "roster/Wataru_Kurahashi.webp",
+    "intro": "intro/Wataru_Kurahashi.webp",
+    "title": "From Yakuza Kiwami 2"
+  }
+}

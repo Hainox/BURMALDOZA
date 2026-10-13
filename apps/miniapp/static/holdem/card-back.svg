@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 140"><defs>
+    <pattern id="nami" width="24" height="12" patternUnits="userSpaceOnUse">
+      <rect width="24" height="12" fill="#7a0b13"/>
+      <g fill="none" stroke="#ece3cf" stroke-opacity=".55" stroke-width="1"><circle cx="12" cy="12" r="11"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/><circle cx="0" cy="6" r="11"/><circle cx="24" cy="6" r="11"/></g>
+    </pattern>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff1b8"/><stop offset=".35" stop-color="#e3b24c"/><stop offset=".7" stop-color="#a8761f"/><stop offset="1" stop-color="#f2cf6e"/></linearGradient>
+    <radialGradient id="backbg" cx=".5" cy=".45" r=".7"><stop offset="0" stop-color="#3b0a10"/><stop offset="1" stop-color="#0c0204"/></radialGradient>
+
+  </defs>
+      <rect width="100" height="140" fill="url(#backbg)"/>
+      <rect x="4" y="4" width="92" height="132" rx="5" fill="none" stroke="url(#gold)" stroke-width="1.8"/>
+      <rect x="8" y="8" width="84" height="124" rx="3" fill="none" stroke="url(#gold)" stroke-width=".7" opacity=".7"/>
+      <g fill="none" stroke="url(#gold)" stroke-width="1" opacity=".5">
+        <path d="M14 30c4-6 12-4 10 2-2 4-8 2-6-1"/><path d="M70 120c4-6 12-4 10 2-2 4-8 2-6-1"/><path d="M12 76c3-5 9-3 8 1"/>
+      </g>
+      <g opacity=".95">
+        <circle cx="84" cy="62" r="9" fill="rgb(255 210 120 / 18%)"/>
+        <circle cx="84" cy="62" r="5.5" fill="url(#gold)"/><circle cx="82.5" cy="60.5" r="1.8" fill="#fff8dc"/>
+        <path d="M84 52c2 3 1 5-1 6M91 58c-3 0-5 2-5 4" stroke="url(#gold)" stroke-width="1" fill="none"/>
+      </g>
+      <path d="M18 124l-12 5 7-9-10-1 12-4z" fill="url(#gold)"/>
+      <g fill="url(#gold)">
+        <path d="M10 108l-7-2 6-3z"/><path d="M14 96l-6-5 7 0z"/><path d="M26 89l-2-7 6 4z"/><path d="M44 91l1-7 4 6z"/>
+        <path d="M62 92l4-6 1 7z"/><path d="M78 82l7-2-4 6z"/><path d="M82 68l7 1-6 4z"/><path d="M72 52l5-5 0 7z"/>
+        <path d="M54 50l1-7 4 6z"/><path d="M38 46l-6-4 7-1z"/><path d="M33 36l-7-1 6-4z"/>
+      </g>
+      <path id="dragonBody" d="M18 124C6 104 22 90 42 94C64 98 84 88 76 68C68 50 34 56 36 38C37 28 46 22 56 24" fill="none" stroke="url(#gold)" stroke-width="10" stroke-linecap="round"/>
+      <path d="M18 124C6 104 22 90 42 94C64 98 84 88 76 68C68 50 34 56 36 38C37 28 46 22 56 24" fill="none" stroke="#6b3207" stroke-width="6" stroke-dasharray="2.2 2.8" stroke-linecap="round" opacity=".55"/>
+      <path d="M18 124C6 104 22 90 42 94C64 98 84 88 76 68C68 50 34 56 36 38C37 28 46 22 56 24" fill="none" stroke="#fff3c4" stroke-width="1" opacity=".55" transform="translate(-1.5 -1.5)"/>
+      <g stroke="url(#gold)" stroke-width="3" stroke-linecap="round" fill="none">
+        <path d="M40 44l-11 7"/><path d="M58 98l3 11"/>
+      </g>
+      <g stroke="url(#gold)" stroke-width="1.6" stroke-linecap="round" fill="none">
+        <path d="M29 51l-5-1M29 51l-4 3M29 51l-1 5"/><path d="M61 109l-4 3M61 109l1 5M61 109l5 2"/>
+      </g>
+      <path d="M50 22l-10-7 5 9-10-1 11 6z" fill="url(#gold)"/>
+      <path d="M52 18L66 13L80 17L86 21L77 23L84 28L70 31L59 31L52 28Z" fill="url(#gold)" stroke="#5a2a08" stroke-width=".6"/>
+      <path d="M77 23L66 25L78 26" fill="#3b0a10"/>
+      <path d="M71 23.5l2 2.5M75 24l1.5 2" stroke="#fff8dc" stroke-width=".8"/>
+      <circle cx="64" cy="19" r="1.6" fill="#3b0a10"/><circle cx="64.4" cy="18.6" r=".5" fill="#ffe08a"/>
+      <path d="M56 15L49 3M61 14L61 1" stroke="url(#gold)" stroke-width="2.6" stroke-linecap="round"/>
+      <path d="M49 3l-2 3M61 1l-2 3" stroke="url(#gold)" stroke-width="1.4" stroke-linecap="round"/>
+      <path d="M84 19C94 14 98 26 91 34M81 29C89 33 89 43 81 47" stroke="url(#gold)" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+    </svg>
