@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- New Slot rooms use the approved slot-siege-1 eight-symbol payout rules; existing skeleton rooms retain their original ruleset.
+
 - The Mini App now shows the player's wallet history (last 100 server ledger entries, Moscow time) and rereads it after confirmed grants and game actions; DEMO shows no invented entries.
 - Refreshed the local project journal snapshot and QA status; closed assignments no longer appear as pending handoffs, and an empty queue is explained explicitly.
 - Demo Slot, Blackjack and Hold’em copy now clearly identifies client-generated demo state; demo grid, bonus state and balance no longer imply server confirmation, while live wording remains unchanged.

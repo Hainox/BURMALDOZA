@@ -14,7 +14,7 @@ if str(_DOMAIN_SRC) not in sys.path:
     sys.path.insert(0, str(_DOMAIN_SRC))
 
 from burmaldoza_domain.games.slot import spin
-from burmaldoza_domain.games.slot_ruleset import load_skeleton_config
+from burmaldoza_domain.games.slot_ruleset import SLOT_RULESET_VERSIONS, load_slot_config
 from burmaldoza_domain.rng import SeededRandomSource
 
 
@@ -87,14 +87,15 @@ def run_slot_simulation(config, trials: int, bet: int, seed: int) -> SlotSimulat
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run the slot skeleton Monte Carlo simulation")
+    parser = argparse.ArgumentParser(description="Run the slot Monte Carlo simulation")
+    parser.add_argument("--ruleset", choices=SLOT_RULESET_VERSIONS, default="slot-skeleton-1")
     parser.add_argument("--trials", type=int, default=100_000)
     parser.add_argument("--bet", type=int, default=10)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--json", action="store_true", dest="as_json")
     args = parser.parse_args()
 
-    report = run_slot_simulation(load_skeleton_config(), args.trials, args.bet, args.seed)
+    report = run_slot_simulation(load_slot_config(args.ruleset), args.trials, args.bet, args.seed)
     if args.as_json:
         print(json.dumps(report.to_dict(), sort_keys=True))
     else:
