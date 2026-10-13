@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { base } from '$app/paths';
 
   import ResultBand from '$lib/components/ResultBand.svelte';
   import type { MotionState } from '$lib/game/motion';
@@ -132,6 +133,11 @@
     return list[index] ?? null;
   }
 
+  // Портреты Deck A лежат в static/blackjack/portraits/<имя куклы>_S.webp.
+  function portraitUrl(doll: string): string {
+    return `${base}/blackjack/portraits/${encodeURIComponent(`${doll}_S.webp`)}`;
+  }
+
   function suitGlyph(suit: string): string {
     return SUIT_GLYPH[suit] ?? '·';
   }
@@ -212,6 +218,7 @@
             data-card={`${card.rank}-${card.suit}`}
             aria-label={`${card.rank} ${suitGlyph(card.suit)} · ${doll ?? 'карта'}`}
           >
+            {#if doll}<img class="portrait" src={portraitUrl(doll)} alt="" loading="lazy" decoding="async" />{/if}
             <span class="corner top">{card.rank}{suitGlyph(card.suit)}</span>
             <span class="dossier">
               <small>GFL DOSSIER · DECK A</small>
@@ -229,6 +236,7 @@
             aria-label="Скрытая карта дилера"
             style={`--card-delay: ${cardDelay(dealerFaces.length)}; --card-rotation: 5deg; --card-offset: 3px`}
           >
+            <img class="back-art" src={`${base}/blackjack/card-back.webp`} alt="" decoding="async" />
             <span class="back-stamp"><b>S09</b><span>РУБАШКА A</span></span>
           </div>
         {/if}
@@ -255,6 +263,7 @@
             data-card={`${card.rank}-${card.suit}`}
             aria-label={`${card.rank} ${suitGlyph(card.suit)} · ${doll ?? 'карта'}`}
           >
+            {#if doll}<img class="portrait" src={portraitUrl(doll)} alt="" loading="lazy" decoding="async" />{/if}
             <span class="corner top">{card.rank}{suitGlyph(card.suit)}</span>
             <span class="dossier">
               <small>GFL DOSSIER · DECK A</small>
@@ -273,6 +282,11 @@
       </span>
     </div>
   </section>
+  <details class="sources">
+    <summary>Источники изображений</summary>
+    <p>Портреты T-Doll © MICA Team / SUNBORN, источник — IOP Wiki. Некоммерческий фанатский интерфейс по решению владельца. Общая лицензия на изображения не заявляется.</p>
+    <a href={`${base}/blackjack/sources.json`} target="_blank" rel="noreferrer">Источники портретов Deck A</a>
+  </details>
 
   {#if canDeal}
     <section class="bet-panel" aria-label="Выбор ставки">
@@ -388,20 +402,30 @@
   .hand-label { color: rgb(255 247 237 / 68%); font-size: 9px; font-weight: 800; letter-spacing: 0.16em; }
   .hand-label b { color: var(--brass-300); }
   .cards { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
-  .playing-card { position: relative; display: grid; place-items: center; width: 104px; min-height: 128px; padding: 22px 8px; margin-left: -10px; border: 1px solid rgb(255 247 237 / 55%); border-radius: 8px; background: #fff8ee; color: #3b2430; box-shadow: 0 7px 14px rgb(0 0 0 / 25%); transform: translate3d(0, var(--card-offset), 0) rotate(var(--card-rotation)); animation: dealCard 440ms var(--ease-spring) var(--card-delay) both; backface-visibility: hidden; will-change: transform, opacity; }
+  /* Карта Deck A: портрет на всю площадь, как в одобренном превью assets/design/blackjack-gfl/deck-a. */
+  .playing-card { position: relative; display: grid; align-content: end; width: 104px; aspect-ratio: 2.5 / 3.65; overflow: hidden; padding: 0 8px 9px; margin-left: -10px; border: 1px solid #b9a27a; border-radius: 9px; background: linear-gradient(155deg, #24232b, #0d1017 62%); color: #f4ece0; box-shadow: 0 8px 16px rgb(0 0 0 / 45%); transform: translate3d(0, var(--card-offset), 0) rotate(var(--card-rotation)); animation: dealCard 440ms var(--ease-spring) var(--card-delay) both; backface-visibility: hidden; will-change: transform, opacity; }
   .playing-card:first-child { margin-left: 0; }
-  .playing-card.red { color: #8f2f3f; }
-  .hole-card { background: repeating-linear-gradient(45deg, #1d2b33 0 6px, #2e4a3a 6px 9px); border-color: rgb(231 187 112 / 60%); }
-  .back-stamp { display: grid; gap: 4px; place-items: center; color: #e7bb70; font-size: 8px; font-weight: 800; letter-spacing: 0.18em; text-align: center; }
+  .playing-card::before { content: ''; position: absolute; z-index: 1; inset: 4px; border: 1px solid rgb(215 189 129 / 25%); border-radius: 5px; pointer-events: none; }
+  .playing-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgb(9 11 18 / 45%) 0%, transparent 26%, rgb(10 11 16 / 92%) 100%); }
+  .portrait, .back-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .portrait { object-position: 50% 15%; filter: saturate(0.9) contrast(1.04); }
+  .hole-card { place-items: center; align-content: center; border-color: rgb(231 187 112 / 60%); background: #1d2b33; }
+  .hole-card::after { background: none; }
+  .back-stamp { position: relative; z-index: 2; display: grid; gap: 4px; place-items: center; color: #e7bb70; font-size: 8px; font-weight: 800; letter-spacing: 0.18em; text-align: center; opacity: 0; }
   .back-stamp b { font-size: 22px; letter-spacing: 0.1em; }
-  .player-card { border-color: rgb(231 187 112 / 75%); }
-  .corner { position: absolute; font-size: 15px; font-weight: 850; line-height: 1; }
-  .corner.top { top: 6px; left: 7px; }
-  .corner.bottom { right: 7px; bottom: 6px; transform: rotate(180deg); }
-  .dossier { display: grid; gap: 2px; justify-items: center; text-align: center; }
-  .dossier small { font-size: 7px; font-weight: 800; letter-spacing: 0.14em; opacity: 0.65; }
-  .dossier strong { font-size: 15px; line-height: 1.1; letter-spacing: -0.01em; }
-  .dossier em { font-style: normal; font-size: 10px; font-weight: 800; opacity: 0.75; }
+  .corner { position: absolute; z-index: 2; color: #fff; font: 700 15px/1 Georgia, serif; text-shadow: 0 2px 6px #000; }
+  .corner.top { top: 7px; left: 8px; }
+  .corner.bottom { right: 7px; top: 7px; color: #e6c17b; font-size: 12px; }
+  .red .corner.bottom { color: #e47d83; }
+  .dossier { position: relative; z-index: 2; display: grid; gap: 1px; text-align: left; }
+  .dossier small { color: #e6c17b; font-size: 6px; font-weight: 800; letter-spacing: 0.14em; }
+  .dossier strong { font: 700 13px/1.05 Georgia, serif; text-shadow: 0 2px 8px #000; overflow-wrap: anywhere; }
+  .dossier em { color: #c3bdb8; font-style: normal; font-size: 8px; font-weight: 800; letter-spacing: 0.06em; }
+  .red .dossier em { color: #e9a3a8; }
+  .sources { margin-top: 10px; color: var(--muted, #b9b2a8); font-size: 11px; }
+  .sources summary { cursor: pointer; }
+  .sources p { margin: 6px 0; }
+  .sources a { color: inherit; }
   .ghost { color: rgb(255 247 237 / 55%); font-size: 11px; }
   .total { color: rgb(255 247 237 / 72%); font-size: 13px; font-weight: 800; }
   .total.bright { color: var(--brass-300); }
@@ -444,7 +468,7 @@
     .action-grid { grid-template-columns: 1fr; }
   }
   @media (min-width: 720px) {
-    .playing-card { width: 118px; min-height: 142px; }
+    .playing-card { width: 118px; }
   }
   @media (prefers-reduced-motion: reduce) {
     .playing-card { animation: none; }
