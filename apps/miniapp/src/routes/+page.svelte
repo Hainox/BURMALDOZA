@@ -5,6 +5,7 @@
   import RoomCard from '$lib/components/RoomCard.svelte';
   import RoomShell from '$lib/components/RoomShell.svelte';
   import WalletGrantControls from '$lib/components/WalletGrantControls.svelte';
+  import Leaderboard from '$lib/components/Leaderboard.svelte';
   import LedgerHistory from '$lib/components/LedgerHistory.svelte';
   import type { ApiLedgerResult } from '$lib/api/client';
   import { getTelegramWebApp } from '$lib/telegram/webapp';
@@ -695,6 +696,7 @@
       </footer>
     </main>
   {/if}
+  <Leaderboard apiClient={ledgerReady ? apiClient : null} live={liveApiEnabled} revision={ledgerRevision} />
   <LedgerHistory apiClient={ledgerReady ? apiClient : null} live={liveApiEnabled} revision={ledgerRevision} />
 </div>
 

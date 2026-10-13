@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.config import cors_origin, settings
 from app.db.session import SessionFactory
-from app.routers import auth, internal, rooms, wallet
+from app.routers import auth, internal, leaderboard, rooms, wallet
 from app.services.event_bus import EventBus
 
 app = FastAPI(title="Burmaldoza API", version="0.1.0")
@@ -33,6 +33,7 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(wallet.router)
+app.include_router(leaderboard.router)
 app.include_router(rooms.router)
 app.include_router(internal.router)
 
