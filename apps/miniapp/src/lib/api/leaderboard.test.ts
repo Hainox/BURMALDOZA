@@ -12,7 +12,14 @@ describe('weekly leaderboard transport', () => {
     expect(fetcher).toHaveBeenCalledWith('https://api.example.test/api/v1/leaderboard',
       expect.objectContaining({ method: 'GET', headers: { 'X-Telegram-Init-Data': 'verified' } }));
   });
+  it('accepts the caller own place outside the top', async () => {
+    const withMe = { ...snapshot, me: { rank: 18, nickname: '@visitor', net_result: -25 } };
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify(withMe)));
+    expect(await new ApiClient('', 'verified', fetcher).getLeaderboard()).toEqual(withMe);
+  });
   it.each([
+    { ...snapshot, me: { rank: 3, nickname: '@visitor', net_result: 5 } },
+    { ...snapshot, me: { rank: 18, nickname: '@visitor', net_result: 5, telegram_user_id: 1 } },
     { ...snapshot, entries: [{ rank: 1, nickname: '@winner', net_result: '50' }] },
     { ...snapshot, entries: Array.from({ length: 16 }, (_, index) => ({ rank: index + 1, nickname: 'a', net_result: 5 })) },
     { ...snapshot, week_start: 'invalid' },

@@ -74,12 +74,25 @@ export interface ApiLeaderboardSnapshot {
   week_start: string;
   week_end: string;
   entries: ApiLeaderboardEntry[];
+  /** The caller's own place, only when they played this week and are outside the top 15. */
+  me?: ApiLeaderboardEntry | null;
+}
+
+function isOwnPlace(value: unknown): boolean {
+  if (value === undefined || value === null) return true;
+  if (typeof value !== 'object') return false;
+  const entry = value as Record<string, unknown>;
+  return Object.keys(entry).every(key => ['rank', 'nickname', 'net_result'].includes(key))
+    && Number.isSafeInteger(entry.rank) && (entry.rank as number) > 15
+    && typeof entry.nickname === 'string' && entry.nickname.length > 0
+    && Number.isSafeInteger(entry.net_result);
 }
 
 function isLeaderboardSnapshot(value: unknown): value is ApiLeaderboardSnapshot {
   if (typeof value !== 'object' || value === null) return false;
   const snapshot = value as Record<string, unknown>;
-  if (Object.keys(snapshot).some(key => !['week_start', 'week_end', 'entries'].includes(key))) return false;
+  if (Object.keys(snapshot).some(key => !['week_start', 'week_end', 'entries', 'me'].includes(key))) return false;
+  if (!isOwnPlace(snapshot.me)) return false;
   return typeof snapshot.week_start === 'string' && Number.isFinite(Date.parse(snapshot.week_start))
     && typeof snapshot.week_end === 'string' && Number.isFinite(Date.parse(snapshot.week_end))
     && Date.parse(snapshot.week_end) > Date.parse(snapshot.week_start)
