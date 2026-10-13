@@ -411,7 +411,7 @@
   .portrait { object-position: 50% 15%; filter: saturate(0.9) contrast(1.04); }
   .hole-card { place-items: center; align-content: center; border-color: rgb(231 187 112 / 60%); background: #1d2b33; }
   .hole-card::after { background: none; }
-  .back-stamp { position: relative; z-index: 2; display: grid; gap: 4px; place-items: center; color: #e7bb70; font-size: 8px; font-weight: 800; letter-spacing: 0.18em; text-align: center; opacity: 0; }
+  .back-stamp { position: relative; z-index: 2; display: grid; gap: 4px; place-items: center; color: #e7bb70; font-size: 8px; font-weight: 800; letter-spacing: 0.18em; text-align: center; text-shadow: 0 2px 4px #000; }
   .back-stamp b { font-size: 22px; letter-spacing: 0.1em; }
   .corner { position: absolute; z-index: 2; color: #fff; font: 700 15px/1 Georgia, serif; text-shadow: 0 2px 6px #000; }
   .corner.top { top: 7px; left: 8px; }
@@ -423,7 +423,7 @@
   .dossier em { color: #c3bdb8; font-style: normal; font-size: 8px; font-weight: 800; letter-spacing: 0.06em; }
   .red .dossier em { color: #e9a3a8; }
   .sources { margin-top: 10px; color: var(--muted, #b9b2a8); font-size: 11px; }
-  .sources summary { cursor: pointer; }
+  .sources summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; }
   .sources p { margin: 6px 0; }
   .sources a { color: inherit; }
   .ghost { color: rgb(255 247 237 / 55%); font-size: 11px; }
