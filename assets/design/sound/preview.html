@@ -10,7 +10,7 @@
 <style>
   :root {
     --bg: #0b0c0f; --panel: #14161b; --line: rgb(255 255 255 / 10%); --text: #eef1f4; --muted: #8d95a1;
-    --siege: #8cc4ff; --atk: #f2b45a; --rgg: #b8141f; --washi: #ece3cf; --gold: #c9a24a; --ok: #43e08f;
+    --siege: #8cc4ff; --gfl: #f6c445; --gfl-2: #4fd1c5; --atk: #f2b45a; --rgg: #b8141f; --washi: #ece3cf; --gold: #c9a24a; --ok: #43e08f;
     --body: 'Inter', system-ui, sans-serif;
   }
   * { box-sizing: border-box; }
@@ -26,8 +26,8 @@
   .mixer .pill[aria-pressed="true"] { border-color: var(--ok); color: var(--ok); }
   .meter { width: 120px; height: 8px; background: #000; border: 1px solid var(--line); overflow: hidden; }
   .meter i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--ok), var(--atk), #e5484d); transition: width .05s; }
-  .rooms { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-  @media (max-width: 980px) { .rooms { grid-template-columns: minmax(0, 1fr); } }
+  .rooms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  @media (max-width: 860px) { .rooms { grid-template-columns: minmax(0, 1fr); } }
   section.room { border: 1px solid var(--line); background: var(--panel); }
   .room h2 { margin: 0; padding: 14px 16px; border-bottom: 1px solid var(--line); font-size: 18px; }
   .room h2 small { display: block; margin-top: 4px; color: var(--muted); font: 400 12px/1.4 var(--body); letter-spacing: 0; text-transform: none; }
@@ -42,6 +42,9 @@
   .cue button.playing { border-color: var(--ok); color: var(--ok); }
   .siege .cue button:hover { border-color: var(--siege); }
   .rgg .cue button:hover { border-color: var(--rgg); }
+  .gfl .cue button:hover { border-color: var(--gfl); }
+  .room.gfl h2 { font: 700 20px/1 'Barlow Condensed', sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--gfl); background: repeating-linear-gradient(135deg, rgb(246 196 69 / 8%) 0 8px, transparent 8px 16px); }
+  .room.gfl h2 i { font-style: normal; color: var(--gfl-2); margin-right: 8px; }
   .cue b { display: block; font-size: 14px; }
   .cue small { display: block; color: var(--muted); font-size: 12px; line-height: 1.4; }
   .cue .h { display: inline-block; margin-top: 3px; padding: 1px 6px; border: 1px solid var(--line); color: var(--muted); font: 500 11px/1.5 ui-monospace, monospace; }
@@ -58,7 +61,7 @@
   <header>
     <div>
       <h1>Звук комнат</h1>
-      <p>Превью саунд-дизайна (#65). Все звуки синтезируются прямо в браузере (Web Audio) — без аудиофайлов и без звуков из игр. Справа от каждого звука — событие, на которое он играет, и виброотклик Telegram. На телефоне внутри Telegram работает и вибрация.</p>
+      <p>Превью саунд-дизайна четырёх зон (#65): интерфейс, Blackjack GFL, Slot Siege, Hold'em RGG. Все звуки синтезируются прямо в браузере (Web Audio) — без аудиофайлов и без звуков из игр. Справа от каждого звука — событие, на которое он играет, и виброотклик Telegram. На телефоне внутри Telegram работает и вибрация.</p>
     </div>
   </header>
 
@@ -74,6 +77,11 @@
     <section class="room ui">
       <h2>Общий интерфейс<small>Лобби, кошелёк, ошибки — нейтральный «клубный» звук</small></h2>
       <ul class="cues" id="cues-ui"></ul>
+    </section>
+    <section class="room gfl">
+      <h2><i>◆</i>Blackjack · GFL Sector 09<small>Штаб Griffin и полевая связь: цифровой интерфейс, магазин и затвор, рация, голограмма</small></h2>
+      <div class="seq"><button type="button" data-seq="gfl">▶ Раздача, ход и блэкджек</button><small>Сдача → hit → stand → раскрытие дилера → блэкджек</small></div>
+      <ul class="cues" id="cues-gfl"></ul>
     </section>
     <section class="room siege">
       <h2>Slot · Siege<small>Тактика, металл, бетон: глухие удары, щелчки затвора, луч дрона</small></h2>
@@ -158,6 +166,18 @@
       ['op', 'Смена операции', 'Анонс новой операции: гул арены и прожектор', null, () => { const t = now(); tone({ type: 'sawtooth', f: 55, f2: 110, t, a: .6, d: 1.2, v: .12 }); hiss({ t, type: 'bandpass', f: 400, f2: 3000, a: .8, d: 1, v: .12 }); tone({ f: 880, t: t + 1.2, d: .6, v: .1 }); }],
       ['amb-siege', 'Атмосфера арены', 'Фоновая петля: низкий гул, ветер, далёкий шум трибун', null, () => toggleAmbient('siege'), true]
     ],
+    gfl: [
+      ['deal', 'Сдача', 'Ставка подтверждена: сигнал планшета и четыре карты скольжением', 'impact light', () => { const t = now(); tone({ type: 'square', f: 1760, t, d: .05, v: .06 }); tone({ type: 'square', f: 2350, t: t + .06, d: .05, v: .06 }); [0, .16, .32, .48].forEach((o) => { hiss({ t: t + .12 + o, type: 'bandpass', f: 2200, f2: 1200, q: 1.4, d: .09, v: .22 }); tone({ f: 180, f2: 100, t: t + .2 + o, d: .05, v: .1 }); }); }],
+      ['hit', 'Hit', 'Ещё карта: щелчок магазина и скольжение карты', 'impact rigid', () => { const t = now(); magClick(t); hiss({ t: t + .12, type: 'bandpass', f: 2200, f2: 1200, q: 1.4, d: .09, v: .22 }); }],
+      ['stand', 'Stand', 'Хватит: двухтоновый сигнал рации «держим позицию»', 'impact soft', () => { const t = now(); squelch(t, .08); tone({ type: 'square', f: 880, t: t + .1, d: .09, v: .06 }); tone({ type: 'square', f: 660, t: t + .22, d: .12, v: .06 }); }],
+      ['double', 'Double', 'Удвоение: передёргивание затвора и фишки', 'impact medium', () => { const t = now(); boltRack(t); [0, .05, .1].forEach((o, i) => tone({ f: 2900 + i * 120, t: t + .35 + o, d: .08, v: .09 })); }],
+      ['reveal', 'Раскрытие дилера', 'Закрытая карта дилера проявляется голограммой', 'impact light', () => { const t = now(); for (let i = 0; i < 6; i++) tone({ type: 'square', f: 1200 + Math.random() * 900, t: t + i * .035, d: .025, v: .04 }); tone({ f: 300, f2: 1500, t: t + .2, a: .02, d: .3, v: .1 }); hiss({ t: t + .2, type: 'highpass', f: 5000, d: .3, v: .06 }); }],
+      ['bust', 'Перебор', 'Больше 21: короткий треск помех — сухо', 'notification error', () => { squelch(now(), .22, .22); }],
+      ['push', 'Ничья', 'Ставка возвращена: один нейтральный сигнал', null, () => { tone({ type: 'triangle', f: 990, d: .14, v: .1 }); }],
+      ['win', 'Победа', 'Подтверждённый выигрыш: цифровой сигнал «задание выполнено»', 'notification success', () => { const t = now(); const e = echo(.14, .25, .3); [784, 988, 1175, 1568].forEach((f, i) => { tone({ type: 'square', f, t: t + i * .07, d: .16, v: .05, out: e }); tone({ type: 'triangle', f: f / 2, t: t + i * .07, d: .2, v: .07, out: e }); }); haptic('notification', 'success'); }],
+      ['bj', 'Блэкджек', 'Натуральный 21 (3:2): позывной штаба и аккорд', 'impact heavy + success', () => { const t = now(); squelch(t, .06); const e = echo(.18, .3, .35); [[392, 494, 587], [440, 554, 659], [523, 659, 784, 1046]].forEach((ch, i) => ch.forEach((f) => { tone({ type: 'sawtooth', f, t: t + .12 + i * .2, a: .02, d: i === 2 ? .9 : .18, v: .05, out: e }); })); tone({ f: 65, f2: 40, t: t + .52, d: .8, v: .4 }); haptic('impact', 'heavy'); setTimeout(() => haptic('notification', 'success'), 500); }],
+      ['amb-gfl', 'Атмосфера Sector 09', 'Фоновая петля: ветер в пустом здании, гул проводки, капли, обрывки радиоэфира', null, () => toggleAmbient('gfl'), true]
+    ],
     rgg: [
       ['taiko', 'Заставка героя', 'Удары тайко и щипок струны под имя героя', 'impact heavy', () => intro()],
       ['shuffle', 'Тасовка', 'Начало раздачи', null, () => { const t = now(); for (let i = 0; i < 9; i++) hiss({ t: t + i * .045, type: 'bandpass', f: 2600 + Math.random() * 800, q: 3, d: .035, v: .16 }); }],
@@ -172,6 +192,9 @@
     ]
   };
 
+  function magClick(t) { hiss({ t, type: 'highpass', f: 3500, d: .02, v: .3 }); tone({ type: 'square', f: 420, f2: 260, t: t + .015, d: .04, v: .12 }); hiss({ t: t + .05, type: 'bandpass', f: 1600, q: 5, d: .03, v: .2 }); }
+  function boltRack(t) { hiss({ t, type: 'bandpass', f: 2400, q: 3, d: .05, v: .3 }); tone({ type: 'square', f: 300, t, d: .05, v: .08 }); hiss({ t: t + .07, type: 'bandpass', f: 900, f2: 1600, d: .08, v: .18 }); hiss({ t: t + .2, type: 'highpass', f: 2800, d: .04, v: .35 }); tone({ type: 'square', f: 520, f2: 330, t: t + .2, d: .05, v: .12 }); }
+  function squelch(t, d, v = .14) { hiss({ t, type: 'bandpass', f: 1800, q: .7, a: .003, d, v }); tone({ type: 'square', f: 60, t, d, v: v * .2 }); }
   function reelStop(t, i) { tone({ f: 140 + i * 18, f2: 60, t, d: .09, v: .5 }); hiss({ t, type: 'highpass', f: 2600 + i * 400, d: .025, v: .3 }); hiss({ t: t + .03, type: 'bandpass', f: 900, q: 4, d: .04, v: .15 }); haptic('impact', 'rigid'); }
   function spinLoop(dur) {
     const t = now(); const s = noise(); const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1100; bp.Q.value = 1.2;
@@ -199,7 +222,22 @@
   function toggleAmbient(kind) {
     if (ambient[kind]) { const a = ambient[kind]; a.g.gain.setTargetAtTime(0.0001, now(), .4); setTimeout(() => a.nodes.forEach((n) => n.stop()), 1500); delete ambient[kind]; return false; }
     const t = now(); const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.setTargetAtTime(1, t, .8); g.connect(ambBus); const nodes = [];
-    if (kind === 'siege') {
+    if (kind === 'gfl') {
+      const wind = noise(); const wf = ctx.createBiquadFilter(); wf.type = 'bandpass'; wf.frequency.value = 350; wf.Q.value = .8; const wg = ctx.createGain(); wg.gain.value = .14;
+      const lfo = ctx.createOscillator(); lfo.frequency.value = .06; const lg = ctx.createGain(); lg.gain.value = 200; lfo.connect(lg); lg.connect(wf.frequency); wind.connect(wf); wf.connect(wg); wg.connect(g);
+      const hum = ctx.createOscillator(); hum.type = 'sawtooth'; hum.frequency.value = 50; const hf = ctx.createBiquadFilter(); hf.type = 'lowpass'; hf.frequency.value = 260; const hg = ctx.createGain(); hg.gain.value = .035; hum.connect(hf); hf.connect(hg); hg.connect(g);
+      nodes.push(wind, lfo, hum);
+      const radio = setInterval(() => {
+        if (!ambient.gfl) return clearInterval(radio);
+        const tt = now() + Math.random() * .5;
+        if (Math.random() < .5) {
+          const s = noise(); const bf = ctx.createBiquadFilter(); bf.type = 'bandpass'; bf.frequency.value = 1400; bf.Q.value = 2; const sg = ctx.createGain();
+          env(sg, tt, .03, .05, .9); s.connect(bf); bf.connect(sg); sg.connect(g); s.start(tt); s.stop(tt + 1);
+        } else {
+          const o = ctx.createOscillator(); const og = ctx.createGain(); o.frequency.setValueAtTime(1800 + Math.random() * 1200, tt); o.frequency.exponentialRampToValueAtTime(600, tt + .05); env(og, tt, .04, .002, .06); o.connect(og); og.connect(g); o.start(tt); o.stop(tt + .1);
+        }
+      }, 1300);
+    } else if (kind === 'siege') {
       const drone = ctx.createOscillator(); drone.type = 'sawtooth'; drone.frequency.value = 41; const dl = ctx.createBiquadFilter(); dl.type = 'lowpass'; dl.frequency.value = 180; const dg = ctx.createGain(); dg.gain.value = .12;
       drone.connect(dl); dl.connect(dg); dg.connect(g);
       const wind = noise(); const wf = ctx.createBiquadFilter(); wf.type = 'bandpass'; wf.frequency.value = 500; wf.Q.value = .6; const wg = ctx.createGain(); wg.gain.value = .18;
@@ -217,10 +255,11 @@
   // ---------- sequences ----------
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   async function seqSiege() { const c = CUES.siege; c[0][4](); await wait(250); spinLoop(1.7); await wait(900); for (let i = 0; i < 3; i++) { reelStop(now(), i); await wait(400); } c[3][4](); await wait(450); winSiege(2); }
+  async function seqGfl() { const c = CUES.gfl; c[0][4](); await wait(1100); c[1][4](); await wait(700); c[2][4](); await wait(700); c[4][4](); await wait(700); c[8][4](); }
   async function seqRgg() { intro(); await wait(1900); CUES.rgg[1][4](); await wait(500); CUES.rgg[2][4](); await wait(600); CUES.rgg[4][4](); await wait(500); CUES.rgg[3][4](); await wait(900); CUES.rgg[4][4](); await wait(700); CUES.rgg[6][4](); await wait(300); winKoto(); }
 
   // ---------- UI ----------
-  const HMAP = { 'notification success': ['notification', 'success'], 'notification error': ['notification', 'error'], 'impact heavy': ['impact', 'heavy'], 'impact rigid': ['impact', 'rigid'],
+  const HMAP = { 'impact heavy + success': ['impact', 'heavy'], 'notification success': ['notification', 'success'], 'notification error': ['notification', 'error'], 'impact heavy': ['impact', 'heavy'], 'impact rigid': ['impact', 'rigid'],
     'impact medium': ['impact', 'medium'], 'impact light': ['impact', 'light'], 'impact soft': ['impact', 'soft'], 'selectionChanged()': ['selection'] };
   for (const [room, list] of Object.entries(CUES)) {
     $('cues-' + room).innerHTML = list.map(([id, name, desc, h, , loop]) => `<li class="cue${loop ? ' loop' : ''}"><button type="button" data-room="${room}" data-id="${id}" aria-label="${loop ? 'Включить или выключить' : 'Проиграть'}: ${name}">${loop ? '◎' : '▶'}</button><span><b>${name}</b><small>${desc}</small>${h ? `<span class="h">haptic: ${h}</span>` : ''}</span></li>`).join('');
@@ -229,9 +268,9 @@
   document.addEventListener('click', (e) => {
     const b = e.target.closest('button[data-id]');
     if (b) { ensure(); const cue = CUES[b.dataset.room].find((c) => c[0] === b.dataset.id); const res = cue[4]();
-      if (cue[3] && HMAP[cue[3]] && !['coin', 'win-s', 'win-m', 'win-l', 'win', 'taiko', 'stop'].includes(cue[0])) haptic(...HMAP[cue[3]]);
+      if (cue[3] && HMAP[cue[3]] && !['coin', 'win-s', 'win-m', 'win-l', 'win', 'taiko', 'stop', 'bj'].includes(cue[0])) haptic(...HMAP[cue[3]]);
       if (cue[5]) b.classList.toggle('playing', !!res); else { b.classList.add('playing'); setTimeout(() => b.classList.remove('playing'), 600); } return; }
-    const s = e.target.closest('button[data-seq]'); if (s) { ensure(); (s.dataset.seq === 'siege' ? seqSiege : seqRgg)(); }
+    const s = e.target.closest('button[data-seq]'); if (s) { ensure(); ({ siege: seqSiege, rgg: seqRgg, gfl: seqGfl })[s.dataset.seq](); }
   });
   $('power').addEventListener('click', () => {
     init();
