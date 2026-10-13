@@ -388,6 +388,10 @@ def apply_holdem_action(
             and next_state.street_contributions[0] == next_state.street_contributions[1]
         ):
             next_state = _advance_street(next_state)
+            # Equal initial stacks mean matched all-ins need no side pot or more decisions.
+            if next_state.stacks == (0, 0):
+                while next_state.phase is not HoldemPhase.SHOWDOWN:
+                    next_state = _advance_street(next_state)
 
     settlement = None
     if next_state.phase in {HoldemPhase.SHOWDOWN, HoldemPhase.SETTLED}:

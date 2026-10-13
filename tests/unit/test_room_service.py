@@ -173,7 +173,7 @@ async def test_snapshot_is_available_after_reconnect_and_auth_is_server_verified
 @pytest.mark.asyncio
 async def test_action_from_non_member_is_rejected() -> None:
     service = RoomService(store=MemoryRoomStore())
-    created = await service.create_room(12345, GameType.HOLDEM, "heads-up")
+    created = await service.create_room(12345, GameType.BLACKJACK, "solo")
 
     with pytest.raises(RoomServiceError, match="member"):
         await service.apply_action(
