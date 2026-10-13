@@ -565,3 +565,25 @@
 - Осталось: CI Verify на head, внешний Claude Code review, UI #77. Docker daemon недоступен, Compose build — CI gate. Merge/deploy/серверные действия не выполнялись.
 
 - Дополнение к #76: действующий docker-compose.prod.yml перечисляет environment API явно и пока не передаёт новые SLOT_EVENT_* поля. Календарная ротация не требует новых env; для arena в production перед включением требуется отдельный deployment-конфигурационный change/override, передающий все три поля. Production Compose не входил в allowlist #76 и не менялся. Одной записи этих переменных в host .env недостаточно.
+
+## 2026-10-13 — Hold’em UI «Камуро-тё» (#75)
+
+- Codex, модель/effort клиента не отображаются; запрошен high. Серверный контракт проверен в #74; cancel требует PR #79. PokerRoom теперь имеет лобби bot/pvp и столы 100/500/1000, самостоятельный seat snapshot, WS + polling/reconnect, восстановление UUID запросов из sessionStorage после потери ответа/reload. Баланс меняется только из подтверждённого снимка; DEMO — записанная сцена без wallet mutation.
+- Встроены утверждённые roster/intro/scene и sources.json, рубашка дракона из превью, локальный Permanent Marker с Apache license. Герой только по hero_code. Скрытые карты до явного showdown; legal_actions, текущие пределы рейза, банк, улицы, таймер pvp, печать/текст результата. Заставка имеет keyboard focus, underlying table inert; reduced motion без заставки/удара. Источники доступны в комнате.
+- Решение владельца в этой сессии: сервер не отдаёт ник/аватар PvP; сейчас нейтральное «Живой игрок», отдельная серверная задача #81. Новые API-поля не выдуманы, сервер в этой ветке не менялся.
+- Проверки: miniapp:check 0 errors/0 warnings; miniapp:test 41 passed; build прошёл как webServer E2E; весь Playwright suite 43 passed (2 workers, изолированный порт 4175, стандартный 4173 занят другим preview). Проверен screenshot 375×812, широкий экран/reduced motion E2E. Тест поля рейза выявил молчаливый сброс ввода на минимум; код исправлен, отрицательный кейс теперь passed. Три прежних E2E обновлены под утверждённый lobby → start → call и новое имя комнаты вместо CHECK на skeleton; проверки честной DEMO-пометки сохранены.
+- Ручная приёмка: Telegram → Hold’em → bot → каждый стол → заставка → К столу → ход → итог; PvP двумя аккаунтами → поиск → match → 20 s без хода → серверный check/fold; cancel до match без списания; потеря сети при ходе → reload → повтор с прежним UUID; iOS/Android safe area, Tab/Enter, reduced motion. Telegram WebView и production не проверены.
+- Осталось: CI Verify на head, внешний Claude Code review, #79 перед выпуском UI; #81 отдельный approved BuildSpec. Merge/Pages/серверный deploy не выполнялись.
+
+## 2026-10-13 — независимый post-merge review Hold'em (#74)
+
+- Codex, точная модель/effort клиента не отображаются; запрошен high. Проверены create/match, sorted wallet locks, ledger mismatch rollback, seat-specific HTTP/WS и replay до showdown, private bot observation/RNG, durable deadlines/hero bags и цепочка миграций 0005/0006. Новых блокеров по деньгам и закрытым картам не найдено.
+- Найден недостающий серверный путь отмены поиска для #75. Action `cancel` закрывает только waiting pvp, очищает deadline, версионирует состояние; membership/replay/conflict проверяются до отмены, начатая раздача отменой не прерывается. Регрессия сначала упала на `Hold'em hand is not active`, после исправления passed; проверены повтор без второго события, отсутствие списания и отсутствие матча с закрытым поиском.
+- Проверки: Ruff passed; pytest с отдельной локальной PostgreSQL 18 и Redis 8 — 270 passed, 2 предупреждения зависимостей. Alembic upgrade head → downgrade 20261013_0004 → upgrade head — passed на отдельной тестовой базе. Docker daemon недоступен; Compose build остаётся gate CI. Не подключались к рабочей базе/серверу, merge/deploy не выполнялись.
+- Осталось: CI Verify на head draft PR и внешнее review. UI может использовать `payload: {action: 'cancel'}` через существующий endpoint действий.
+
+## 2026-10-13 — браузерный QA демо (#57) и DOUBLE в демо-Blackjack (PR #78)
+
+- Google Antigravity (Gemini) проверил опубликованное демо в Chromium (375×812 и 1440×900, обычный режим и reduced motion): ошибок консоли и сети нет, горизонтального скролла нет, DEMO-контур нигде не выдаёт себя за серверный результат; `slot-v2/` — 404 (превью публикуется вручную, не дефект). Отчёт передан владельцем и опубликован в #57.
+- Единственное замечание — в демо-Blackjack после HIT оставался DOUBLE. Claude Code (claude-opus-5-5): `runDemoBlackjackAction` в `+page.svelte` после HIT сужает действия до `hit`/`stand`, как домен и сервер; новый e2e-тест сначала красный, после правки зелёный.
+- Проверки: `pnpm miniapp:check` — 0/0; `pnpm miniapp:test` — 38 passed; весь Playwright e2e — 36 passed; CI `verify` на PR — passed. Локально порт 4173 может быть занят другим сервером — тогда Playwright тестирует не тот сайт.

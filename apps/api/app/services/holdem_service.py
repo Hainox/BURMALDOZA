@@ -496,27 +496,51 @@ class HoldemService:
                 return await self.project_event(room, event, user_id)
             if room.state_version != request.expected_state_version:
                 raise StateVersionConflictError("Hold'em action uses an old state version")
-            if room.status != "active":
-                raise RoomServiceError("Hold'em hand is not active")
-            if room.deadline_at and utc(room.deadline_at) <= utc(self.rooms.now()):
-                raise RoomServiceError("Hold'em turn deadline has expired")
-            action = self.validate_action(request.payload)
-            members = await self.members(room_id)
-            seat = next(seat for seat, member in members.items() if member == user_id)
-            state = decode_state(room.private_state_json["state"])
-            try:
-                transition = apply_holdem_action(
-                    state, seat, action, self.rng, rules_for_buy_in(room.state_json["buy_in"])
+            if request.payload == {"action": "cancel"}:
+                if room.status != "waiting" or room.mode != "pvp":
+                    raise RoomServiceError("only a waiting Hold'em search can be cancelled")
+                room.status = "closed"
+                room.deadline_at = None
+                room.state_json = {
+                    **room.state_json,
+                    "phase": "cancelled",
+                    "search_deadline": None,
+                    "cancel_reason": "player_cancelled",
+                }
+                event = await self.record(
+                    room, user_id, request.action_id, "cancel", request_payload=request.payload
                 )
-            except (InvalidActionError, ValueError) as error:
-                raise RoomServiceError(str(error)) from error
-            await self.update(room, transition.state, request.action_id)
-            event = await self.record(
-                room, user_id, request.action_id, action.kind.value, request_payload=request.payload
-            )
-            projected = await self.project_event(room, event, user_id)
+                projected = await self.project_event(room, event, user_id)
+            else:
+                event, projected = await self.apply_move(room, user_id, request)
         await self.rooms.event_bus.publish(event)
         return projected
+
+    async def apply_move(
+        self, room: GameRoom, user_id: int, request: ActionRequest
+    ) -> tuple[EventEnvelope, EventEnvelope]:
+        from app.services.room_service import RoomServiceError
+
+        if room.status != "active":
+            raise RoomServiceError("Hold'em hand is not active")
+        if room.deadline_at and utc(room.deadline_at) <= utc(self.rooms.now()):
+            raise RoomServiceError("Hold'em turn deadline has expired")
+        action = self.validate_action(request.payload)
+        members = await self.members(room.id)
+        seat = next(seat for seat, member in members.items() if member == user_id)
+        state = decode_state(room.private_state_json["state"])
+        try:
+            transition = apply_holdem_action(
+                state, seat, action, self.rng, rules_for_buy_in(room.state_json["buy_in"])
+            )
+        except (InvalidActionError, ValueError) as error:
+            raise RoomServiceError(str(error)) from error
+        await self.update(room, transition.state, request.action_id)
+        event = await self.record(
+            room, user_id, request.action_id, action.kind.value, request_payload=request.payload
+        )
+        projected = await self.project_event(room, event, user_id)
+        return event, projected
 
     @staticmethod
     def validate_action(payload: dict[str, Any]) -> HoldemAction:

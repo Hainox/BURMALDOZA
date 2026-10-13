@@ -61,12 +61,12 @@
     },
     {
       gameType: 'holdem' as const,
-      eyebrow: 'HEADS-UP · SKELETON',
+      eyebrow: 'HEADS-UP · КАМУРО-ТЁ',
       title: 'Hold’em',
       description: 'Один pot, два места и понятная линия действия.',
       accent: '#ce86f2',
       icon: '♣',
-      rulesetVersion: 'holdem-skeleton-1'
+      rulesetVersion: 'holdem-v1'
     }
   ];
 
@@ -110,6 +110,7 @@
   let demoBlackjack: DemoBlackjackHand | null = null;
 
   let selectedGame: GameType | null = null;
+  let pokerRoom: PokerRoom | null = null;
   let isRunning = false;
   let timers: number[] = [];
   let motionQuery: MediaQueryList | undefined;
@@ -191,7 +192,7 @@
     if (!definition) return;
 
     apiError = null;
-    if (liveApiEnabled && apiClient) {
+    if (liveApiEnabled && apiClient && gameType !== 'holdem') {
       apiLoading = true;
       session.setConnection('connecting');
       try {
@@ -210,7 +211,7 @@
       return;
     }
 
-    session.setConnection('demo');
+    session.setConnection(liveApiEnabled ? 'connected' : 'demo');
     roomState.setSnapshot({
       roomId: `demo-${gameType}`,
       gameType,
@@ -354,6 +355,8 @@
         bet: action === 'double' ? demoBlackjack.bet * 2 : demoBlackjack.bet,
         playerCards,
         playerTotal: blackjackTotal(playerCards),
+        // Как в домене: double разрешён только на стартовой руке из двух карт.
+        legalActions: ['hit', 'stand'],
         drawIndex: demoBlackjack.drawIndex + 1
       };
       if (demoBlackjack.playerTotal > 21) {
@@ -558,6 +561,7 @@
   }
 
   async function resync() {
+    if (selectedGame === 'holdem') { await pokerRoom?.resync(); return; }
     if (!roomState.snapshot) return;
     clearTimers();
     isRunning = false;
@@ -644,7 +648,7 @@
           resultSource={liveApiEnabled ? 'live' : 'demo'}
         />
       {:else}
-        <PokerRoom motion={roomState.motion} result={roomState.result} onAction={runAction} resultSource={liveApiEnabled ? 'live' : 'demo'} />
+        <PokerRoom bind:this={pokerRoom} client={apiClient} live={liveApiEnabled} reducedMotion={session.reducedMotion} onBalance={(balance) => { session.setBalance(balance); ledgerRevision += 1; }} />
       {/if}
     </RoomShell>
   {:else}
