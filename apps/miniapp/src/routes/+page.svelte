@@ -354,6 +354,8 @@
         bet: action === 'double' ? demoBlackjack.bet * 2 : demoBlackjack.bet,
         playerCards,
         playerTotal: blackjackTotal(playerCards),
+        // Как в домене: double разрешён только на стартовой руке из двух карт.
+        legalActions: ['hit', 'stand'],
         drawIndex: demoBlackjack.drawIndex + 1
       };
       if (demoBlackjack.playerTotal > 21) {

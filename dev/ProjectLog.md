@@ -555,3 +555,9 @@
 - Исправлено по ходу слияния: оформление теста #68; в #69 — своё место игрока вне топ-15 (`me`), рейтинг не мигает и обновляется не чаще раза в 15 с; в #70 — неизвестная версия правил комнаты даёт ошибку комнаты, а не 500.
 - Ветка `claude/cleanup-observations`: тест CORS не зависит от локального `.env`; обёртка вибрации Telegram использует `WebApp.HapticFeedback` (раньше вибрация не срабатывала); e2e открывают комнаты через `openRoom` с повтором клика до гидратации (нестабильный `slot-stop.spec.ts` — 6 чистых прогонов подряд); индекс `ix_ledger_entries_created_at_reason` и миграция `20261013_0006`; README, чекпоинт запуска и роадмап — по состоянию после слияния.
 - Проверки: `ruff check` — passed; `pytest -q` с PostgreSQL 16 / Redis 7 — 269 passed; `alembic upgrade head` / откат на шаг — passed; `pnpm miniapp:check` — 0/0; `pnpm miniapp:test` — 38 passed; `pnpm miniapp:e2e` — 35 passed ×6.
+
+## 2026-10-13 — браузерный QA демо (#57) и DOUBLE в демо-Blackjack (PR #78)
+
+- Google Antigravity (Gemini) проверил опубликованное демо в Chromium (375×812 и 1440×900, обычный режим и reduced motion): ошибок консоли и сети нет, горизонтального скролла нет, DEMO-контур нигде не выдаёт себя за серверный результат; `slot-v2/` — 404 (превью публикуется вручную, не дефект). Отчёт передан владельцем и опубликован в #57.
+- Единственное замечание — в демо-Blackjack после HIT оставался DOUBLE. Claude Code (claude-opus-5-5): `runDemoBlackjackAction` в `+page.svelte` после HIT сужает действия до `hit`/`stand`, как домен и сервер; новый e2e-тест сначала красный, после правки зелёный.
+- Проверки: `pnpm miniapp:check` — 0/0; `pnpm miniapp:test` — 38 passed; весь Playwright e2e — 36 passed; CI `verify` на PR — passed. Локально порт 4173 может быть занят другим сервером — тогда Playwright тестирует не тот сайт.

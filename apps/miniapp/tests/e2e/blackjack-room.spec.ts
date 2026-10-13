@@ -440,6 +440,20 @@ test.describe('Blackjack GFL room', () => {
     await expect(page.getByTestId('blackjack-deal')).toBeVisible();
   });
 
+  test('removes demo double after a hit, like the server rules', async ({ page }) => {
+    await page.goto('/');
+    await openRoom(page, 'blackjack');
+
+    await page.getByTestId('blackjack-deal').click();
+    await expect(page.getByTestId('blackjack-double')).toBeVisible();
+
+    await page.getByTestId('blackjack-hit').click();
+    await expect(page.getByTestId('blackjack-player-total')).toContainText('total 20');
+    await expect(page.getByTestId('blackjack-hit')).toBeVisible();
+    await expect(page.getByTestId('blackjack-stand')).toBeVisible();
+    await expect(page.getByTestId('blackjack-double')).toHaveCount(0);
+  });
+
   test('reveals dealer and player rows immediately under reduced motion', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await stubLiveBlackjack(page);
