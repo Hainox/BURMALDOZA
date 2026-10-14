@@ -101,6 +101,22 @@ def build(pack: Path, out: Path) -> dict:
         manifest["voices"][doll] = groups
         print("voice", doll, {g: len(v) for g, v in groups.items()})
 
+    # URL меняется вместе с байтами, включая новую нарезку: недельный кэш не держит старый звук.
+    def version_asset(name: str) -> str:
+        path = out / name
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()[:16]
+        target = path.with_stem(f"{path.stem}-{digest}")
+        path.rename(target)
+        return target.relative_to(out).as_posix()
+
+    for tracks in manifest["music"].values():
+        for track in tracks:
+            track["src"] = version_asset(track["src"])
+    for effect in manifest["sfx"].values():
+        effect["src"] = version_asset(effect["src"])
+    for groups in manifest["voices"].values():
+        for group, clips in groups.items():
+            groups[group] = [version_asset(name) for name in clips]
     (out / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return manifest
 
@@ -117,6 +133,11 @@ def speech_segments(path: Path, low: float, high: float) -> list[tuple[float, fl
             ends.append(float(line.split("silence_start:")[1].split()[0]))
         elif "silence_end:" in line:
             starts.append(float(line.split("silence_end:")[1].split()[0]))
+    duration = subprocess.run(
+        ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(path)],
+        check=True, capture_output=True, text=True,
+    )
+    ends.append(float(duration.stdout.strip()))
     return [(a, b) for a, b in zip(starts, ends) if low <= b - a <= high]
 
 
@@ -128,8 +149,12 @@ def split_quotes(folder: Path, who: str, spec: dict, out: Path) -> list[str]:
     ]
     # Равномерно по всему диску, а не первые N.
     limit = int(spec["limit"])
-    step = max(1, len(candidates) // limit)
-    chosen = candidates[::step][:limit]
+    if limit < 1:
+        raise SystemExit("число реплик должно быть положительным")
+    if not candidates:
+        raise SystemExit(f"нет подходящих реплик: {who}")
+    count = min(limit, len(candidates))
+    chosen = [candidates[round(i * (len(candidates) - 1) / (count - 1))] for i in range(count)] if count > 1 else candidates[:1]
     names = []
     for index, (path, start, end) in enumerate(chosen):
         name = f"voice/{slug(who)}/{spec['group']}-{index:02d}.m4a"

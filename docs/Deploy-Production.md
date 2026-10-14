@@ -416,13 +416,37 @@ SQL
 ```bash
 # на ПК владельца (нужен ffmpeg): собрать в пустую папку вне репозитория
 python -m devtools.audio.build_pack "<папка Game_Audio>" "<пустая папка>"
-# залить на сервер без «пустого окна»: распаковка во временную папку и подмена
-tar -C "<папка сборки>" -cf - . | ssh deploy@<сервер> 'set -e; tmp=$(mktemp -d /home/deploy/audio.new.XXXX);   tar -xf - -C "$tmp"; test -f "$tmp/manifest.json"; find /srv/burmaldoza-audio -mindepth 1 -delete;   cp -a "$tmp"/. /srv/burmaldoza-audio/; rm -rf "$tmp"'
+# Один оператор загрузки; старые файлы сохраняются, manifest публикуется последним.
+# cp/mv выполняются внутри существующего bind mount: замена самого каталога не обновит mount Caddy.
+tar -C "<папка сборки>" -cf - . | ssh deploy@<сервер> '
+  set -e
+  tmp=$(mktemp -d /srv/burmaldoza-audio/.upload.XXXX)
+  trap "rm -rf \"$tmp\"" EXIT
+  tar -xf - -C "$tmp"
+  test -f "$tmp/manifest.json"
+  # Распаковка уже на файловой системе назначения. Каждый rename атомарен.
+  # Для этих команд требуется Bash (login shell deploy в production runbook).
+  set -o pipefail
+  find "$tmp" -type f -name "*.m4a" -print0 | while IFS= read -r -d "" file; do
+    rel=${file#"$tmp"/}
+    dst="/srv/burmaldoza-audio/$rel"
+    mkdir -p "$(dirname "$dst")"
+    if test -e "$dst"; then
+      cmp -s "$file" "$dst" || { echo "Audio content mismatch" >&2; exit 1; }
+    else
+      mv "$file" "$dst"
+    fi
+  done
+  mv -f "$tmp/manifest.json" /srv/burmaldoza-audio/manifest.json
+'
 ```
 
 Каталог создаётся один раз: `sudo install -d -m 755 -o deploy -g deploy /srv/burmaldoza-audio`. После
 первого добавления тома Caddy пересоздаётся (`"${C[@]}" up -d --no-build --pull never caddy`); замена файлов
-пакета перезапуска не требует (клиент кэширует файлы до недели — меняйте имена, а не содержимое).
+пакета перезапуска не требует. Сборщик добавляет SHA-256 байтов к имени каждого аудиофайла;
+клиент перечитывает manifest без кэша при следующем открытии. Старые файлы не удаляются при
+загрузке: ими могут пользоваться открытые клиенты. Их очистка — отдельное действие владельца,
+не раньше окончания недельного кэша и завершения старых сессий. Для сборки нужны ffmpeg и ffprobe.
 Проверка: `curl -fsSI https://burmaldoza.ru/audio/manifest.json` → 200.
 
 ## 9. Обновление и откат

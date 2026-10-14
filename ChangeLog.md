@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Cancel stale audio on mute, backgrounding and room exits; avoid replaying restored hand results and sequence Kiryu voice after the actual intro ending. Audio packs now retain trailing voice segments, sample the whole disc and use content-hashed filenames with manifest-last publishing.
+
 - Added sound and haptics: a sound toggle in the hub and room headers (off by default, remembered), scene music for the hub and each room, synthesized card/chip/reel/stamp cues, Siege samples in the slot, the Blackjack dealer speaking with her T-Doll voice, and GFL interface sounds on taps and confirmations. Telegram haptics now fire on the same confirmed events. The game audio pack is served only from the production server (`/audio/`), not from the public repository or the Pages demo.
 
 - Renamed the Siege slot to «Tachanka’s Luck» and Kamurocho to «Kamurocho 神室町» across the hub, room headers and portals.

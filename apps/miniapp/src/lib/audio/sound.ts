@@ -15,7 +15,7 @@ export type VoiceGroup = 'greet' | 'dealer_win' | 'dealer_lose' | 'quip';
 type Track = { src: string; title: string; duration: number };
 type Manifest = {
   music: Partial<Record<Scene, Track[]>>;
-  sfx: Record<string, { src: string }>;
+  sfx: Record<string, { src: string; duration?: number }>;
   voices: Record<string, Partial<Record<VoiceGroup, string[]>>>;
 };
 
@@ -43,6 +43,9 @@ class SoundEngine {
   private enabled = false;
   private reduced = false;
   private started = false;
+  private revision = 0;
+  private musicRevision = 0;
+  private sources = new Set<AudioScheduledSourceNode>();
 
   /** Восстанавливает выбор игрока; контекст звука создаётся только по касанию (правило iOS/Android). */
   init() {
@@ -57,8 +60,8 @@ class SoundEngine {
     document.addEventListener('visibilitychange', () => {
       // Свернули Mini App — музыка и эффекты замолкают, вернули — продолжают.
       if (!this.ctx) return;
-      if (document.hidden) { void this.ctx.suspend(); this.player?.pause(); }
-      else if (this.enabled) { void this.ctx.resume(); this.resumeMusic(); }
+      if (document.hidden) { this.stopEffects(); this.musicRevision += 1; void this.ctx.suspend(); this.player?.pause(); }
+      else if (this.enabled) { void this.wake(); }
     });
   }
 
@@ -68,40 +71,84 @@ class SoundEngine {
     soundEnabled.set(this.enabled);
     try { localStorage.setItem(STORAGE_KEY, this.enabled ? 'on' : 'off'); } catch { /* приватный режим — только на сессию */ }
     if (this.enabled) { await this.wake(); this.cue('tap'); }
-    else { this.player?.pause(); void this.ctx?.suspend(); }
+    else { this.stopEffects(); this.musicRevision += 1; this.player?.pause(); void this.ctx?.suspend(); }
   }
 
   setReducedMotion(reduced: boolean) {
     // «Уменьшить движение» убирает фоновые петли, короткие сигналы остаются.
     this.reduced = reduced;
-    if (reduced) this.player?.pause(); else this.resumeMusic();
+    this.musicRevision += 1;
+    if (reduced) this.player?.pause(); else void this.playSceneMusic();
   }
 
   setScene(scene: Scene | null) {
     if (scene === this.scene) return;
+    this.stopEffects();
     this.scene = scene;
     this.trackIndex = Math.floor(Math.random() * 8);
     void this.playSceneMusic();
   }
 
   /** Событие игры: вибрация всегда (если Telegram её поддерживает), звук — если включён. */
-  cue(name: Cue) {
+  cue(name: Cue, onEnded?: () => void): () => void {
+    const revision = this.revision;
+    let cancelled = false;
+    let cueSources: AudioScheduledSourceNode[] = [];
+    const cancel = () => {
+      cancelled = true;
+      for (const source of cueSources) source.stop();
+      cueSources = [];
+    };
+    const current = () => !cancelled && revision === this.revision && this.enabled && !document.hidden;
+    const done = () => { if (current()) onEnded?.(); };
+    if (typeof document !== 'undefined' && document.hidden) return cancel;
     this.vibrate(name);
-    if (!this.enabled || !this.ctx || !this.sfxGain) return;
+    if (!this.enabled || !this.ctx || !this.sfxGain) return cancel;
+    const synth = () => {
+      const previous = new Set(this.sources);
+      this.synth(name);
+      cueSources = [...this.sources].filter((source) => !previous.has(source));
+      if (onEnded) this.defer(name === 'intro' ? 820 : 1000, done);
+    };
     const sample = this.sampleFor(name);
-    if (sample) { void this.playSample(sample); return; }
-    this.synth(name);
+    if (sample) {
+      void this.playSample(sample.src, done, current).then((source) => {
+        if (source) cueSources = [source];
+        else if (current()) synth();
+      });
+    } else synth();
+    return cancel;
   }
 
   voice(doll: string, group: VoiceGroup) {
-    if (!this.enabled || !this.ctx) return;
+    if (!this.enabled || !this.ctx || document.hidden) return;
     const clips = this.manifest?.voices[doll]?.[group];
     if (!clips?.length) return;
     void this.playSample(clips[Math.floor(Math.random() * clips.length)]);
   }
 
+  /** Отложенный отклик принадлежит текущей сцене; вызывающий отменяет его при демонтаже. */
+  defer(delay: number, callback: () => void): () => void {
+    const revision = this.revision;
+    const timer = setTimeout(() => {
+      if (revision === this.revision && !document.hidden) callback();
+    }, delay);
+    return () => clearTimeout(timer);
+  }
+
+  stopEffects() {
+    this.revision += 1;
+    for (const source of this.sources) source.stop();
+    this.sources.clear();
+  }
+
+  private trackSource(source: AudioScheduledSourceNode) {
+    this.sources.add(source);
+    source.onended = () => { this.sources.delete(source); };
+  }
+
   private async wake() {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || !this.enabled || document.hidden) return;
     if (!this.ctx) {
       const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (!Ctx) return;
@@ -118,6 +165,7 @@ class SoundEngine {
     }
     await this.ctx.resume().catch(() => undefined);
     await this.loadManifest();
+    if (!this.enabled || document.hidden) return;
     void this.playSceneMusic();
   }
 
@@ -145,7 +193,8 @@ class SoundEngine {
   }
 
   private async playSceneMusic() {
-    if (!this.enabled || this.reduced || !this.ctx || !this.musicGain || !this.scene) {
+    const revision = ++this.musicRevision;
+    if (!this.enabled || this.reduced || !this.ctx || !this.musicGain || !this.scene || document.hidden) {
       this.fadeMusic(0);
       return;
     }
@@ -155,18 +204,15 @@ class SoundEngine {
     const next = AUDIO_ROOT + tracks[this.trackIndex % tracks.length].src;
     this.fadeMusic(0, 0.4);
     await new Promise((resolve) => setTimeout(resolve, 420));
+    if (revision !== this.musicRevision || !this.enabled || this.reduced || document.hidden) return;
     if (!player.src.endsWith(next)) player.src = next;
     try {
       await player.play();
+      if (revision !== this.musicRevision) return;
       this.fadeMusic(MUSIC_LEVEL, 1.2);
     } catch (error) {
       console.info('[sound] музыка не запустилась', error);
     }
-  }
-
-  private resumeMusic() {
-    if (!this.enabled || this.reduced || !this.player?.src) return;
-    void this.player.play().then(() => this.fadeMusic(MUSIC_LEVEL, 0.8)).catch(() => undefined);
   }
 
   private fadeMusic(target: number, seconds = 0.3) {
@@ -177,20 +223,21 @@ class SoundEngine {
     gain.linearRampToValueAtTime(target, this.ctx.currentTime + seconds);
   }
 
-  private sampleFor(name: Cue): string | null {
+  private sampleFor(name: Cue): { src: string; duration?: number } | null {
     if (!this.manifest) return null;
     // Нажатия и подтверждения — звуки интерфейса GFL во всех сценах.
-    if (name === 'tap' || name === 'confirm') return this.manifest.sfx[name === 'tap' ? 'ui-tap' : 'ui-confirm']?.src ?? null;
+    if (name === 'tap' || name === 'confirm') return this.manifest.sfx[name === 'tap' ? 'ui-tap' : 'ui-confirm'] ?? null;
     // Заставка «новая глава» Yakuza — представление соперника в Hold'em.
-    if (name === 'intro') return this.scene === 'holdem' ? this.manifest.sfx['holdem-intro']?.src ?? null : null;
+    if (name === 'intro') return this.scene === 'holdem' ? this.manifest.sfx['holdem-intro'] ?? null : null;
     // Сэмплы R6 — только в слоте; остальное синтезируется.
     if (this.scene !== 'slot') return null;
     const key = name === 'spin' ? 'slot-spin' : name === 'win' ? 'slot-win' : name === 'win-big' ? 'slot-big-win' : null;
-    return key ? this.manifest.sfx[key]?.src ?? null : null;
+    return key ? this.manifest.sfx[key] ?? null : null;
   }
 
-  private async playSample(src: string) {
-    if (!this.ctx || !this.sfxGain) return;
+  private async playSample(src: string, onEnded?: () => void, canPlay: () => boolean = () => true): Promise<AudioBufferSourceNode | null> {
+    if (!this.ctx || !this.sfxGain) return null;
+    const revision = this.revision;
     let pending = this.buffers.get(src);
     if (!pending) {
       const ctx = this.ctx;
@@ -201,11 +248,17 @@ class SoundEngine {
       this.buffers.set(src, pending);
     }
     const buffer = await pending;
-    if (!buffer || !this.ctx || !this.sfxGain) return;
+    if (!buffer || !this.ctx || !this.sfxGain || !this.enabled || document.hidden || revision !== this.revision || !canPlay()) return null;
     const source = this.ctx.createBufferSource();
     source.buffer = buffer;
     source.connect(this.sfxGain);
+    this.trackSource(source);
+    source.onended = () => {
+      this.sources.delete(source);
+      if (revision === this.revision && this.enabled && !document.hidden) onEnded?.();
+    };
     source.start();
+    return source;
   }
 
   // --- Синтез коротких сигналов: 0 КБ файлов, работает и в демо. ---
@@ -221,6 +274,7 @@ class SoundEngine {
     gain.gain.exponentialRampToValueAtTime(level, t + 0.008);
     gain.gain.exponentialRampToValueAtTime(0.0001, t + length);
     osc.connect(gain).connect(this.sfxGain!);
+    this.trackSource(osc);
     osc.start(t);
     osc.stop(t + length + 0.02);
   }
@@ -239,6 +293,7 @@ class SoundEngine {
     filter.frequency.value = filterFreq;
     gain.gain.value = level;
     source.connect(filter).connect(gain).connect(this.sfxGain!);
+    this.trackSource(source);
     source.start(ctx.currentTime + start);
   }
 
