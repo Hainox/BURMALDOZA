@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Siege slot cells and the machine are larger (about 58 px tall on a 390 px phone, up to 72 px), and operator portraits fill each cell so most of the operator is visible.
+
 - Rooms now share the hub's look: a full-screen animated scene per room (Blackjack: the approved abandoned building behind the police perimeter with flashing police lights; Slot: tactical smoke and searchlights; Hold'em: the Kamurocho gate with neon flicker), a hub-style header with back button and balance pill, glass panels, and the same pause and reduced-motion behaviour. Technical labels are gone, the result band waits with animated dots and pops the payout, and ranking and history now live only in the hub. Blackjack gets a glowing table with a light sheen and a single row of actions. The Slot portal now features Tachanka and the Hold'em portal Kazuma Kiryu (Like a Dragon: Infinite Wealth).
 
 - Bets now go up to the whole balance: five standard amounts (slot 10/25/50/100/250, Blackjack 25/50/100/250/500) plus a separate custom slider and field from the minimum to the current balance; the server cap rose from 100 JG to a technical 1,000,000 JG with the wallet still rejecting stakes above the balance. Blackjack shows the dealer T-Doll portrait, drops the deck and card-back captions, and replays the deal animation on every new hand instead of swapping card images. The hub headline now reads «Где сегодня сливаем хату?» with the subtitle «Три комнаты. Везде дилер мудак.»
