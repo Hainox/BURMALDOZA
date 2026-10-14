@@ -1,10 +1,12 @@
 <script lang="ts">
+  import { onDestroy } from 'svelte';
   import { base } from '$app/paths';
   import PlayingCard from './PlayingCard.svelte';
   import { sound } from '$lib/audio/sound';
   import BetPicker from '$lib/components/BetPicker.svelte';
   import type { HoldemView } from '$lib/api/holdem';
   export let view: HoldemView;
+  export let roomId = '';
   export let hero: {name:string;avatar:string;intro:string;title:string} | null = null;
   export let busy = false;
   export let seconds = 0;
@@ -20,20 +22,30 @@
   $: updateBounds(view.minimumRaise,view.maximumRaise);
   // Звук: карта на каждую открытую карту, фишки — когда растёт банк, печать и итог — по результату сервера.
   let heardCards = 0; let heardPot = 0; let heardResult = '';
-  $: cueTable(view);
-  function cueTable(v: HoldemView) {
+  let heardRoom: string | null = null;
+  let cancelResult: (() => void)[] = [];
+  function clearResultCues() { for (const cancel of cancelResult) cancel(); cancelResult = []; }
+  onDestroy(() => { clearResultCues(); sound.stopEffects(); });
+  $: cueTable(view, roomId);
+  function cueTable(v: HoldemView, id: string) {
     const cards = v.own.filter((c) => !('hidden' in c)).length + v.board.length + v.opponent.filter((c) => !('hidden' in c)).length;
+    const key = v.result ? `${v.result.outcome}:${v.result.winners.join(',')}:${v.pot}` : '';
+    if (heardRoom !== id) {
+      clearResultCues(); heardRoom = id; heardCards = 0; heardPot = 0; heardResult = key;
+      // Снимок завершённой раздачи восстанавливает вид, а не повторяет старый исход.
+      if (v.result) { heardCards = cards; heardPot = v.pot; return; }
+    }
     if (cards > heardCards) sound.cue('card');
     heardCards = cards;
     if (v.pot > heardPot && heardPot > 0) sound.cue('chip');
     heardPot = v.pot;
-    const key = v.result ? `${v.result.outcome}:${v.result.winners.join(',')}:${v.pot}` : '';
     if (key && key !== heardResult) {
+      clearResultCues();
       sound.cue('stamp');
-      if (v.result!.winners.length === 1 && v.result!.winners.includes(v.seat)) setTimeout(() => sound.cue('win'), 260);
+      if (v.result!.winners.length === 1 && v.result!.winners.includes(v.seat)) cancelResult.push(sound.defer(260, () => sound.cue('win')));
       // Соперник-герой комментирует итог своим голосом (если в пакете есть его реплики, например Кирю).
       const hero = v.heroCode;
-      if (hero) setTimeout(() => sound.voice(hero, 'quip'), 700);
+      if (hero) cancelResult.push(sound.defer(700, () => sound.voice(hero, 'quip')));
     }
     heardResult = key;
   }

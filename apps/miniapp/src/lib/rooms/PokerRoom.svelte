@@ -21,6 +21,7 @@
   let error = '';
   let introRoom = '';
   let showIntro = false;
+  let cancelIntroVoice: (() => void) | null = null;
   let seconds = 0;
   let stopStream: (() => void) | null = null;
   let polling = false;
@@ -51,15 +52,23 @@
   let pendingAction: {roomId:string;version:number;id:string;payload:Record<string,unknown>} | null = null;
   $: hero = mode === 'bot' && view?.heroCode ? (heroes as Record<string,{name:string;avatar:string;intro:string;title:string}>)[view.heroCode] ?? null : null;
 
-  function accept(next: RoomSnapshot) {
+  function accept(next: RoomSnapshot, restored = false) {
     if (disposed || (snapshot?.roomId === next.roomId && next.stateVersion < snapshot.stateVersion)) return;
     const parsed = parseHoldem(next.publicState);
+    if (snapshot?.roomId !== next.roomId || parsed.phase === 'settled') { cancelIntroVoice?.(); cancelIntroVoice = null; }
     snapshot = next; view = parsed;
     void loadAvatar(next.roomId);
     if (live && parsed.balance !== null && parsed.balance !== lastBalance) {lastBalance=parsed.balance;onBalance(parsed.balance);}
     seconds = parsed.deadline ? Math.max(0,Math.ceil((Date.parse(parsed.deadline)-Date.now())/1000)) : 0;
     const knownHero = mode === 'bot' && parsed.heroCode && parsed.heroCode in heroes;
-    if (knownHero && introRoom !== next.roomId) { introRoom = next.roomId; showIntro = !reducedMotion && !quiet(); if (showIntro) { sound.cue('intro'); const code = parsed.heroCode; if (code) setTimeout(() => sound.voice(code, 'quip'), 1100); } }
+    if (knownHero && introRoom !== next.roomId) {
+      introRoom = next.roomId;
+      showIntro = !restored && parsed.phase === 'active' && !reducedMotion && !quiet();
+      if (showIntro) {
+        const code = parsed.heroCode;
+        cancelIntroVoice = sound.cue('intro', () => { if (code) sound.voice(code, 'quip'); });
+      }
+    }
   }
   function stream(roomId:string) {
     stopStream?.();
@@ -125,7 +134,7 @@
       if (client) {try{accept(await client.getRoom(snapshot.roomId));}catch{error+=' Синхронизация недоступна.';}}
     } finally {busy=false;}
   }
-  function lobby() { clearAvatar();stopStream?.();stopStream=null;snapshot=null;view=null;pendingAction=null;sessionStorage.removeItem('holdem-room');sessionStorage.removeItem('holdem-action'); }
+  function lobby() { cancelIntroVoice?.();cancelIntroVoice=null;sound.stopEffects();clearAvatar();stopStream?.();stopStream=null;snapshot=null;view=null;pendingAction=null;sessionStorage.removeItem('holdem-room');sessionStorage.removeItem('holdem-action'); }
   function focusIntro(node:HTMLButtonElement) {node.focus();}
   function restoreAction(roomId:string) {
     try {const p=JSON.parse(sessionStorage.getItem('holdem-action') ?? 'null');if(p?.roomId === roomId && typeof p.id === 'string' && Number.isSafeInteger(p.version) && ['fold','check','call','raise','cancel'].includes(p.payload?.action)){pendingAction=p;error='Остался неподтверждённый запрос. Повторите ход с тем же идентификатором.';}}
@@ -136,10 +145,10 @@
     clockTimer=setInterval(() => {seconds=view?.deadline ? Math.max(0,Math.ceil((Date.parse(view.deadline)-Date.now())/1000)) : 0;},250);
     if (live && client) {
       try {const pending=JSON.parse(sessionStorage.getItem('holdem-create') ?? 'null');if(pending && ['bot','pvp'].includes(pending.mode) && [100,500,1000].includes(pending.buyIn) && typeof pending.id === 'string') {pendingCreate=pending;void start();return;}} catch {sessionStorage.removeItem('holdem-create');}
-      try { const stored=JSON.parse(sessionStorage.getItem('holdem-room') ?? 'null'); if(stored?.id && ['bot','pvp'].includes(stored.mode)) {mode=stored.mode;busy=true;client.getRoom(stored.id).then(next=>{accept(next);restoreAction(next.roomId);if(!disposed)stream(next.roomId);}).catch(()=>{sessionStorage.removeItem('holdem-room');error='Предыдущая раздача недоступна. Выберите стол.';}).finally(()=>{busy=false;});} } catch {sessionStorage.removeItem('holdem-room');}
+      try { const stored=JSON.parse(sessionStorage.getItem('holdem-room') ?? 'null'); if(stored?.id && ['bot','pvp'].includes(stored.mode)) {mode=stored.mode;busy=true;client.getRoom(stored.id).then(next=>{accept(next,true);restoreAction(next.roomId);if(!disposed)stream(next.roomId);}).catch(()=>{sessionStorage.removeItem('holdem-room');error='Предыдущая раздача недоступна. Выберите стол.';}).finally(()=>{busy=false;});} } catch {sessionStorage.removeItem('holdem-room');}
     }
   });
-  onDestroy(() => {disposed=true;clearAvatar();stopStream?.();clearInterval(pollTimer);clearInterval(clockTimer);});
+  onDestroy(() => {disposed=true;cancelIntroVoice?.();sound.stopEffects();clearAvatar();stopStream?.();clearInterval(pollTimer);clearInterval(clockTimer);});
 </script>
 <svelte:head><link rel="stylesheet" href={`${base}/holdem/font.css`} /></svelte:head>
 <div class="poker-room" aria-busy={busy}>
@@ -156,7 +165,7 @@
   {:else if view.phase === 'cancelled'}
     <p role="status">Поиск завершён. Вход не списан.</p><button on:click={lobby}>Выбрать стол</button>
   {:else}
-    <div inert={showIntro}><HandTable {view} {hero} {avatarUrl} busy={busy || !!pendingAction} {seconds} {live} onAction={action} /></div>
+    <div inert={showIntro}><HandTable {view} roomId={snapshot?.roomId ?? ''} {hero} {avatarUrl} busy={busy || !!pendingAction} {seconds} {live} onAction={action} /></div>
     {#if view.phase === 'settled'}<button on:click={lobby}>Выбрать стол</button>{/if}
     {#if showIntro && hero}<section class="intro" data-testid="holdem-intro" aria-label="Ваш соперник"><img src={`${base}/holdem/${hero.intro}`} alt="" /><div><h3>{hero.name}</h3><p>{hero.title}</p><button use:focusIntro on:click={() => showIntro=false}>К столу</button></div></section>{/if}
   {/if}

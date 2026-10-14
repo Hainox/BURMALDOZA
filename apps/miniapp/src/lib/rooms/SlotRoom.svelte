@@ -148,9 +148,9 @@
   // сила по выплате относительно ставки (возврат < ставки звучит нейтрально, docs/Sound-Design.md).
   let heardReels = 0;
   let heardSpin = 0;
-  $: cueReels(stoppedReels);
+  $: cueReels(stoppedReels, spinSeq);
   $: cueOutcome(showConfirmedGrid, spinSeq);
-  function cueReels(count: number) { if (count > heardReels) sound.cue('reel-stop'); heardReels = count; }
+  function cueReels(count: number, seq: number) { if (seq > 0 && count > heardReels) sound.cue('reel-stop'); heardReels = count; }
   function cueOutcome(shown: boolean, seq: number) {
     if (!shown || seq === 0 || seq === heardSpin) return;
     heardSpin = seq;

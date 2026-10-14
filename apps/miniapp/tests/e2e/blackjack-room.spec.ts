@@ -249,6 +249,36 @@ async function stubLiveBlackjack(page: Page, options: StubOptions = {}) {
 }
 
 test.describe('Blackjack GFL room', () => {
+  test('restored natural blackjack stays silent, a new deal still signals success', async ({ page }) => {
+    await stubLiveBlackjack(page, { hand: 'natural' });
+    await page.addInitScript(() => {
+      const webApp = (window as unknown as { Telegram: { WebApp: Record<string, unknown> } }).Telegram.WebApp;
+      webApp.HapticFeedback = {
+        impactOccurred() {}, selectionChanged() {},
+        notificationOccurred(type: string) { sessionStorage.setItem('blackjack-haptic', type); }
+      };
+    });
+    await page.routeWebSocket(`**/api/v1/rooms/${roomId}/events`, (socket) => {
+      socket.send(JSON.stringify({ type: 'snapshot', snapshot: {
+        room_id: roomId, game_type: 'blackjack', mode: 'solo', status: 'active',
+        ruleset_version: approvedRuleset, state_version: 0,
+        public_state: { ...naturalPublicState, last_result: naturalResult }
+      } }));
+    });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/'); await openRoom(page, 'blackjack');
+    await expect(page.getByTestId('blackjack-settlement')).toContainText('Натуральный блэкджек');
+    expect(await page.evaluate(() => sessionStorage.getItem('blackjack-haptic'))).toBeNull();
+    await page.getByTestId('blackjack-deal').click();
+    await expect.poll(() => page.evaluate(() => sessionStorage.getItem('blackjack-haptic'))).toBe('success');
+    await expect(page.getByTestId('blackjack-deal')).toBeEnabled();
+    await page.route(`**/api/v1/rooms/${roomId}/actions`, route => route.fulfill({ status: 409, json: { detail: 'rejected deal' } }));
+    await page.evaluate(() => sessionStorage.removeItem('blackjack-haptic'));
+    await page.getByTestId('blackjack-deal').click();
+    await expect(page.getByTestId('blackjack-settlement')).toContainText('Натуральный блэкджек');
+    await expect(page.getByTestId('blackjack-deal')).toBeEnabled();
+    expect(await page.evaluate(() => sessionStorage.getItem('blackjack-haptic'))).toBeNull();
+  });
   test('resolves a natural blackjack inside the deal response', async ({ page }) => {
     const counters = await stubLiveBlackjack(page, { hand: 'natural' });
     await page.goto('/');

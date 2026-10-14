@@ -127,13 +127,21 @@
   // Звук: карта на каждую новую карту на столе; итог и реплика дилера — после подтверждения.
   let heardCards = 0;
   let heardOutcome = '';
-  $: cueCards(playerFaces.length + dealerFaces.length + (holeShown ? 1 : 0));
-  $: cueOutcome(tableOutcome, roundSeq);
-  function cueCards(count: number) { if (count > heardCards) sound.cue('card'); heardCards = count; }
-  function cueOutcome(value: string, round: number) {
+  let heardRoom: string | null = null;
+  let soundRoundActive = false;
+  let soundIntentVersion = -1;
+  $: cueCards(playerFaces.length + dealerFaces.length + (holeShown ? 1 : 0), snapshot?.roomId ?? '', snapshot?.stateVersion ?? 0);
+  $: cueOutcome(tableOutcome, roundSeq, snapshot?.stateVersion ?? 0);
+  function cueCards(count: number, roomId: string, _version: number) {
+    if (heardRoom !== roomId) { heardRoom = roomId; heardCards = count; return; }
+    if (count > heardCards) sound.cue('card');
+    heardCards = count;
+  }
+  function cueOutcome(value: string, round: number, version: number) {
     const key = `${round}:${value}`;
-    if (!value || key === heardOutcome) return;
+    if (!value || key === heardOutcome || !soundRoundActive || (resultSource === 'live' && version <= soundIntentVersion)) return;
     heardOutcome = key;
+    soundRoundActive = false;
     if (value === 'win' || value === 'blackjack') { sound.cue(value === 'blackjack' ? 'win-big' : 'win'); sound.voice(dealerName, 'dealer_lose'); }
     else if (value === 'loss') { sound.cue('lose'); sound.voice(dealerName, 'dealer_win'); }
     else sound.cue('return');
@@ -195,12 +203,16 @@
 
   function deal() {
     if (!canSendDeal) return;
+    soundRoundActive = true; heardOutcome = ''; heardCards = 0;
+    soundIntentVersion = snapshot?.stateVersion ?? -1;
     sound.cue('confirm');
     onAction('deal', { bet });
   }
 
   function act(action: 'hit' | 'stand' | 'double') {
     if (busy || !legalActions.includes(action)) return;
+    soundRoundActive = true;
+    soundIntentVersion = snapshot?.stateVersion ?? -1;
     onAction(action);
   }
 
