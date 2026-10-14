@@ -731,3 +731,10 @@
 - Клиент `lib/audio/sound.ts`: переключатель в шапках (по умолчанию выключено, запоминается), музыка сцены с плавной сменой через Web Audio, синтез коротких сигналов, R6-сэмплы в слоте, голос дилера в Blackjack (пул дилеров — куклы с голосом и портретом: HK416, G36, M4 SOPMOD II, Makarov, Mosin-Nagant, PPSh-41), звуки интерфейса GFL; вибрация Telegram на тех же подтверждённых событиях (раньше обёртка нигде не вызывалась).
 - Найдено по ходу: реактивные `$:` с объектом сессии в `+page.svelte` сбивали порядок обновлений (демо-слот не получал результат) — сцена и reduced motion передаются звуку явными вызовами.
 - Проверки: `pnpm miniapp:check` — 0/0; `pnpm miniapp:test` — 49 passed (3 новых); Playwright — 64 passed (`sound.spec.ts`); `ruff check devtools/audio` — passed.
+
+## 2026-10-14 — звуковой пакет: повторный просмотр после докачки
+
+- Пакет вырос до 2950 файлов / 8,9 ГБ (Yakuza 5–Infinite Wealth, Gaiden, Ultimate Quotes, новые треки GFL). Отбор обновлён: Hold'em — музыка казино и игорного дома из Yakuza 5 (`minig casino/toba kinpaku`), Gaiden «Gambling Match» и «The Sleepless Castle», «The Dawn of the Cabaret Club»; Blackjack — плюс GFL «Secret Agent»; заставка «новая глава» Yakuza (`system chapter`) на представлении соперника в Hold'em (событие `intro`, без пакета — синтез тайко).
+- Не взяты: `mahjong reach` (музыка «почти выиграл» — запрещено принципом 2), Ultimate Quotes (99 безымянных фраз по 10–45 с — для реплик за столом длинные, содержание без названий неизвестно).
+- Сборщик: эффект может задать свою длину (`{"src", "max"}`). Пакет 63 файла, 25 МБ — на сервере.
+- Проверки: `pnpm miniapp:check` — 0/0; `pnpm miniapp:test` — 49 passed; Playwright — 64 passed; `ruff check devtools/audio` — passed.
