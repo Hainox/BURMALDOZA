@@ -71,9 +71,12 @@ def build(pack: Path, out: Path) -> dict:
             manifest["music"][room].append({"src": name, "title": Path(rel).stem, "duration": duration})
             print("music", room, name, duration)
 
-    for key, rel in selection["sfx"].items():
+    for key, spec in selection["sfx"].items():
+        # Эффект — путь или {"src", "max"}: длинные заставки (например, «новая глава» Yakuza) не обрезаются до 2,5 с.
+        rel, limit = (spec, 2.5) if isinstance(spec, str) else (spec["src"], float(spec["max"]))
+        audio_filter = SFX_FILTER.replace("atrim=0:2.5,afade=t=out:st=1.9", f"atrim=0:{limit},afade=t=out:st={limit - 0.6}")
         name = f"sfx/{key}.m4a"
-        manifest["sfx"][key] = {"src": name, "duration": encode(need(rel), out / name, SFX_FILTER, ["-ac", "2", "-b:a", "96k"])}
+        manifest["sfx"][key] = {"src": name, "duration": encode(need(rel), out / name, audio_filter, ["-ac", "2", "-b:a", "96k"])}
         print("sfx", key)
 
     for doll, spec in selection["voices"].items():

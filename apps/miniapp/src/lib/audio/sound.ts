@@ -8,7 +8,7 @@ import { getTelegramWebApp } from '$lib/telegram/webapp';
 
 export type Scene = 'hub' | 'slot' | 'blackjack' | 'holdem';
 export type Cue =
-  | 'tap' | 'confirm' | 'card' | 'flip' | 'chip' | 'spin' | 'reel-stop' | 'stamp'
+  | 'tap' | 'confirm' | 'intro' | 'card' | 'flip' | 'chip' | 'spin' | 'reel-stop' | 'stamp'
   | 'return' | 'win-small' | 'win' | 'win-big' | 'lose';
 export type VoiceGroup = 'greet' | 'dealer_win' | 'dealer_lose';
 
@@ -181,6 +181,8 @@ class SoundEngine {
     if (!this.manifest) return null;
     // Нажатия и подтверждения — звуки интерфейса GFL во всех сценах.
     if (name === 'tap' || name === 'confirm') return this.manifest.sfx[name === 'tap' ? 'ui-tap' : 'ui-confirm']?.src ?? null;
+    // Заставка «новая глава» Yakuza — представление соперника в Hold'em.
+    if (name === 'intro') return this.scene === 'holdem' ? this.manifest.sfx['holdem-intro']?.src ?? null : null;
     // Сэмплы R6 — только в слоте; остальное синтезируется.
     if (this.scene !== 'slot') return null;
     const key = name === 'spin' ? 'slot-spin' : name === 'win' ? 'slot-win' : name === 'win-big' ? 'slot-big-win' : null;
@@ -249,6 +251,7 @@ class SoundEngine {
       case 'chip': this.tone(2400, 0, 0.03, 0.18, 'triangle'); this.tone(3100, 0.045, 0.03, 0.14, 'triangle'); break;
       case 'spin': this.noise(0, 0.25, 0.25, 900, 'lowpass'); break;
       case 'reel-stop': this.tone(140, 0, 0.09, 0.4, 'sine', 70); this.noise(0, 0.03, 0.3, 1200); break;
+      case 'intro': this.tone(110, 0, 0.35, 0.6, 'sine', 55); this.tone(110, 0.32, 0.5, 0.7, 'sine', 50); this.noise(0.32, 0.12, 0.4, 500, 'lowpass'); break;
       case 'stamp': this.tone(90, 0, 0.22, 0.6, 'sine', 45); this.noise(0, 0.08, 0.5, 700, 'lowpass'); break;
       case 'return': this.tone(660, 0, 0.18, 0.14, 'triangle'); break;
       case 'win-small': [784, 988, 1175].forEach((f, i) => this.tone(f, i * 0.07, 0.18, 0.16, 'triangle')); break;
@@ -264,7 +267,7 @@ class SoundEngine {
     if (name === 'tap') haptic('selection');
     else if (name === 'confirm') haptic('impact', 'light');
     else if (name === 'card' || name === 'chip' || name === 'reel-stop' || name === 'flip') haptic('impact', 'light');
-    else if (name === 'stamp' || name === 'spin') haptic('impact', 'medium');
+    else if (name === 'stamp' || name === 'spin' || name === 'intro') haptic('impact', 'medium');
     else if (name === 'win' || name === 'win-big' || name === 'win-small') haptic('notification', 'success');
   }
 }

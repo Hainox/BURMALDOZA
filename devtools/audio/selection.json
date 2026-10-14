@@ -7,7 +7,8 @@
     ],
     "blackjack": [
       "GFL/OST/01_Girls_Frontline_OST_2022/(The Bounty Feast) Dark Zone.mp3",
-      "GFL/OST/01_Girls_Frontline_OST_2022/(VA-11 HALL-A) Those Who Dwell in Shadows.mp3"
+      "GFL/OST/01_Girls_Frontline_OST_2022/(VA-11 HALL-A) Those Who Dwell in Shadows.mp3",
+      "GFL/2-secret-agent.mp3"
     ],
     "slot": [
       "R6/OST/01_R6_Year_6/01. After Hours.mp3",
@@ -15,9 +16,11 @@
       "R6/OST/01_R6_Year_6/14. Transaction.mp3"
     ],
     "holdem": [
-      "Yakuza/OST/04_Yakuza_0_B_Sides/1-12. The Dawn of the Cabaret Club.mp3",
-      "Yakuza/OST/04_Yakuza_0_B_Sides/1-07. Toko Credit.mp3",
-      "Yakuza/OST/04_Yakuza_0_B_Sides/1-28. Deadly Dealings.mp3"
+      "Yakuza/OST/11_Yakuza_5/minig casino kinpaku.mp3",
+      "Yakuza/OST/19_Gaiden_OST/3-21. Gambling Match.mp3",
+      "Yakuza/OST/11_Yakuza_5/minig toba kinpaku.mp3",
+      "Yakuza/OST/19_Gaiden_OST/1-13. The Sleepless Castle.mp3",
+      "Yakuza/OST/04_Yakuza_0_B_Sides/1-12. The Dawn of the Cabaret Club.mp3"
     ]
   },
   "sfx": {
@@ -25,7 +28,11 @@
     "slot-win": "R6/R6 Door Break - QuickSounds.com.mp3",
     "slot-big-win": "R6/r6 c4 sound - QuickSounds.com.mp3",
     "ui-tap": "GFL/UI/girls-frontline-confirm2.mp3",
-    "ui-confirm": "GFL/UI/girls-frontline-confirm.mp3"
+    "ui-confirm": "GFL/UI/girls-frontline-confirm.mp3",
+    "holdem-intro": {
+      "src": "Yakuza/OST/11_Yakuza_5/system chapter.mp3",
+      "max": 6.5
+    }
   },
   "voices": {
     "HK416": {
