@@ -13,6 +13,8 @@ class BotConfig:
     miniapp_url: str
     api_base_url: str
     environment: str = "development"
+    # Telegram ID админов (ADMIN_TELEGRAM_IDS в .env сервера); пусто — админ-команды выключены.
+    admin_telegram_ids: frozenset[int] = frozenset()
 
     def __post_init__(self) -> None:
         if not self.token:
@@ -44,6 +46,17 @@ def _validate_url(name: str, value: str, environment: str) -> None:
             raise RuntimeError(f"{name} must point to a real production host")
 
 
+def parse_admin_ids(raw: str) -> frozenset[int]:
+    ids: set[int] = set()
+    for part in raw.replace(";", ",").split(","):
+        part = part.strip()
+        if part:
+            if not part.isdigit():
+                raise RuntimeError("ADMIN_TELEGRAM_IDS must be comma-separated Telegram user IDs")
+            ids.add(int(part))
+    return frozenset(ids)
+
+
 def load_config() -> BotConfig:
     """Read runtime configuration without embedding secrets in source code."""
     token = getenv("BOT_TOKEN", "")
@@ -69,6 +82,7 @@ def load_config() -> BotConfig:
         miniapp_url=miniapp_url,
         api_base_url=api_base_url,
         environment=environment,
+        admin_telegram_ids=parse_admin_ids(getenv("ADMIN_TELEGRAM_IDS", "")),
     )
 
 

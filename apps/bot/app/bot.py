@@ -3,7 +3,7 @@ from __future__ import annotations
 from aiogram import Bot, Dispatcher
 
 from .api_client import BotApiClient
-from .handlers import casino_router, help_router, start_router, wallet_router
+from .handlers import admin_router, casino_router, help_router, start_router, wallet_router
 from .main import BotConfig
 
 
@@ -19,4 +19,5 @@ def create_dispatcher(config: BotConfig) -> Dispatcher:
     dispatcher.include_router(help_router)
     dispatcher.include_router(casino_router)
     dispatcher.include_router(wallet_router)
+    dispatcher.include_router(admin_router)
     return dispatcher
