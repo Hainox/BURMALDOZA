@@ -1,0 +1,48 @@
+{
+  "_comment": "Отбор из пакета владельца (Downloads/Game_Audio). Пути относительно корня пакета. Сами файлы в репозиторий не кладутся: собранный пакет живёт только на сервере (/srv/burmaldoza-audio). Поменять трек — заменить путь и пересобрать.",
+  "music": {
+    "hub": [
+      "GFL/OST/01_Girls_Frontline_OST_2022/(VA-11 HALL-A) Welcome to VA-11 HALL-A.mp3",
+      "GFL/OST/01_Girls_Frontline_OST_2022/(VA-11 HALL-A) Every Day Is Night.mp3"
+    ],
+    "blackjack": [
+      "GFL/OST/01_Girls_Frontline_OST_2022/(The Bounty Feast) Dark Zone.mp3",
+      "GFL/OST/01_Girls_Frontline_OST_2022/(VA-11 HALL-A) Those Who Dwell in Shadows.mp3"
+    ],
+    "slot": [
+      "R6/OST/01_R6_Year_6/01. After Hours.mp3",
+      "R6/OST/01_R6_Year_6/03. Archive Hold.mp3",
+      "R6/OST/01_R6_Year_6/14. Transaction.mp3"
+    ],
+    "holdem": [
+      "Yakuza/OST/04_Yakuza_0_B_Sides/1-12. The Dawn of the Cabaret Club.mp3",
+      "Yakuza/OST/04_Yakuza_0_B_Sides/1-07. Toko Credit.mp3",
+      "Yakuza/OST/04_Yakuza_0_B_Sides/1-28. Deadly Dealings.mp3"
+    ]
+  },
+  "sfx": {
+    "slot-spin": "R6/Rainbow Six Plant - QuickSounds.com.mp3",
+    "slot-win": "R6/R6 Door Break - QuickSounds.com.mp3",
+    "slot-big-win": "R6/r6 c4 sound - QuickSounds.com.mp3",
+    "ui-tap": "GFL/UI/girls-frontline-confirm2.mp3",
+    "ui-confirm": "GFL/UI/girls-frontline-confirm.mp3"
+  },
+  "voices": {
+    "HK416": {
+      "greet": [
+        "GFL/HK416/advisor_notification_incoming_transmission_01.wav"
+      ],
+      "dealer_win": [
+        "GFL/HK416/advisor_notification_invasion_success_01.wav"
+      ],
+      "dealer_lose": [
+        "GFL/HK416/advisor_notification_invasion_failed_01.wav"
+      ]
+    },
+    "G36": "GFL/G36",
+    "M4 SOPMOD II": "GFL/M4-SOPMODII",
+    "Makarov": "GFL/Makarov",
+    "Mosin-Nagant": "GFL/Mosin-Nagant",
+    "PPSh-41": "GFL/PPSh-41"
+  }
+}

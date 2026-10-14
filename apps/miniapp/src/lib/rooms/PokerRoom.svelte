@@ -5,6 +5,7 @@
   import { createHoldem, parseHoldem, type HoldemMode, type HoldemView } from '$lib/api/holdem';
   import type { RoomSnapshot } from '$lib/state/room.svelte';
   import HandTable from '$lib/components/holdem/HandTable.svelte';
+  import { sound } from '$lib/audio/sound';
   import heroes from '$lib/components/holdem/heroes.json';
 
   export let client: ApiClient | null = null;
@@ -148,7 +149,7 @@
     <section class="lobby" aria-label="Лобби Hold’em">
       <fieldset disabled={busy || !!pendingCreate}><legend>Соперник</legend><label><input type="radio" bind:group={mode} value="bot" /> Против бота</label><label><input type="radio" bind:group={mode} value="pvp" disabled={!live} /> Живой игрок</label></fieldset>
       <fieldset disabled={busy || !!pendingCreate}><legend>Вход в раздачу</legend>{#each [100,500,1000] as table}<label><input type="radio" bind:group={buyIn} value={table} /> <b>{table.toLocaleString('ru')} <em>JG</em></b> <small>Блайнды {table/20}/{table/10}</small></label>{/each}</fieldset>
-      <button class="primary" data-testid="holdem-start" on:click={start} disabled={busy}>{busy ? 'Подключаемся…' : mode === 'pvp' ? 'Найти соперника' : 'Начать раздачу'}</button>
+      <button class="primary" data-testid="holdem-start" on:click={() => { sound.cue('confirm'); void start(); }} disabled={busy}>{busy ? 'Подключаемся…' : mode === 'pvp' ? 'Найти соперника' : 'Начать раздачу'}</button>
     </section>
   {:else if view.phase === 'waiting'}
     <section class="search" role="status"><h3>Поиск соперника</h3><p>Стол {view.buyIn} JG · {seconds} с</p><p>Вход списывается при начале раздачи.</p><button data-testid="holdem-cancel" on:click={() => action('cancel')} disabled={busy}>Отменить поиск</button></section>

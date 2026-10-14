@@ -3,6 +3,7 @@
   import { base } from '$app/paths';
 
   import BetPicker from '$lib/components/BetPicker.svelte';
+  import { sound } from '$lib/audio/sound';
   import ResultBand from '$lib/components/ResultBand.svelte';
   import type { MotionState } from '$lib/game/motion';
   import type { RoomResult, RoomSnapshot } from '$lib/state/room.svelte';
@@ -32,7 +33,8 @@
 
   const SUIT_GLYPH: Record<string, string> = { spades: '♠', clubs: '♣', hearts: '♥', diamonds: '♦' };
 
-  const DEALER_POOL = ['M4A1', 'UMP45', 'AK-12', 'RPK-16', 'HK416', 'WA2000'];
+  // Дилеры — куклы, у которых есть и портрет Deck A, и голос в пакете владельца.
+  const DEALER_POOL = ['HK416', 'G36', 'M4 SOPMOD II', 'Makarov', 'Mosin-Nagant', 'PPSh-41'];
 
   const OUTCOME_LABEL: Record<string, string> = {
     blackjack: 'Натуральный блэкджек · 3:2',
@@ -117,8 +119,23 @@
   let revealRound = -1;
   $: trackHole(holeShown, roundSeq);
   function trackHole(shown: boolean, round: number) {
-    if (previousHoleShown && !shown) revealRound = round;
+    if (previousHoleShown && !shown) { revealRound = round; sound.cue('flip'); }
     previousHoleShown = shown;
+  }
+
+  // Звук: карта на каждую новую карту на столе; итог и реплика дилера — после подтверждения.
+  let heardCards = 0;
+  let heardOutcome = '';
+  $: cueCards(playerFaces.length + dealerFaces.length + (holeShown ? 1 : 0));
+  $: cueOutcome(tableOutcome, roundSeq);
+  function cueCards(count: number) { if (count > heardCards) sound.cue('card'); heardCards = count; }
+  function cueOutcome(value: string, round: number) {
+    const key = `${round}:${value}`;
+    if (!value || key === heardOutcome) return;
+    heardOutcome = key;
+    if (value === 'win' || value === 'blackjack') { sound.cue(value === 'blackjack' ? 'win-big' : 'win'); sound.voice(dealerName, 'dealer_lose'); }
+    else if (value === 'loss') { sound.cue('lose'); sound.voice(dealerName, 'dealer_win'); }
+    else sound.cue('return');
   }
 
   let bet = 25;
@@ -127,6 +144,8 @@
   $: betValid = Number.isInteger(bet) && bet >= BET_MIN && bet <= betMax && bet <= balance;
   $: canSendDeal = canDeal && betValid && !busy;
 
+  // Дилер здоровается при входе в комнату (если звук включён).
+  onMount(() => { const timer = setTimeout(() => sound.voice(dealerName, 'greet'), 600); return () => clearTimeout(timer); });
   onMount(() => {
     if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
       reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -175,6 +194,7 @@
 
   function deal() {
     if (!canSendDeal) return;
+    sound.cue('confirm');
     onAction('deal', { bet });
   }
 
