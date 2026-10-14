@@ -312,7 +312,8 @@ test.describe('Blackjack GFL room', () => {
     await expect(page.getByTestId('blackjack-player-total')).toContainText('total 17');
     await expect(page.getByTestId('blackjack-dealer-total')).toContainText('total скрыт');
     await expect(page.getByTestId('blackjack-hole-hidden')).toBeVisible();
-    await expect(page.getByTestId('blackjack-hole-hidden')).toContainText('S09');
+    await expect(page.getByTestId('blackjack-hole-hidden')).toHaveAttribute('aria-label', 'Скрытая карта дилера');
+    await expect(page.getByTestId('blackjack-dealer-portrait')).toHaveAttribute('src', /portraits\/.+_S\.webp$/);
     await expect(
       page.getByTestId('blackjack-player-cards').locator('[data-card="10-spades"]')
     ).toBeVisible();
@@ -334,16 +335,16 @@ test.describe('Blackjack GFL room', () => {
     await expect(page.getByTestId('blackjack-room')).toHaveAttribute('data-game-phase', 'settled');
   });
 
-  test('accepts only integer bets between 25 and 100', async ({ page }) => {
+  test('accepts only integer bets from 25 up to the balance', async ({ page }) => {
     await stubLiveBlackjack(page);
     await page.goto('/');
     await openRoom(page, 'blackjack');
 
     await page.getByTestId('blackjack-bet').fill('10');
     await expect(page.getByTestId('blackjack-deal')).toBeDisabled();
-    await expect(page.getByText('Ставка — целое число от 25 до 100.')).toBeVisible();
+    await expect(page.getByText(/Ставка — целое число от 25 до \d+ JG \(ваш баланс\)\./)).toBeVisible();
 
-    await page.getByTestId('blackjack-bet').fill('101');
+    await page.getByTestId('blackjack-bet').fill('10000000');
     await expect(page.getByTestId('blackjack-deal')).toBeDisabled();
 
     await page.getByTestId('blackjack-bet').fill('50');
@@ -452,6 +453,18 @@ test.describe('Blackjack GFL room', () => {
     await expect(page.getByTestId('blackjack-hit')).toBeVisible();
     await expect(page.getByTestId('blackjack-stand')).toBeVisible();
     await expect(page.getByTestId('blackjack-double')).toHaveCount(0);
+  });
+
+  test('a repeated deal mounts fresh cards so the deal animation plays again', async ({ page }) => {
+    await page.goto('/');
+    await openRoom(page, 'blackjack');
+    await page.getByTestId('blackjack-deal').click();
+    const firstCard = await page.getByTestId('blackjack-player-cards').locator('.playing-card').first().elementHandle();
+    await page.getByTestId('blackjack-stand').click();
+    await expect(page.getByTestId('blackjack-deal')).toBeVisible();
+    await page.getByTestId('blackjack-deal').click();
+    await expect(page.getByTestId('blackjack-player-cards').locator('.playing-card')).toHaveCount(2);
+    expect(await firstCard?.evaluate((node) => node.isConnected)).toBe(false);
   });
 
   test('reveals dealer and player rows immediately under reduced motion', async ({ page }) => {

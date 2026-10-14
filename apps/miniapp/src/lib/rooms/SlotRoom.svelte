@@ -28,12 +28,13 @@
   export let motion: MotionState = 'idle';
   export let result: RoomResult | null = null;
   export let onAction: (action: string, fields?: Record<string, unknown>) => void = () => undefined;
-  // Сервер принимает целую ставку 10–100 JG за спин (room_service, slot bet).
+  // Ставка от 10 JG до всего баланса; сервер проверяет сумму и баланс (room_service).
+  export let balance = 1000;
   const BET_MIN = 10;
-  const BET_MAX = 100;
-  const BET_PRESETS = [10, 20, 30, 50, 100].map((value) => ({ value }));
+  const BET_PRESETS = [10, 25, 50, 100, 250].map((value) => ({ value }));
+  $: betMax = Math.max(BET_MIN, Math.floor(balance));
   let bet = BET_MIN;
-  $: betValid = Number.isInteger(bet) && bet >= BET_MIN && bet <= BET_MAX;
+  $: betValid = Number.isInteger(bet) && bet >= BET_MIN && bet <= betMax && bet <= balance;
   export let resultSource: 'demo' | 'live' = 'demo';
   // Родитель ещё доигрывает итог прошлого спина: новое нажатие он бы молча отбросил.
   export let busy = false;
@@ -265,7 +266,7 @@
   {/if}
 
   <div class="slot-bet">
-    <BetPicker bind:value={bet} min={BET_MIN} max={BET_MAX} presets={BET_PRESETS} disabled={motion === 'resolving' || isSpinning} inputId="slot-bet" inputTestId="slot-bet" />
+    <BetPicker bind:value={bet} min={BET_MIN} max={betMax} presets={BET_PRESETS} disabled={motion === 'resolving' || isSpinning} inputId="slot-bet" inputTestId="slot-bet" />
   </div>
   <button class="primary-action" on:click={() => handleAction('spin')} disabled={busy || motion === 'resolving' || isSpinning || !betValid} data-testid="slot-spin">
     <span class="action-icon" aria-hidden="true">↻</span>

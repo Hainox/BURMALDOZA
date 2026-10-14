@@ -87,6 +87,12 @@ class MemoryRoomStore:
         self.rooms: dict[UUID, _MemoryRoom] = {}
 
 
+# Ставка — до всего баланса (решение владельца 14.10.2026); нехватку проверяет кошелёк.
+# Потолок технический: не даёт абсурдной сумме дойти до ledger.
+SLOT_MIN_BET = 10
+BLACKJACK_MIN_BET = 25
+MAX_BET = 1_000_000
+
 _RULESET_VERSIONS = {
     GameType.SLOT: "slot-siege-2",
     GameType.BLACKJACK: "blackjack-gfl-skeleton-1",
@@ -233,14 +239,16 @@ def _action_name(request: ActionRequest, game_type: GameType) -> str:
     if game_type is GameType.BLACKJACK:
         if action == "deal":
             bet = request.payload.get("bet")
-            if isinstance(bet, bool) or not isinstance(bet, int) or not 25 <= bet <= 100:
-                raise RoomServiceError("blackjack bet must be an integer between 25 and 100")
+            if isinstance(bet, bool) or not isinstance(bet, int) or not BLACKJACK_MIN_BET <= bet <= MAX_BET:
+                raise RoomServiceError(
+                    f"blackjack bet must be an integer between {BLACKJACK_MIN_BET} and {MAX_BET}"
+                )
         elif "bet" in request.payload:
             raise RoomServiceError("blackjack bet is only accepted with deal")
     if game_type is GameType.SLOT and "bet" in request.payload:
         bet = request.payload["bet"]
-        if isinstance(bet, bool) or not isinstance(bet, int) or not 10 <= bet <= 100:
-            raise RoomServiceError("slot bet must be an integer between 10 and 100")
+        if isinstance(bet, bool) or not isinstance(bet, int) or not SLOT_MIN_BET <= bet <= MAX_BET:
+            raise RoomServiceError(f"slot bet must be an integer between {SLOT_MIN_BET} and {MAX_BET}")
     return action
 
 
@@ -591,8 +599,10 @@ class RoomService:
                 raise RoomServiceError(f"action {action!r} is not supported by the slot room")
 
             bet = request.payload.get("bet", 10)
-            if isinstance(bet, bool) or not isinstance(bet, int) or not 10 <= bet <= 100:
-                raise RoomServiceError("slot bet must be an integer between 10 and 100")
+            if isinstance(bet, bool) or not isinstance(bet, int) or not SLOT_MIN_BET <= bet <= MAX_BET:
+                raise RoomServiceError(
+                    f"slot bet must be an integer between {SLOT_MIN_BET} and {MAX_BET}"
+                )
 
             raw_paylines = request.payload.get("paylines", tuple(range(len(config.paylines))))
             if not isinstance(raw_paylines, (list, tuple)) or any(

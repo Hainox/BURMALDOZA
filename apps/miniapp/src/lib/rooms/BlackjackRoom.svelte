@@ -16,8 +16,10 @@
   export let resultSource: 'demo' | 'live' = 'demo';
 
   const BET_MIN = 25;
-  const BET_MAX = 100;
-  const BET_PRESETS = [25, 40, 50, 75, 100].map((value) => ({ value }));
+  // Своя ставка — до всего баланса (решение владельца 14.10.2026); сервер проверяет баланс.
+  export let balance = 1000;
+  const BET_PRESETS = [25, 50, 100, 250, 500].map((value) => ({ value }));
+  $: betMax = Math.max(BET_MIN, Math.floor(balance));
 
   const RANK_ORDER = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
@@ -102,6 +104,16 @@
       : (snapshot?.rulesetVersion ?? 'blackjack-gfl-skeleton-1');
   $: stateVersion = snapshot?.stateVersion ?? 0;
 
+  // Номер раздачи: сервер его не присылает, считаем по входу в новую игру из ожидания/итога.
+  // Карты привязаны к нему ключом — на каждой раздаче они монтируются заново и снова «прилетают».
+  let roundSeq = 0;
+  let lastPhase = '';
+  $: trackRound(gamePhase);
+  function trackRound(phase: string) {
+    if (phase && phase !== lastPhase && phase !== 'waiting' && (lastPhase === '' || lastPhase === 'waiting' || lastPhase === 'settled')) roundSeq += 1;
+    lastPhase = phase;
+  }
+
   $: busy = pending || motion === 'resolving';
   $: isConfirmed = result !== null && (motion === 'outcome' || motion === 'settle');
   $: outcome = result?.blackjackOutcome ?? null;
@@ -109,7 +121,7 @@
   let bet = 25;
   let reducedMotion = false;
 
-  $: betValid = Number.isInteger(bet) && bet >= BET_MIN && bet <= BET_MAX;
+  $: betValid = Number.isInteger(bet) && bet >= BET_MIN && bet <= betMax && bet <= balance;
   $: canSendDeal = canDeal && betValid && !busy;
 
   onMount(() => {
@@ -183,7 +195,7 @@
       <p>{isDemo ? 'Заброшенный корпус за полицейским периметром. Демо-раздачу и результат показывает клиент.' : 'Заброшенный корпус за полицейским периметром. Раздаёт только сервер.'}</p>
     </div>
     <span class="bet-chip" data-testid="blackjack-wallet">
-      {betShown !== null ? `${betShown} JG ставка` : `${BET_MIN}–${BET_MAX} JG`}
+      {betShown !== null ? `${betShown} JG ставка` : `от ${BET_MIN} JG`}
       {walletBalance !== null ? ` · ${walletBalance} JG` : ''}
     </span>
   </div>
@@ -201,14 +213,14 @@
     <div class="table-orbit orbit-two"></div>
 
     <div class="dealer-line" data-testid="blackjack-dealer">
-      <span class="dealer-avatar" aria-hidden="true">{dealerName.slice(0, 1)}</span>
+      <img class="dealer-avatar" src={portraitUrl(dealerName)} alt="" aria-hidden="true" decoding="async" data-testid="blackjack-dealer-portrait" />
       <span class="dealer-copy">DEALER · <b>{dealerName}</b> <small>GFL DOSSIER · COSMETIC</small></span>
     </div>
 
     <div class="hand dealer-hand">
       <span class="hand-label">DEALER <b>{dealerTotal !== null ? dealerTotal : holeHidden ? 'скрыто' : '—'}</b></span>
       <div class="cards" data-testid="blackjack-dealer-cards">
-        {#each dealerFaces as card, index (index)}
+        {#each dealerFaces as card, index (`${roundSeq}-${index}`)}
           {@const doll = dollFor(card.rank, card.suit)}
           <div
             class="playing-card"
@@ -217,10 +229,9 @@
             data-card={`${card.rank}-${card.suit}`}
             aria-label={`${card.rank} ${suitGlyph(card.suit)} · ${doll ?? 'карта'}`}
           >
-            {#if doll}<img class="portrait" src={portraitUrl(doll)} alt="" loading="lazy" decoding="async" />{/if}
+            {#if doll}<img class="portrait" src={portraitUrl(doll)} alt="" loading="eager" decoding="async" />{/if}
             <span class="corner top">{card.rank}{suitGlyph(card.suit)}</span>
             <span class="dossier">
-              <small>GFL DOSSIER · DECK A</small>
               <strong>{doll ?? `${card.rank} ${suitGlyph(card.suit)}`}</strong>
               <em>{card.rank}{suitGlyph(card.suit)} · {rankHint(card.rank)}</em>
             </span>
@@ -236,7 +247,6 @@
             style={`--card-delay: ${cardDelay(dealerFaces.length)}; --card-rotation: 5deg; --card-offset: 3px`}
           >
             <img class="back-art" src={`${base}/blackjack/card-back.webp`} alt="" decoding="async" />
-            <span class="back-stamp"><b>S09</b><span>РУБАШКА A</span></span>
           </div>
         {/if}
         {#if dealerFaces.length === 0 && !holeShown}
@@ -253,7 +263,7 @@
     <div class="hand player-hand">
       <span class="hand-label">YOU <b>{playerTotal !== null ? playerTotal : '—'}</b></span>
       <div class="cards" data-testid="blackjack-player-cards">
-        {#each playerFaces as card, index (index)}
+        {#each playerFaces as card, index (`${roundSeq}-${index}`)}
           {@const doll = dollFor(card.rank, card.suit)}
           <div
             class="playing-card player-card"
@@ -262,10 +272,9 @@
             data-card={`${card.rank}-${card.suit}`}
             aria-label={`${card.rank} ${suitGlyph(card.suit)} · ${doll ?? 'карта'}`}
           >
-            {#if doll}<img class="portrait" src={portraitUrl(doll)} alt="" loading="lazy" decoding="async" />{/if}
+            {#if doll}<img class="portrait" src={portraitUrl(doll)} alt="" loading="eager" decoding="async" />{/if}
             <span class="corner top">{card.rank}{suitGlyph(card.suit)}</span>
             <span class="dossier">
-              <small>GFL DOSSIER · DECK A</small>
               <strong>{doll ?? `${card.rank} ${suitGlyph(card.suit)}`}</strong>
               <em>{card.rank}{suitGlyph(card.suit)} · {rankHint(card.rank)}</em>
             </span>
@@ -292,14 +301,14 @@
       <BetPicker
         bind:value={bet}
         min={BET_MIN}
-        max={BET_MAX}
+        max={betMax}
         presets={BET_PRESETS}
         disabled={busy}
         inputId="blackjack-bet"
         inputTestId="blackjack-bet"
       />
       {#if !betValid}
-        <p class="bet-hint" role="alert">Ставка — целое число от {BET_MIN} до {BET_MAX}.</p>
+        <p class="bet-hint" role="alert">Ставка — целое число от {BET_MIN} до {betMax} JG (ваш баланс).</p>
       {/if}
       <button
         type="button"
@@ -385,7 +394,7 @@
   .table-orbit { position: absolute; inset: 16px; border: 1px solid rgb(142 228 182 / 12%); border-radius: 42% / 20%; pointer-events: none; }
   .orbit-two { inset: 28px; border-color: rgb(231 187 112 / 12%); }
   .dealer-line { position: relative; z-index: 1; display: flex; align-items: center; gap: 9px; justify-self: center; padding: 6px 12px 6px 6px; border: 1px solid rgb(255 247 237 / 16%); border-radius: 999px; background: rgb(11 11 17 / 55%); color: rgb(255 247 237 / 80%); font-size: 9px; font-weight: 800; letter-spacing: 0.12em; }
-  .dealer-avatar { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(145deg, #8f3559, #3b2430); color: #ffe9c4; font-size: 13px; }
+  .dealer-avatar { width: 34px; height: 34px; border: 1px solid rgb(231 187 112 / 70%); border-radius: 50%; object-fit: cover; object-position: 50% 12%; background: #3b2430; }
   .dealer-copy b { color: var(--brass-300); }
   .dealer-copy small { color: rgb(255 247 237 / 55%); font-weight: 700; }
   .hand { position: relative; z-index: 1; display: grid; justify-items: center; gap: 8px; }
@@ -401,14 +410,11 @@
   .portrait { object-position: 50% 15%; filter: saturate(0.9) contrast(1.04); }
   .hole-card { place-items: center; align-content: center; border-color: rgb(231 187 112 / 60%); background: #1d2b33; }
   .hole-card::after { background: none; }
-  .back-stamp { position: relative; z-index: 2; display: grid; gap: 4px; place-items: center; color: #e7bb70; font-size: 8px; font-weight: 800; letter-spacing: 0.18em; text-align: center; text-shadow: 0 2px 4px #000; }
-  .back-stamp b { font-size: 22px; letter-spacing: 0.1em; }
   .corner { position: absolute; z-index: 2; color: #fff; font: 700 15px/1 Georgia, serif; text-shadow: 0 2px 6px #000; }
   .corner.top { top: 7px; left: 8px; }
   .corner.bottom { right: 7px; top: 7px; color: #e6c17b; font-size: 12px; }
   .red .corner.bottom { color: #e47d83; }
   .dossier { position: relative; z-index: 2; display: grid; gap: 1px; text-align: left; }
-  .dossier small { color: #e6c17b; font-size: 6px; font-weight: 800; letter-spacing: 0.14em; }
   .dossier strong { font: 700 13px/1.05 Georgia, serif; text-shadow: 0 2px 8px #000; overflow-wrap: anywhere; }
   .dossier em { color: #c3bdb8; font-style: normal; font-size: 8px; font-weight: 800; letter-spacing: 0.06em; }
   .red .dossier em { color: #e9a3a8; }
