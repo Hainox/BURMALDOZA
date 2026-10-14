@@ -1,6 +1,20 @@
 import {test,expect,type Page} from '@playwright/test';
 import {openRoom} from './helpers';
 const room='00000000-0000-0000-0000-000000000075';
+async function recordHaptics(page: Page) {
+  await page.addInitScript(() => {
+    const record = (value: string) => {
+      const calls = JSON.parse(sessionStorage.getItem('sound-haptics') ?? '[]') as string[];
+      calls.push(value); sessionStorage.setItem('sound-haptics', JSON.stringify(calls));
+    };
+    const telegram = (window as unknown as { Telegram: { WebApp: Record<string, unknown> } }).Telegram;
+    telegram.WebApp.HapticFeedback = {
+      impactOccurred: (style: string) => record(`impact:${style}`),
+      notificationOccurred: (style: string) => record(style),
+      selectionChanged: () => record('selection')
+    };
+  });
+}
 async function stub(page:Page, options:{pvp?:boolean;conflict?:boolean;lost?:boolean;profile?:boolean}={}) {
   await page.addInitScript(() => { (window as unknown as {Telegram:unknown}).Telegram={WebApp:{initData:'query_id=verified-test',ready(){},expand(){},setHeaderColor(){},setBackgroundColor(){}}}; });
   await page.route('**/api/v1/wallet',r=>r.fulfill({json:{balance:1000,currency_code:'JOKERGEM',version:1}}));
@@ -35,6 +49,25 @@ for(const buy of [100,500,1000])test(`bot table ${buy}: intro, private cards, ra
   await page.getByTestId('holdem-call').click();await expect(page.getByTestId('holdem-result')).toContainText('Победа');
   await expect(page.getByTestId('holdem-opponent').getByLabel('Закрытая карта')).toHaveCount(0);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
+test('restoring a settled hand does not replay result haptics or hero intro', async ({ page }) => {
+  await stub(page); await recordHaptics(page);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/'); await openRoom(page, 'holdem');
+  await page.getByTestId('holdem-start').click();
+  await page.getByTestId('holdem-call').click();
+  await expect(page.getByTestId('holdem-result')).toBeVisible();
+  await expect.poll(() => page.evaluate(() => sessionStorage.getItem('sound-haptics'))).toContain('success');
+  await page.getByRole('button', { name: 'Назад к комнатам' }).click();
+  await page.evaluate(() => sessionStorage.setItem('sound-haptics', '[]'));
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await openRoom(page, 'holdem');
+  await expect(page.getByTestId('holdem-result')).toBeVisible();
+  await expect(page.getByTestId('holdem-intro')).toHaveCount(0);
+  await page.waitForTimeout(1200);
+  const calls = await page.evaluate(() => sessionStorage.getItem('sound-haptics'));
+  expect(calls).not.toContain('success');
+  expect(calls).not.toContain('impact:medium');
 });
 test('pvp cancel and server search timeout never charge entry',async({page})=>{
   const state=await stub(page,{pvp:true});await page.goto('/');await openRoom(page,'holdem');await page.getByLabel('Живой игрок').check();await page.getByTestId('holdem-start').click();
