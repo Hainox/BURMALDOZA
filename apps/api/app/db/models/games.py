@@ -5,6 +5,7 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import (
     JSON,
+    BigInteger,
     CheckConstraint,
     DateTime,
     ForeignKey,
@@ -53,7 +54,7 @@ class GamePlayer(Base):
     room_id: Mapped[UUID] = mapped_column(ForeignKey("game_rooms.id", ondelete="CASCADE"), nullable=False)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     seat: Mapped[int] = mapped_column(Integer, nullable=False)
-    stack: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    stack: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="active")
     joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
@@ -69,9 +70,9 @@ class GameRound(Base):
     id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
     room_id: Mapped[UUID] = mapped_column(ForeignKey("game_rooms.id", ondelete="CASCADE"), nullable=False)
     round_no: Mapped[int] = mapped_column(Integer, nullable=False)
-    bet_amount: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    bet_amount: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
     outcome_json: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
-    payout_amount: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    payout_amount: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
     status: Mapped[str] = mapped_column(String(32), nullable=False)
     idempotency_key: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), unique=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

@@ -5,6 +5,7 @@
   import { displayOperation, operatorForSymbol, knownOperation } from '$lib/components/slot/operations';
 
   import BetPicker from '$lib/components/BetPicker.svelte';
+  import { MAX_BET } from '$lib/game/bets';
   import { sound } from '$lib/audio/sound';
   import ResultBand from '$lib/components/ResultBand.svelte';
   import {
@@ -29,11 +30,11 @@
   export let motion: MotionState = 'idle';
   export let result: RoomResult | null = null;
   export let onAction: (action: string, fields?: Record<string, unknown>) => void = () => undefined;
-  // Ставка от 10 JG до всего баланса; сервер проверяет сумму и баланс (room_service).
+  // Ставка от 10 JG до меньшего из баланса и технического потолка сервера.
   export let balance = 1000;
   const BET_MIN = 10;
   const BET_PRESETS = [10, 25, 50, 100, 250].map((value) => ({ value }));
-  $: betMax = Math.max(BET_MIN, Math.floor(balance));
+  $: betMax = Math.max(BET_MIN, Math.min(MAX_BET, Math.floor(balance)));
   let bet = BET_MIN;
   $: betValid = Number.isInteger(bet) && bet >= BET_MIN && bet <= betMax && bet <= balance;
   export let resultSource: 'demo' | 'live' = 'demo';
