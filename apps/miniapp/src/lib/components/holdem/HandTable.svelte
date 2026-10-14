@@ -1,6 +1,7 @@
 <script lang="ts">
   import { base } from '$app/paths';
   import PlayingCard from './PlayingCard.svelte';
+  import { sound } from '$lib/audio/sound';
   import BetPicker from '$lib/components/BetPicker.svelte';
   import type { HoldemView } from '$lib/api/holdem';
   export let view: HoldemView;
@@ -17,6 +18,22 @@
     if(bounds !== previousBounds) {raise=minimum;previousBounds=bounds;}
   }
   $: updateBounds(view.minimumRaise,view.maximumRaise);
+  // Звук: карта на каждую открытую карту, фишки — когда растёт банк, печать и итог — по результату сервера.
+  let heardCards = 0; let heardPot = 0; let heardResult = '';
+  $: cueTable(view);
+  function cueTable(v: HoldemView) {
+    const cards = v.own.filter((c) => !('hidden' in c)).length + v.board.length + v.opponent.filter((c) => !('hidden' in c)).length;
+    if (cards > heardCards) sound.cue('card');
+    heardCards = cards;
+    if (v.pot > heardPot && heardPot > 0) sound.cue('chip');
+    heardPot = v.pot;
+    const key = v.result ? `${v.result.outcome}:${v.result.winners.join(',')}:${v.pot}` : '';
+    if (key && key !== heardResult) {
+      sound.cue('stamp');
+      if (v.result!.winners.length === 1 && v.result!.winners.includes(v.seat)) setTimeout(() => sound.cue('win'), 260);
+    }
+    heardResult = key;
+  }
   // Рейз «до» суммы: текущая ставка + доля банка после колла; BetPicker отбросит выходящие за границы.
   function raiseTo(share:number) {const current=view.call+view.contributions[view.seat];return current+Math.round(share*(view.pot+view.call));}
   $: raisePresets = [{label:'Мин',value:view.minimumRaise},{label:'½ банка',value:raiseTo(0.5)},{label:'¾ банка',value:raiseTo(0.75)},{label:'Банк',value:raiseTo(1)},{label:'Ва-банк',value:view.maximumRaise}];

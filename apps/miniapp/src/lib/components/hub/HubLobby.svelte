@@ -2,6 +2,8 @@
   import { onMount } from 'svelte';
   import { base } from '$app/paths';
   import { fade } from 'svelte/transition';
+  import SoundToggle from '$lib/components/SoundToggle.svelte';
+  import { sound } from '$lib/audio/sound';
   import type { GameType } from '$lib/state/room.svelte';
   import type { ConnectionStatus } from '$lib/state/session.svelte';
 
@@ -57,6 +59,7 @@
       <img src={`${base}/hub/icons/diamond.svg`} width="22" height="22" alt="" />
       <span><small>Баланс · {status[connection]}</small><strong>{balanceReady ? balance.toLocaleString('ru-RU') : '—'} <span>{currencyCode === 'JOKERGEM' ? 'JG' : currencyCode}</span></strong></span>
     </div>
+    <SoundToggle />
     <button class="motion-toggle" type="button" on:click={() => paused=!paused} disabled={reducedMotion} aria-pressed={paused || reducedMotion} aria-label={reducedMotion ? 'Анимация отключена настройками устройства' : paused ? 'Включить анимацию' : 'Остановить анимацию'} title={paused || reducedMotion ? 'Декоративная анимация выключена' : 'Остановить декоративную анимацию'} data-testid="hub-motion-toggle">
       <img src={`${base}/hub/icons/settings-pause.svg`} width="22" height="22" alt="" />
     </button>
@@ -81,7 +84,7 @@
           {/each}
         </div>
         <p class="sr-only" aria-live="polite">{chosen.name}. {chosen.subtitle}</p>
-        <button class="open-room" type="button" on:click={() => void onOpen(activity)} disabled={busy} data-testid="hub-open-room" aria-label={`Открыть комнату ${chosen.name}`}>
+        <button class="open-room" type="button" on:click={() => { sound.cue('confirm'); void onOpen(activity); }} disabled={busy} data-testid="hub-open-room" aria-label={`Открыть комнату ${chosen.name}`}>
           <img src={`${base}/hub/icons/poker-chip.svg`} width="28" height="28" alt="" />
           <span>{busy ? 'Открываем комнату…' : 'Открыть комнату'}</span>
           <img src={`${base}/hub/icons/arrow-right.svg`} width="24" height="24" alt="" />
