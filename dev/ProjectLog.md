@@ -603,3 +603,10 @@
 - Конфликты только в ProjectLog/ChangeLog разрешены с сохранением записей обеих сторон; изменения +page и E2E применились автоматически. Удалён один trailing-whitespace в сгенерированной SVG-рубашке (вид изображения не меняется). Force-push не выполнялся, чужие ветки не менялись.
 - Совместный локальный прогон четырёх Codex-изменений до merge: Ruff passed, PostgreSQL/Redis pytest 278 passed, miniapp check 0/0, frontend unit 43 passed, E2E 45 passed. Дополнительный DOUBLE-тест #78 и конфигурация E2E_PORT #80 проверяются в CI объединённой цепочки. Итоговые merge SHA и статусы CI/Pages публикуются в комментариях PR.
 - Серверный deploy не входит в поручение и не выполняется. Ручная Telegram/iOS/Android приёмка, nickname/avatar #81 и передача SLOT_EVENT_* в production environment остаются отдельными задачами.
+
+## 2026-10-14 — первый деплой на сервер и исправления по живому Telegram
+
+- Claude Code (claude-opus-5-5) по поручению владельца: сервер переустановлен владельцем, по `docs/Deploy-Production.md` выполнены разделы 3–6; `BOT_TOKEN` ввёл владелец. Работают postgres, redis, api, miniapp, caddy и bot (@Burmaldoza_bot), сертификаты Let's Encrypt на четыре домена, миграции до `20261013_0006`.
+- В живом Telegram найдены и исправлены: Mini App оставалась в DEMO — не был подключён `telegram-web-app.js` (PR #85); Hold'em не начинался — клиент не принимал масть словом (`hearts`) из домена (PR #88); колода Deck A существовала только на превью — портреты и рубашка S09 подключены в комнату Blackjack с атрибуцией (PR #89). Runbook дополнен по итогам деплоя (PR #86).
+- Проверки: `/health/ready` — ok; внутренние маршруты снаружи — 404; наружу слушаются только 22/80/443; `pnpm miniapp:test` — 44 passed; e2e — 46 passed. `slot-siege.spec.ts` «server faces stay…» дважды падал в CI и проходил на перезапуске — нестабилен (Codex).
+- Осталось: резервное копирование (разделы 7–8, ключи `age` владельца), Portainer, решение владельца о числе линий слота.

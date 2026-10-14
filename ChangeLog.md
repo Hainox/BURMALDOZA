@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Blackjack cards now show the approved Deck A T-Doll portraits and the S09 card back, with MICA Team / SUNBORN image attribution. Card mapping, rules and payouts are unchanged.
+
+- Fixed live Hold'em hands failing to start: the client now accepts server card suits written as words.
+
+- Fixed the Mini App staying in DEMO inside Telegram: the official Telegram WebApp script is now loaded.
+
 - Added the Siege slot visual theme with operation-specific operator portraits, immutable spin appearance, post-stop winning beams, next-operation announcements and image attribution. Legacy skeleton rooms remain supported; Siege Free Spins stay deferred. Reconnect snapshots can no longer reveal winning effects before the reels stop.
 
 - Added cosmetic seven-day Siege operation rotation starting October 19, 2026 at 00:00 Moscow time, with optional dated arena overrides and immutable operation metadata on spin replays. Invalid or incomplete event configuration now fails at startup. Slot payouts and reel strips are unchanged.
