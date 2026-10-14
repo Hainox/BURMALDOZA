@@ -6,14 +6,17 @@ from typing import Any
 
 from .slot import SlotConfig
 
-SLOT_RULESET_VERSIONS = ("slot-skeleton-1", "slot-siege-1")
+SLOT_RULESET_VERSIONS = ("slot-skeleton-1", "slot-siege-1", "slot-siege-2")
+# Siege-версии с ротацией операций; slot-siege-2 — 9 линий (#91).
+SIEGE_RULESET_VERSIONS = frozenset({"slot-siege-1", "slot-siege-2"})
 _RULESET_FILES = {
     "slot-skeleton-1": "slot_skeleton.json",
     "slot-siege-1": "slot_siege.json",
+    "slot-siege-2": "slot_siege_2.json",
 }
 
 
-def load_slot_config(version: str = "slot-siege-1") -> SlotConfig:
+def load_slot_config(version: str = "slot-siege-2") -> SlotConfig:
     """Load an explicitly registered ruleset; versions are never filesystem paths."""
     try:
         filename = _RULESET_FILES[version]

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- New Siege slot rooms use ruleset `slot-siege-2` with 9 paylines (all 7 rows plus two diagonals) at the same 10-100 JG stake per spin and the same paytable; reel strips were rebalanced to keep RTP at about 96.3% (exact 0.9627, Monte Carlo 0.959), with winning spins rising from 31% to 44%. Rooms already on `slot-siege-1` keep their three lines. The spin button now stays disabled until the previous result has fully settled, so a quick tap can no longer start reels without a server request.
+
 - Added bet selection with five quick amounts and a custom slider: slot spins now use the chosen 10-100 JG stake (previously fixed at 10 JG), Blackjack offers 25/40/50/75/100 and any amount in 25-100, and Hold'em raises offer min, half pot, three-quarter pot, pot and all-in. The server still validates every amount.
 
 - Redesigned the hub as a night atrium with three welcoming project mascots, illustrated activity portals including SOPPO for Blackjack, room entry transitions, animated backgrounds and buttons, accessible motion pause, and Play/Ranking/History navigation. Game rooms and rules are unchanged.

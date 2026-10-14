@@ -35,6 +35,8 @@
   let bet = BET_MIN;
   $: betValid = Number.isInteger(bet) && bet >= BET_MIN && bet <= BET_MAX;
   export let resultSource: 'demo' | 'live' = 'demo';
+  // Родитель ещё доигрывает итог прошлого спина: новое нажатие он бы молча отбросил.
+  export let busy = false;
   export let rulesetVersion = 'slot-skeleton-1';
   export let publicState:Record<string,unknown> = {};
 
@@ -50,7 +52,9 @@
   ];
   let frozenOperation = 'op1';
   let frozenMetadata:Record<string,unknown> = {};
-  $: isSiege = rulesetVersion === 'slot-siege-1' || rulesetVersion === 'slot-siege-demo-1';
+  $: isSiege = rulesetVersion === 'slot-siege-1' || rulesetVersion === 'slot-siege-2' || rulesetVersion === 'slot-siege-demo-1';
+  // Три линии остались только у старых комнат (skeleton и slot-siege-1); новые правила — 9 линий (#91).
+  $: activeLines = rulesetVersion === 'slot-skeleton-1' || rulesetVersion === 'slot-siege-1' ? 3 : 9;
   $: reelBases = isSiege ? siegeBases : legacyBases;
   $: operationId = displayOperation(publicState,Boolean(result?.slotOutcome),isSpinning,frozenOperation);
 
@@ -125,7 +129,7 @@
   }
 
   function handleAction(action: string) {
-    if (motion === 'resolving' || ticker !== null) return;
+    if (busy || motion === 'resolving' || ticker !== null) return;
     if (action === 'spin' && !betValid) return;
     startSpin();
     onAction(action, action === 'spin' ? { bet } : {});
@@ -244,7 +248,7 @@
 
   <div class="slot-meta">
     <span><b>RULESET</b> {isSiege ? 'Siege' : 'skeleton-1'}</span>
-    <span><b>LINES</b> 3 active</span>
+    <span data-testid="slot-lines"><b>LINES</b> {activeLines} active</span>
     <span><b>MOTION</b> wave · 60 fps</span>
   </div>
 
@@ -254,7 +258,7 @@
         <span class="free-spins-kicker">{isLive ? 'BONUS STATE · SERVER CONFIRMED' : 'DEMO BONUS STATE · CLIENT RESULT'}</span>
         <strong>{slotOutcome.freeSpinsRemaining} FREE SPINS</strong>
       </div>
-      <button class="free-spin-action" on:click={() => handleAction('free-spin')}>
+      <button class="free-spin-action" on:click={() => handleAction('free-spin')} disabled={busy}>
         Запустить Free Spin <span aria-hidden="true">↻</span>
       </button>
     </section>
@@ -263,7 +267,7 @@
   <div class="slot-bet">
     <BetPicker bind:value={bet} min={BET_MIN} max={BET_MAX} presets={BET_PRESETS} disabled={motion === 'resolving' || isSpinning} inputId="slot-bet" inputTestId="slot-bet" />
   </div>
-  <button class="primary-action" on:click={() => handleAction('spin')} disabled={motion === 'resolving' || isSpinning || !betValid} data-testid="slot-spin">
+  <button class="primary-action" on:click={() => handleAction('spin')} disabled={busy || motion === 'resolving' || isSpinning || !betValid} data-testid="slot-spin">
     <span class="action-icon" aria-hidden="true">↻</span>
     {isSpinning ? 'Барабаны останавливаются…' : motion === 'resolving' ? (isLive ? 'Ждём сервер…' : 'Готовим демо…') : betValid ? `Крутить за ${bet} JG` : 'Выберите ставку'}
   </button>

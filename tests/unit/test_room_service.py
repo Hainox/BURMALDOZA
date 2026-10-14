@@ -355,7 +355,7 @@ async def test_new_slot_rooms_use_siege_but_old_rooms_keep_their_ruleset() -> No
     service = RoomService(store=store, wallet_service=wallet)
     new = await service.create_room(12345, GameType.SLOT, "solo")
     assert old.ruleset_version == "slot-skeleton-1"
-    assert new.ruleset_version == "slot-siege-1"
+    assert new.ruleset_version == "slot-siege-2"
     for snapshot in (old, new):
         event = await service.apply_action(snapshot.room_id, 12345, ActionRequest(
             action_id=uuid4(), expected_state_version=0, payload={"action": "spin", "bet": 10}
