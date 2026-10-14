@@ -646,7 +646,7 @@
     <div class="room-entry" in:fade={{duration:session.reducedMotion || hubMotionPaused ? 0 : 180}}>
     <RoomShell room={roomState.snapshot} connection={session.connection} motion={roomState.motion} onBack={backToRooms} onResync={resync}>
       {#if selectedGame === 'slot'}
-        <SlotRoom motion={roomState.motion} result={roomState.result} busy={isRunning} onAction={runAction} resultSource={liveApiEnabled ? 'live' : 'demo'} rulesetVersion={roomState.snapshot.rulesetVersion} publicState={roomState.snapshot.publicState} />
+        <SlotRoom motion={roomState.motion} result={roomState.result} busy={isRunning} balance={session.balance} onAction={runAction} resultSource={liveApiEnabled ? 'live' : 'demo'} rulesetVersion={roomState.snapshot.rulesetVersion} publicState={roomState.snapshot.publicState} />
       {:else if selectedGame === 'blackjack'}
         <BlackjackRoom
           snapshot={roomState.snapshot}
@@ -654,6 +654,7 @@
           result={roomState.result}
           pending={isRunning}
           apiError={apiError}
+          balance={session.balance}
           onAction={runAction}
           resultSource={liveApiEnabled ? 'live' : 'demo'}
         />

@@ -49,15 +49,17 @@ test('live slot sends the chosen bet from a preset or the slider', async ({ page
   await expect(page.getByTestId('slot-machine')).toHaveAttribute('data-stopped-reels', '3', { timeout: 5_000 });
   expect(bets).toEqual([70]);
 
-  await page.getByTestId('slot-bet').fill('150');
+  await page.getByTestId('slot-bet').fill('931');
   await expect(page.getByTestId('slot-spin')).toBeDisabled();
+  await page.getByTestId('slot-bet').fill('930');
+  await expect(page.getByTestId('slot-spin')).toContainText('Крутить за 930 JG');
 });
 
 test('blackjack presets and slider set the deal amount', async ({ page }) => {
   await page.goto('/');
   await openRoom(page, 'blackjack');
-  await page.getByRole('button', { name: '75', exact: true }).click();
-  await expect(page.getByTestId('blackjack-deal')).toContainText('Раздать за 75 JG');
+  await page.getByRole('button', { name: '250', exact: true }).click();
+  await expect(page.getByTestId('blackjack-deal')).toContainText('Раздать за 250 JG');
   await page.getByRole('slider').fill('33');
   await expect(page.getByTestId('blackjack-bet')).toHaveValue('33');
   await expect(page.getByTestId('blackjack-deal')).toContainText('Раздать за 33 JG');

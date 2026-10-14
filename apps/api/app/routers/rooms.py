@@ -34,6 +34,7 @@ from app.dependencies import (
     get_room_service,
 )
 from app.services.room_service import (
+    MAX_BET,
     RoomAccessError,
     RoomNotFoundError,
     RoomService,
@@ -112,13 +113,13 @@ _RULESETS: dict[GameType, dict[str, object]] = {
         "columns": 3,
         "rows": 7,
         "min_bet": 10,
-        "max_bet": 100,
+        "max_bet": MAX_BET,
     },
     GameType.BLACKJACK: {
         "game_type": GameType.BLACKJACK,
         "version": "blackjack-gfl-skeleton-1",
         "min_bet": 25,
-        "max_bet": 100,
+        "max_bet": MAX_BET,
         "blackjack_payout": "3:2",
     },
     GameType.HOLDEM: {

@@ -334,7 +334,7 @@ async def test_blackjack_bet_must_match_published_ruleset_range() -> None:
     service = RoomService(store=MemoryRoomStore(), wallet_service=wallet)
     room = await service.create_room(55555, GameType.BLACKJACK, "solo")
 
-    with pytest.raises(RoomServiceError, match="between 25 and 100"):
+    with pytest.raises(RoomServiceError, match="between 25 and 1000000"):
         await service.apply_action(
             room.room_id,
             55555,
@@ -342,6 +342,39 @@ async def test_blackjack_bet_must_match_published_ruleset_range() -> None:
                 action_id=uuid4(), expected_state_version=0, payload={"action": "deal", "bet": True}
             ),
         )
+
+@pytest.mark.asyncio
+async def test_bets_reach_the_whole_balance_but_not_past_it() -> None:
+    # Решение владельца 14.10.2026: своя ставка — вплоть до всего баланса.
+    wallet = WalletService(store=MemoryWalletStore())
+    await wallet.claim_welcome_grant(66666, uuid4())
+    balance = (await wallet.get_or_create(66666)).balance
+    service = RoomService(store=MemoryRoomStore(), wallet_service=wallet)
+
+    slot = await service.create_room(66666, GameType.SLOT, "solo")
+    spun = await service.apply_action(
+        slot.room_id,
+        66666,
+        ActionRequest(action_id=uuid4(), expected_state_version=0, payload={"action": "spin", "bet": 500}),
+    )
+    assert spun.payload["result"]["net_delta"] == spun.payload["result"]["gross_payout"] - 500
+
+    blackjack = await service.create_room(66666, GameType.BLACKJACK, "solo")
+    too_much = (await wallet.get_or_create(66666)).balance + 1
+    with pytest.raises(RoomServiceError, match="insufficient"):
+        await service.apply_action(
+            blackjack.room_id,
+            66666,
+            ActionRequest(action_id=uuid4(), expected_state_version=0, payload={"action": "deal", "bet": too_much}),
+        )
+    with pytest.raises(RoomServiceError, match="between 10 and 1000000"):
+        await service.apply_action(
+            slot.room_id,
+            66666,
+            ActionRequest(action_id=uuid4(), expected_state_version=1, payload={"action": "spin", "bet": 1_000_001}),
+        )
+    assert balance >= 500
+
 
 @pytest.mark.asyncio
 async def test_new_slot_rooms_use_siege_but_old_rooms_keep_their_ruleset() -> None:

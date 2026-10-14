@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Bets now go up to the whole balance: five standard amounts (slot 10/25/50/100/250, Blackjack 25/50/100/250/500) plus a separate custom slider and field from the minimum to the current balance; the server cap rose from 100 JG to a technical 1,000,000 JG with the wallet still rejecting stakes above the balance. Blackjack shows the dealer T-Doll portrait, drops the deck and card-back captions, and replays the deal animation on every new hand instead of swapping card images. The hub headline now reads «Где сегодня сливаем хату?».
+
 - New Siege slot rooms use ruleset `slot-siege-2` with 9 paylines (all 7 rows plus two diagonals) at the same 10-100 JG stake per spin and the same paytable; reel strips were rebalanced to keep RTP at about 96.3% (exact 0.9627, Monte Carlo 0.959), with winning spins rising from 31% to 44%. Rooms already on `slot-siege-1` keep their three lines. The spin button now stays disabled until the previous result has fully settled, so a quick tap can no longer start reels without a server request.
 
 - Added bet selection with five quick amounts and a custom slider: slot spins now use the chosen 10-100 JG stake (previously fixed at 10 JG), Blackjack offers 25/40/50/75/100 and any amount in 25-100, and Hold'em raises offer min, half pot, three-quarter pot, pot and all-in. The server still validates every amount.

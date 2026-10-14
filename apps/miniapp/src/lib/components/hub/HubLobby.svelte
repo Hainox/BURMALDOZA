@@ -68,7 +68,7 @@
         <img src={`${base}/hub/welcome.webp`} width="1400" height="1099" alt="Три маскота Бурмалдозы встречают у входа в клуб" fetchpriority="high" />
       </div>
       <div class="welcome-copy">
-        <h1 id="lounge-title">Вечер начинается здесь.</h1>
+        <h1 id="lounge-title">Где сегодня сливаем хату?</h1>
         <p>ТРИ КОМНАТЫ. ОДНА АТМОСФЕРА.</p>
       </div>
       <section class="activity-section" aria-label="Выбор активности">
