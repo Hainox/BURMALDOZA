@@ -10,7 +10,7 @@ export type Scene = 'hub' | 'slot' | 'blackjack' | 'holdem';
 export type Cue =
   | 'tap' | 'confirm' | 'intro' | 'card' | 'flip' | 'chip' | 'spin' | 'reel-stop' | 'stamp'
   | 'return' | 'win-small' | 'win' | 'win-big' | 'lose';
-export type VoiceGroup = 'greet' | 'dealer_win' | 'dealer_lose';
+export type VoiceGroup = 'greet' | 'dealer_win' | 'dealer_lose' | 'quip';
 
 type Track = { src: string; title: string; duration: number };
 type Manifest = {

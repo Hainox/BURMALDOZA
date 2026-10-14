@@ -31,6 +31,9 @@
     if (key && key !== heardResult) {
       sound.cue('stamp');
       if (v.result!.winners.length === 1 && v.result!.winners.includes(v.seat)) setTimeout(() => sound.cue('win'), 260);
+      // Соперник-герой комментирует итог своим голосом (если в пакете есть его реплики, например Кирю).
+      const hero = v.heroCode;
+      if (hero) setTimeout(() => sound.voice(hero, 'quip'), 700);
     }
     heardResult = key;
   }
