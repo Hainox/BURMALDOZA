@@ -30,9 +30,9 @@
 
   // Сцена каждой комнаты: фон из утверждённых концептов, концепция комнат не меняется.
   const scenes: Record<RoomTheme, { kicker: string; title: string; backdrop: string | null }> = {
-    slot: { kicker: 'RAINBOW SIX · SIEGE', title: 'Slot Siege', backdrop: 'slot/scene/room.webp' },
+    slot: { kicker: 'RAINBOW SIX · SIEGE', title: 'Tachanka’s Luck', backdrop: 'slot/scene/room.webp' },
     blackjack: { kicker: 'GFL · SECTOR 09', title: 'Blackjack', backdrop: 'blackjack/room.webp' },
-    holdem: { kicker: '神室町 · HEADS-UP', title: 'Hold’em', backdrop: 'holdem/scene/room.webp' }
+    holdem: { kicker: 'KAMUROCHO 神室町 · HEADS-UP', title: 'Hold’em', backdrop: 'holdem/scene/room.webp' }
   };
   $: scene = scenes[theme];
 </script>
@@ -81,12 +81,12 @@
   .theme-blackjack .fx-a { background: radial-gradient(46% 20% at 30% 50%, rgb(255 40 60 / 34%), transparent 70%); animation: police-red 1.8s steps(1) infinite; }
   .theme-blackjack .fx-b { background: radial-gradient(46% 20% at 72% 48%, rgb(50 110 255 / 34%), transparent 70%); animation: police-blue 1.8s steps(1) infinite; }
 
-  /* Slot Siege: тактический холод, дым и медленные лучи прожекторов. */
+  /* Tachanka’s Luck (Siege): тактический холод, дым и медленные лучи прожекторов. */
   .theme-slot .scene { background: radial-gradient(120% 70% at 50% 0%, #1d2a33 0%, #0b1116 55%, #06090c 100%); }
   .theme-slot .fx-a { inset: -30% -60%; background: conic-gradient(from 180deg at 50% 0%, transparent 0deg, rgb(205 228 240 / 10%) 8deg, transparent 18deg, transparent 340deg, rgb(205 228 240 / 8%) 350deg, transparent 360deg); animation: searchlight 14s ease-in-out infinite alternate; transform-origin: 50% 0%; }
   .theme-slot .fx-b { background: radial-gradient(60% 30% at 20% 85%, rgb(170 190 200 / 12%), transparent 70%), radial-gradient(55% 28% at 80% 75%, rgb(170 190 200 / 10%), transparent 70%); animation: smoke 22s ease-in-out infinite alternate; }
 
-  /* Hold'em: ворота Камуро-тё, мерцающий неон. */
+  /* Hold'em: ворота Kamurocho (神室町), мерцающий неон. */
   .theme-holdem .backdrop { object-position: 50% 40%; opacity: .62; filter: blur(2px) saturate(1.1); transform: scale(1.06); }
   .theme-holdem .fx-a { background: radial-gradient(70% 34% at 50% 18%, rgb(255 46 96 / 22%), transparent 70%); animation: neon 6s linear infinite; }
   .theme-holdem .fx-b { background: radial-gradient(60% 30% at 50% 95%, rgb(201 162 74 / 16%), transparent 70%); }

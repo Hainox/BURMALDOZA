@@ -62,7 +62,7 @@
     },
     {
       gameType: 'holdem' as const,
-      eyebrow: 'HEADS-UP · КАМУРО-ТЁ',
+      eyebrow: 'HEADS-UP · KAMUROCHO 神室町',
       title: 'Hold’em',
       description: 'Один pot, два места и понятная линия действия.',
       accent: '#ce86f2',

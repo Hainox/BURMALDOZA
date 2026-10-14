@@ -20,9 +20,9 @@
   let visible = true;
 
   const activities: Array<{game:GameType;name:string;subtitle:string;art:string}> = [
-    {game:'slot',name:'Slot Siege',subtitle:'Быстрый раунд',art:'slot-portal.webp'},
+    {game:'slot',name:'Tachanka’s Luck',subtitle:'Быстрый раунд',art:'slot-portal.webp'},
     {game:'blackjack',name:'Blackjack',subtitle:'Girls’ Frontline',art:'blackjack-portal.webp'},
-    {game:'holdem',name:'Hold’em',subtitle:'Камуро-тё · Два игрока',art:'holdem-portal.webp'}
+    {game:'holdem',name:'Hold’em',subtitle:'Kamurocho 神室町 · Два игрока',art:'holdem-portal.webp'}
   ];
   const navigation = [
     {id:'play' as const,label:'Играть',icon:'cards'},

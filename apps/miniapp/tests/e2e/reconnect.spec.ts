@@ -10,6 +10,6 @@ test('resync returns to a stable room snapshot', async ({ page }) => {
   await expect(page.getByTestId('resync-button')).toContainText('DEMO');
   await expect(page.getByTestId('room-shell')).toHaveAttribute('data-motion', 'idle');
   await expect(
-    page.getByTestId('room-shell').getByRole('heading', { name: 'Камуро-тё', level: 2 })
+    page.getByTestId('room-shell').getByRole('heading', { name: 'Kamurocho 神室町', level: 2 })
   ).toBeVisible();
 });

@@ -21,17 +21,17 @@
     },
     {
       "file": "holdem-portal.webp",
-      "source": "ImageGen integrated illustration based on approved hub option 2, current portal composition and character identity reference; non-commercial fan interface. Kazuma Kiryu identity reference from owner local Infinite Wealth portrait set (not published); character © SEGA / Ryu Ga Gotoku Studio.",
-      "bytes": 195514,
-      "sha256": "3e5045f657482862cfec3e03d23ae95b5897b37f920421f72b24e64269c5f11a",
+      "source": "ImageGen integrated illustration based on approved hub option 2, current portal composition and character identity reference; non-commercial fan interface. Kazuma Kiryu identity reference from owner local Infinite Wealth portrait set (not published); character © SEGA / Ryu Ga Gotoku Studio. Subtitle re-lettered 14.10.2026 by owner request: КАМУРО-ТЁ -> KAMUROCHO 神室町 (Impact, Yu Gothic).",
+      "bytes": 176778,
+      "sha256": "ed77fe2325623437ffb538c77f5d87951216d996e904c757f47ec24876912549",
       "width": 640,
       "height": 1280
     },
     {
       "file": "slot-portal.webp",
-      "source": "ImageGen integrated illustration based on approved hub option 2, current portal composition and character identity reference; non-commercial fan interface. Tachanka Maska helmet reference from project operator portrait; character © Ubisoft.",
-      "bytes": 196558,
-      "sha256": "f3fd5aea592734d22c3eacfe745379906b8629a875b7e720c4bda0de78aed493",
+      "source": "ImageGen integrated illustration based on approved hub option 2, current portal composition and character identity reference; non-commercial fan interface. Tachanka Maska helmet reference from project operator portrait; character © Ubisoft. Title re-lettered 14.10.2026 by owner request: SLOT SIEGE -> TACHANKA'S LUCK (gold-framed plate, Impact).",
+      "bytes": 175140,
+      "sha256": "36efaf51f93c9b59c69288a9f8742c383bff51e7cffccf479d649d76327cbb09",
       "width": 640,
       "height": 1280
     },
