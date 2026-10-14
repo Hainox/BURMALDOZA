@@ -69,7 +69,7 @@
       </div>
       <div class="welcome-copy">
         <h1 id="lounge-title">Где сегодня сливаем хату?</h1>
-        <p>ТРИ КОМНАТЫ. ОДНА АТМОСФЕРА.</p>
+        <p>ТРИ КОМНАТЫ. ВЕЗДЕ ДИЛЕР МУДАК.</p>
       </div>
       <section class="activity-section" aria-label="Выбор активности">
         <div class="portals">
