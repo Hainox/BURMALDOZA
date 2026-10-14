@@ -20,6 +20,7 @@ test('DEMO never invents a leaderboard or requests one', async ({ page }) => {
   let requests = 0;
   await page.route('**/api/v1/leaderboard', route => { requests++; return route.fulfill({ json: snapshot }); });
   await page.goto('/');
+  await page.getByTestId('hub-nav-ranking').click();
   await expect(page.getByTestId('leaderboard-demo')).toContainText('Настоящий рейтинг');
   await expect(page.getByTestId('leaderboard-entry')).toHaveCount(0);
   expect(requests).toBe(0);
@@ -35,6 +36,7 @@ for (const viewport of [{ width: 320, height: 812 }, { width: 1440, height: 900 
       return route.fulfill({ json: snapshot });
     });
     await page.goto('/');
+  await page.getByTestId('hub-nav-ranking').click();
     const ranking = page.getByTestId('leaderboard');
     await expect(ranking).toContainText('@winner');
     await expect(ranking).toContainText('Игрок без ника');
@@ -55,6 +57,7 @@ test('loading, error, keyboard retry, empty current week', async ({ page }) => {
     else await route.fulfill({ json: { ...snapshot, entries: [] } });
   });
   await page.goto('/');
+  await page.getByTestId('hub-nav-ranking').click();
   await expect(page.getByTestId('leaderboard')).toContainText('Загружаем рейтинг');
   release();
   const retry = page.getByRole('button', { name: 'Повторить загрузку рейтинга' });

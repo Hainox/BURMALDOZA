@@ -4,6 +4,8 @@
 
 - Added bet selection with five quick amounts and a custom slider: slot spins now use the chosen 10-100 JG stake (previously fixed at 10 JG), Blackjack offers 25/40/50/75/100 and any amount in 25-100, and Hold'em raises offer min, half pot, three-quarter pot, pot and all-in. The server still validates every amount.
 
+- Redesigned the hub as a night atrium with three welcoming project mascots, illustrated activity portals including SOPPO for Blackjack, room entry transitions, animated backgrounds and buttons, accessible motion pause, and Play/Ranking/History navigation. Game rooms and rules are unchanged.
+
 - Blackjack cards now show the approved Deck A T-Doll portraits and the S09 card back, with MICA Team / SUNBORN image attribution. Card mapping, rules and payouts are unchanged.
 
 - Fixed live Hold'em hands failing to start: the client now accepts server card suits written as words.

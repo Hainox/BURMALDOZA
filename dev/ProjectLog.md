@@ -1,5 +1,32 @@
 # Project Log
 
+## 2026-10-14 — хаб «Ночной атриум», #90
+
+- Поручение владельца: полный редизайн только хаба; выбран вариант 2 Product Design.
+  Дополнение: M4 SOPMOD / SOPPO — главный персонаж портала Blackjack по двум портретам.
+  Объём утверждённого изменения записан в BuildSpec до реализации.
+- Ветка `codex/hub-atrium-redesign`, база `5ea8697`; отдельный worktree, сторонние правки
+  Blackjack и локальные настройки не затронуты. Один implementer UI, три asset-only агента
+  по image-to-code skill. Маскоты/арки/фон/logo — отдельные WebP, иконки Tabler/Supericons MIT.
+- Новый HubLobby: выбор трёх активностей и отдельный вход, реальные баланс/бонусы,
+  Играть/Рейтинг/История, DEMO граница, декоративные циклы/переходы, pause/reduced motion
+  и остановка background при скрытии вкладки. Игровые обработчики, комнаты и backend не менялись.
+- Проверки: `pnpm miniapp:check` — 0 errors/warnings; `pnpm miniapp:test` — 44 passed;
+  `E2E_PORT=4181 CI=true pnpm miniapp:e2e` — 51 passed, build successful внутри webServer;
+  повтор hub-only для screenshot — 5 passed; `git diff --check` — passed.
+  Доступны pnpm 11.19.0, Chromium нужной версии; Pillow использован только для WebP-конверсии,
+  runtime-зависимости не добавлены. Непромоканные вспомогательные API в E2E дают 404;
+  настоящий production/Telegram этим запуском не проверяется.
+- CUA Chrome: combined сравнение источника и iframe; исправлены размер title,
+  высота reception и избыточная строка selection, яркость порталов. Второй проход — passed.
+  Вручную проверены вход Blackjack, возврат с сохранением выбора/паузы и панель рейтинга.
+- Handoff: `assets/design/hub-atrium/README.md`, source/render screenshots,
+  `apps/miniapp/design-qa.md`, `apps/miniapp/static/hub/sources.json` и лицензия иконок.
+  Работа сохранена в draft PR по просьбе владельца обеспечить продолжение при остатке лимита 5%.
+- Осталось: независимое review и CI на опубликованном head, Android/iOS Telegram manual QA.
+  Параллельный PR #92 bet-picker может пересекаться с +page.svelte: сохранять его игровые
+  изменения отдельно. #87 профиля Hold’em не входит в редизайн. Merge/Pages/server deploy не выполнялись.
+
 ## 2026-10-12 — инструкции для агентов: разделы «Неочевидное» и «Указатели» (PR #49)
 
 - В `AGENTS.md` добавлены разделы «Неочевидное» (публикация, подводные камни, конвенции, причины решений, что не трогать) и «Указатели»; все прежние правила сохранены дословно. Новые `CODING_STANDARDS.md`, `docs/agents/security.md` и `docs/agents/git.md` подгружаются по указателям.
