@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Integrate the TACHANKA’S LUCK title into the Tachanka hub portal artwork, replacing the temporary title plate.
+
 - Renamed the Siege slot to «Tachanka’s Luck» and Kamurocho to «Kamurocho 神室町» across the hub, room headers and portals.
 
 - Replace temporary Slot and Hold'em hub portal collages with integrated Tachanka and Infinite Wealth Kiryu illustrations.

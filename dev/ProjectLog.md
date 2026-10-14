@@ -716,3 +716,22 @@
 - Claude Code замещает Codex (лимит). Закоммичены незавершённые правки Codex: переходы только по `transform`/`opacity`, лучи линий появляются через `opacity`; e2e 320px ждёт LIVE, паузу хаба и загрузку сцены вместо разового чтения (причина падения CI на `a0ca2a0`).
 - Review: ячейки слота Codex уменьшил до `clamp(38px, 10.25vw, 50px)` ради «всё в экран» — это противоречило решению владельца (#101). Возвращено `clamp(48px, 14.2vw, 70px)`; кнопка спина остаётся в первом экране (низ на 802 px из 844), e2e проверяет именно её. Имена на картах Blackjack больше не рвутся посреди слова. Скриншоты «после» обновлены.
 - Проверки: `pnpm miniapp:check` — 0/0; `pnpm miniapp:test` — 46 passed; Playwright — 63 passed; стресс `slot-stop.spec.ts:9` — 16/16, `rooms-polish` 320px ×5 — 15/15.
+
+## 2026-10-14 — портал TACHANKA’S LUCK (#106)
+
+- Codex, модель GPT-6; точный effort клиента не отображается (запрошен low).
+  Встроенный ImageGen перегенерировал арт из PR #102 (`b6196d0`): светлая
+  TACHANKA’S с U+2019 и золотая LUCK вписаны в иллюстрацию, таблички нет.
+- Runtime `slot-portal.webp`: 640×1280, 194 736 байт, SHA256
+  `c064e61ee967140216541b1767f7a91d297cf51e389781004ba123fbd731d700`.
+  Происхождение/хэш/байты обновлены в sources.json, промпт и ручная приёмка —
+  assets/design/hub-atrium/README.md; before/after Chromium DEMO 390×844 сохранены.
+- Проверки: miniapp:check — 0/0; miniapp:test — 46 passed;
+  полный E2E с workers=1 — 63 passed, включая hub 320/390/1440.
+  В первом параллельном прогоне wallet-relief получил timeout (62 passed);
+  полный последовательный прогон зелёный. Это Chromium DEMO/mocked LIVE,
+  настоящий API и Telegram WebView здесь не проверялись.
+- Зависимости: pnpm 11.19.0, locked frontend, Playwright Chromium, встроенный
+  ImageGen и Pillow для WebP (новых runtime-зависимостей нет).
+- Осталось: CI опубликованного head, review Claude/владельца и ручная Telegram
+  iOS/Android приёмка; merge меняет Pages. Merge/server deploy не выполнялись.

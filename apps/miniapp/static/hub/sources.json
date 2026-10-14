@@ -29,9 +29,9 @@
     },
     {
       "file": "slot-portal.webp",
-      "source": "ImageGen integrated illustration based on approved hub option 2, current portal composition and character identity reference; non-commercial fan interface. Tachanka Maska helmet reference from project operator portrait; character © Ubisoft. Title re-lettered 14.10.2026 by owner request: SLOT SIEGE -> TACHANKA'S LUCK (gold-framed plate, Impact).",
-      "bytes": 175140,
-      "sha256": "36efaf51f93c9b59c69288a9f8742c383bff51e7cffccf479d649d76327cbb09",
+      "source": "Built-in ImageGen edit of PR #102 portal (b6196d0), 2026-10-14 issue #106: integrated distressed ivory TACHANKA’S / gold LUCK lettering with typographic apostrophe, no plate; same Tachanka, arch, machine gun, smoke, case and chips. Resized and encoded as WebP with Pillow. Character © Ubisoft; non-commercial fan interface, no general license claimed.",
+      "bytes": 194736,
+      "sha256": "c064e61ee967140216541b1767f7a91d297cf51e389781004ba123fbd731d700",
       "width": 640,
       "height": 1280
     },
