@@ -62,3 +62,11 @@ test('blackjack presets and slider set the deal amount', async ({ page }) => {
   await expect(page.getByTestId('blackjack-bet')).toHaveValue('33');
   await expect(page.getByTestId('blackjack-deal')).toContainText('Раздать за 33 JG');
 });
+
+test('demo slot payout follows the chosen bet', async ({ page }) => {
+  await page.goto('/');
+  await openRoom(page, 'slot');
+  await page.getByRole('button', { name: '50', exact: true }).click();
+  await page.getByTestId('slot-spin').click();
+  await expect(page.getByTestId('result-band')).toContainText('200', { timeout: 8_000 });
+});
