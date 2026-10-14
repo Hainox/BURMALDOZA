@@ -332,6 +332,14 @@
   .siege .slot-machine { box-shadow: inset 0 -80px 60px -60px #c3d5de44, 0 0 0 1px rgb(190 208 220 / 22%), 0 0 36px rgb(190 208 220 / 14%); }
   .siege .slot-machine::after { content: ''; position: absolute; inset: 0; z-index: 3; background: linear-gradient(180deg, transparent 0%, rgb(222 239 255 / 14%) 48%, transparent 52%); opacity: 0; pointer-events: none; will-change: transform; }
   .siege .slot-machine:not([data-slot-phase='idle']):not([data-slot-phase='settled'])::after { opacity: 1; animation: scan 1.1s linear infinite; }
+  /* Крупные ячейки Siege: портреты 272×160 — ячейка близка к их пропорции, лицо заполняет её целиком. */
+  .siege .slot-machine { padding: 46px 6px 24px; }
+  .siege .machine-rim { inset: 6px; }
+  .siege .reel-grid { gap: 5px; width: 100%; }
+  .siege .reel { padding: 5px 3px; }
+  .siege .reel-window { --symbol-size: clamp(50px, 15vw, 72px); --reel-gap: 5px; }
+  .siege .operator-face { object-fit: cover; object-position: 50% 30%; }
+  .siege .beams { height: calc(7 * (clamp(50px, 15vw, 72px) + 5px) - 5px); }
   .siege .slot-meta { justify-content: center; }
   .lines-chip { padding: 5px 10px; border: 1px solid rgb(190 208 220 / 30%); border-radius: 999px; color: #d1dce3; font-size: 9px; letter-spacing: .1em; }
   .lines-chip b { display: inline; margin: 0 4px 0 0; }
