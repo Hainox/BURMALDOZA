@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { openRoom } from './helpers';
 
 const entry = (reason: string, amount_delta: number, balance_after: number) => ({
   id: reason, operation_id: reason, amount_delta, balance_after, reason,
@@ -20,6 +21,7 @@ test('DEMO shows no invented history and sends no ledger requests', async ({ pag
   let requests = 0;
   await page.route('**/api/v1/wallet/ledger', route => { requests++; return route.fulfill({ json: [] }); });
   await page.goto('/');
+  await page.getByTestId('hub-nav-history').click();
   await expect(page.getByTestId('ledger-demo')).toContainText('после входа через Telegram');
   await expect(page.getByTestId('ledger-entry')).toHaveCount(0);
   expect(requests).toBe(0);
@@ -34,6 +36,7 @@ for (const viewport of [{ width: 375, height: 812 }, { width: 1440, height: 900 
       entry('game_stake', -25, 912), entry('game_payout', 75, 987), entry('welcome', 1000, 1000)
     ] }));
     await page.goto('/');
+  await page.getByTestId('hub-nav-history').click();
     const history = page.getByTestId('ledger-history');
     await expect(history).toContainText('13.10.2026, 00:04 МСК');
     await expect(history).toContainText('Ставка');
@@ -55,6 +58,7 @@ test('shows loading, error/retry, then the empty state', async ({ page }) => {
     else await route.fulfill({ json: [] });
   });
   await page.goto('/');
+  await page.getByTestId('hub-nav-history').click();
   await expect(page.getByTestId('ledger-history')).toContainText('Загружаем историю');
   release();
   const retry = page.getByRole('button', { name: 'Повторить загрузку истории' });
@@ -75,8 +79,12 @@ test('rereads after a grant without fabricating history from the grant response'
       delta: 250, balance_after: 1250, reason: 'daily_bonus' } });
   });
   await page.goto('/');
+  await page.getByTestId('hub-nav-history').click();
   await expect(page.getByTestId('ledger-entry')).toHaveCount(1);
+  await page.getByTestId('hub-nav-play').click();
+  await page.getByTestId('hub-bonus-toggle').click();
   await page.getByTestId('wallet-daily-claim').click();
+  await page.getByTestId('hub-nav-history').click();
   await expect(page.getByTestId('ledger-entry')).toHaveCount(2);
   await expect(page.getByTestId('ledger-history')).toContainText('Ежедневный бонус');
   expect(reads).toBe(2);
@@ -103,8 +111,10 @@ test('rereads after confirmed game actions even before a round has settled', asy
       } } } } });
   });
   await page.goto('/');
+  await page.getByTestId('hub-nav-history').click();
   await expect(page.getByTestId('ledger-entry')).toHaveCount(1);
-  await page.getByRole('button', { name: /Blackjack/ }).click();
+  await page.getByTestId('hub-nav-play').click();
+  await openRoom(page, 'blackjack');
   await page.getByTestId('blackjack-deal').click();
   await expect(page.getByTestId('ledger-entry')).toHaveCount(2);
   await expect(page.getByTestId('ledger-history')).toContainText('Баланс после: 975 JG');

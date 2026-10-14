@@ -68,6 +68,7 @@ test.describe('Wallet grants', () => {
   test('claims daily once, blocks a repeated tap, and updates balance from the server', async ({ page }) => {
     const counters = await stubLiveWallet(page);
     await page.goto('/');
+    await page.getByTestId('hub-bonus-toggle').click();
 
     await expect(page.getByTestId('wallet-daily-claim')).toBeVisible();
     await page.getByTestId('wallet-daily-claim').click();
@@ -84,6 +85,7 @@ test.describe('Wallet grants', () => {
   test('treats relief 409 as an expected cooldown state', async ({ page }) => {
     await stubLiveWallet(page, { reliefCooldown: true });
     await page.goto('/');
+    await page.getByTestId('hub-bonus-toggle').click();
 
     await page.getByTestId('wallet-relief-claim').click();
     await expect(page.getByTestId('wallet-relief-message')).toContainText('Relief пока недоступен');
@@ -92,6 +94,7 @@ test.describe('Wallet grants', () => {
 
   test('keeps grants in live mode only', async ({ page }) => {
     await page.goto('/');
+    await page.getByTestId('hub-bonus-toggle').click();
     await expect(page.getByTestId('demo-banner')).toContainText('ДЕМО-КОНТУР');
     await expect(page.getByTestId('wallet-grants')).toHaveCount(0);
   });
