@@ -5,6 +5,7 @@
 <script lang="ts">
   import { setContext } from 'svelte';
   import { base } from '$app/paths';
+  import SoundToggle from '$lib/components/SoundToggle.svelte';
   import type { MotionState } from '$lib/game/motion';
   import type { ConnectionStatus } from '$lib/state/session.svelte';
   import type { RoomSnapshot } from '$lib/state/room.svelte';
@@ -53,6 +54,7 @@
       <span>{scene.kicker}</span>
       <h1>{scene.title}</h1>
     </div>
+    <SoundToggle />
     <button class="balance" on:click={onResync} data-testid="resync-button" aria-label={`Баланс ${balance} JG, ${connectionLabel[connection]}. Синхронизировать комнату`}>
       <img src={`${base}/hub/icons/diamond.svg`} width="20" height="20" alt="" />
       <span>
@@ -100,7 +102,7 @@
   .room-shell { min-height: calc(100dvh - 42px); gap: 10px; }
 
   /* Шапка в стиле хаба. */
-  .room-topbar { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding-top: env(safe-area-inset-top); }
+  .room-topbar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px auto; align-items: center; gap: 10px; padding-top: env(safe-area-inset-top); }
   .back { display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid #b8955d; border-radius: 50%; background: #0a0e14c9; cursor: pointer; transition: transform .2s ease, opacity .2s ease; }
   .back img { transform: rotate(180deg); }
   .back:hover { background: #241b13; transform: translateX(-2px); }

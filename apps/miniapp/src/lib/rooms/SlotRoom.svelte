@@ -5,6 +5,8 @@
   import { displayOperation, operatorForSymbol, knownOperation } from '$lib/components/slot/operations';
 
   import BetPicker from '$lib/components/BetPicker.svelte';
+  import { MAX_BET } from '$lib/game/bets';
+  import { sound } from '$lib/audio/sound';
   import ResultBand from '$lib/components/ResultBand.svelte';
   import {
     SLOT_LAUNCH_DURATION,
@@ -28,11 +30,11 @@
   export let motion: MotionState = 'idle';
   export let result: RoomResult | null = null;
   export let onAction: (action: string, fields?: Record<string, unknown>) => void = () => undefined;
-  // Ставка от 10 JG до всего баланса; сервер проверяет сумму и баланс (room_service).
+  // Ставка от 10 JG до меньшего из баланса и технического потолка сервера.
   export let balance = 1000;
   const BET_MIN = 10;
   const BET_PRESETS = [10, 25, 50, 100, 250].map((value) => ({ value }));
-  $: betMax = Math.max(BET_MIN, Math.floor(balance));
+  $: betMax = Math.max(BET_MIN, Math.min(MAX_BET, Math.floor(balance)));
   let bet = BET_MIN;
   $: betValid = Number.isInteger(bet) && bet >= BET_MIN && bet <= betMax && bet <= balance;
   export let resultSource: 'demo' | 'live' = 'demo';
@@ -138,7 +140,26 @@
     if (busy || motion === 'resolving' || ticker !== null) return;
     if (action === 'spin' && !betValid) return;
     startSpin();
+    sound.cue('spin');
     onAction(action, action === 'spin' ? { bet } : {});
+  }
+
+  // Звук: удар на каждый остановившийся барабан; исход — только после подтверждённой сетки,
+  // сила по выплате относительно ставки (возврат < ставки звучит нейтрально, docs/Sound-Design.md).
+  let heardReels = 0;
+  let heardSpin = 0;
+  $: cueReels(stoppedReels);
+  $: cueOutcome(showConfirmedGrid, spinSeq);
+  function cueReels(count: number) { if (count > heardReels) sound.cue('reel-stop'); heardReels = count; }
+  function cueOutcome(shown: boolean, seq: number) {
+    if (!shown || seq === 0 || seq === heardSpin) return;
+    heardSpin = seq;
+    const payout = slotOutcome?.payout ?? 0;
+    if (payout <= 0) return;
+    if (confirmedBet > 0 && payout >= confirmedBet * 20) sound.cue('win-big');
+    else if (confirmedBet > 0 && payout >= confirmedBet * 3) sound.cue('win');
+    else if (confirmedBet > 0 && payout >= confirmedBet) sound.cue('win-small');
+    else sound.cue('return');
   }
 
   function isWinningSymbol(reelIndex: number, symbolIndex: number) {

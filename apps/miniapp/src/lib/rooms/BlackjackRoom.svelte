@@ -3,6 +3,8 @@
   import { base } from '$app/paths';
 
   import BetPicker from '$lib/components/BetPicker.svelte';
+  import { MAX_BET } from '$lib/game/bets';
+  import { sound } from '$lib/audio/sound';
   import ResultBand from '$lib/components/ResultBand.svelte';
   import type { MotionState } from '$lib/game/motion';
   import type { RoomResult, RoomSnapshot } from '$lib/state/room.svelte';
@@ -16,10 +18,10 @@
   export let resultSource: 'demo' | 'live' = 'demo';
 
   const BET_MIN = 25;
-  // Своя ставка — до всего баланса (решение владельца 14.10.2026); сервер проверяет баланс.
+  // Своя ставка ограничена балансом и техническим потолком сервера.
   export let balance = 1000;
   const BET_PRESETS = [25, 50, 100, 250, 500].map((value) => ({ value }));
-  $: betMax = Math.max(BET_MIN, Math.floor(balance));
+  $: betMax = Math.max(BET_MIN, Math.min(MAX_BET, Math.floor(balance)));
 
   const RANK_ORDER = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
@@ -32,7 +34,8 @@
 
   const SUIT_GLYPH: Record<string, string> = { spades: '♠', clubs: '♣', hearts: '♥', diamonds: '♦' };
 
-  const DEALER_POOL = ['M4A1', 'UMP45', 'AK-12', 'RPK-16', 'HK416', 'WA2000'];
+  // Дилеры — куклы, у которых есть и портрет Deck A, и голос в пакете владельца.
+  const DEALER_POOL = ['HK416', 'G36', 'M4 SOPMOD II', 'Makarov', 'Mosin-Nagant', 'PPSh-41'];
 
   const OUTCOME_LABEL: Record<string, string> = {
     blackjack: 'Натуральный блэкджек · 3:2',
@@ -117,8 +120,23 @@
   let revealRound = -1;
   $: trackHole(holeShown, roundSeq);
   function trackHole(shown: boolean, round: number) {
-    if (previousHoleShown && !shown) revealRound = round;
+    if (previousHoleShown && !shown) { revealRound = round; sound.cue('flip'); }
     previousHoleShown = shown;
+  }
+
+  // Звук: карта на каждую новую карту на столе; итог и реплика дилера — после подтверждения.
+  let heardCards = 0;
+  let heardOutcome = '';
+  $: cueCards(playerFaces.length + dealerFaces.length + (holeShown ? 1 : 0));
+  $: cueOutcome(tableOutcome, roundSeq);
+  function cueCards(count: number) { if (count > heardCards) sound.cue('card'); heardCards = count; }
+  function cueOutcome(value: string, round: number) {
+    const key = `${round}:${value}`;
+    if (!value || key === heardOutcome) return;
+    heardOutcome = key;
+    if (value === 'win' || value === 'blackjack') { sound.cue(value === 'blackjack' ? 'win-big' : 'win'); sound.voice(dealerName, 'dealer_lose'); }
+    else if (value === 'loss') { sound.cue('lose'); sound.voice(dealerName, 'dealer_win'); }
+    else sound.cue('return');
   }
 
   let bet = 25;
@@ -127,6 +145,8 @@
   $: betValid = Number.isInteger(bet) && bet >= BET_MIN && bet <= betMax && bet <= balance;
   $: canSendDeal = canDeal && betValid && !busy;
 
+  // Дилер здоровается при входе в комнату (если звук включён).
+  onMount(() => { const timer = setTimeout(() => sound.voice(dealerName, 'greet'), 600); return () => clearTimeout(timer); });
   onMount(() => {
     if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
       reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -175,6 +195,7 @@
 
   function deal() {
     if (!canSendDeal) return;
+    sound.cue('confirm');
     onAction('deal', { bet });
   }
 
@@ -314,7 +335,7 @@
         inputTestId="blackjack-bet"
       />
       {#if !betValid}
-        <p class="bet-hint" role="alert">Ставка — целое число от {BET_MIN} до {betMax} JG (ваш баланс).</p>
+        <p class="bet-hint" role="alert">Ставка — целое число от {BET_MIN} до {betMax} JG (лимит с учётом баланса).</p>
       {/if}
       </details>
       <button

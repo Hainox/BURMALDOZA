@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
 
   import HubLobby from '$lib/components/hub/HubLobby.svelte';
+  import { sound } from '$lib/audio/sound';
   import { cubicOut } from 'svelte/easing';
 
   import RoomShell from '$lib/components/RoomShell.svelte';
@@ -200,6 +201,8 @@
     clearTimers();
     isRunning = false;
     selectedGame = gameType;
+    // Музыка сцены переключается вместе с комнатой (явно, без реактивных $: — они сбивали порядок обновлений).
+    sound.setScene(gameType);
     demoFreeSpinsRemaining = 0;
     demoBlackjack = null;
     const definition = roomDefinitions.find((room) => room.gameType === gameType);
@@ -217,6 +220,7 @@
         session.setConnection('connected');
       } catch (error) {
         selectedGame = null;
+        sound.setScene('hub');
         session.setConnection('offline');
         apiError = error instanceof Error ? error.message : 'Не удалось открыть комнату';
       } finally {
@@ -607,10 +611,13 @@
     isRunning = false;
     roomState.reset();
     selectedGame = null;
+    sound.setScene('hub');
     session.setConnection(liveApiEnabled ? 'connected' : 'demo');
   }
 
   onMount(() => {
+    sound.init();
+    sound.setScene('hub');
     const webApp = getTelegramWebApp();
     webApp.ready();
     webApp.expand();
@@ -633,7 +640,10 @@
     }
 
     motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const updateMotionPreference = () => session.setReducedMotion(motionQuery?.matches ?? false);
+    const updateMotionPreference = () => {
+      session.setReducedMotion(motionQuery?.matches ?? false);
+      sound.setReducedMotion(motionQuery?.matches ?? false);
+    };
     updateMotionPreference();
     motionQuery.addEventListener('change', updateMotionPreference);
 

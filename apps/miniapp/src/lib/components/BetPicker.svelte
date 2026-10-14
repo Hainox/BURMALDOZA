@@ -3,6 +3,7 @@
 </script>
 
 <script lang="ts">
+  import { sound } from '$lib/audio/sound';
   // Выбор суммы: пять стандартных вариантов и отдельно своя сумма — слайдер и ввод до max.
   // Только интерфейс: допустимость суммы и списание проверяет сервер.
   export let value: number;
@@ -26,7 +27,7 @@
   $: rangeValue = Number.isFinite(value) ? Math.min(top, Math.max(min, value)) : min;
 
   function pick(next: number) {
-    if (!disabled && next <= top) value = next;
+    if (!disabled && next <= top) { value = next; sound.cue('tap'); }
   }
 
   function slide(event: Event) {

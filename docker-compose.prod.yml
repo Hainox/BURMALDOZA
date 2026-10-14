@@ -129,6 +129,8 @@ services:
     volumes:
       - caddy_data:/data
       - caddy_config:/config
+      # Звуковой пакет из игр живёт только на сервере (не в публичном репозитории): /audio/*.
+      - /srv/burmaldoza-audio:/srv/audio:ro
     depends_on:
       api:
         condition: service_healthy
@@ -142,7 +144,7 @@ configs:
   caddyfile:
     # Let's Encrypt certificates are issued automatically once DNS points at the server.
     # /api/* (incl. the WebSocket /api/v1/rooms/{id}/events) and /health* go to the API,
-    # everything else to the Mini App. No X-Frame-Options: Telegram Web embeds the Mini App.
+    # /audio/* is served from the server-only sound pack, everything else to the Mini App. No X-Frame-Options: Telegram Web embeds the Mini App.
     content: |
       burmaldoza.ru {
         encode zstd gzip
@@ -158,6 +160,13 @@ configs:
 
           @api path /api/* /health /health/*
           reverse_proxy @api api:8000
+
+          # Звуки Mini App: файлы с сервера, нет файла — 404 (клиент молча остаётся без звука).
+          @audio path /audio/*
+          header @audio Cache-Control "public, max-age=604800"
+          uri @audio strip_prefix /audio
+          root @audio /srv/audio
+          file_server @audio
           reverse_proxy miniapp:8080
         }
       }

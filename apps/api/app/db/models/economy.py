@@ -3,7 +3,17 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Integer, String, Uuid, func
+from sqlalchemy import (
+    BigInteger,
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Uuid,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from . import Base
@@ -14,7 +24,7 @@ class Wallet(Base):
     __table_args__ = (CheckConstraint("balance >= 0", name="ck_wallets_balance_non_negative"),)
 
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
-    balance: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    balance: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     welcome_granted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     daily_bonus_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -47,8 +57,8 @@ class LedgerEntry(Base):
         ForeignKey("wallet_operations.id", ondelete="RESTRICT"), nullable=False
     )
     wallet_id: Mapped[int] = mapped_column(ForeignKey("wallets.user_id", ondelete="CASCADE"), nullable=False)
-    amount_delta: Mapped[int] = mapped_column(Integer, nullable=False)
-    balance_after: Mapped[int] = mapped_column(Integer, nullable=False)
+    amount_delta: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    balance_after: Mapped[int] = mapped_column(BigInteger, nullable=False)
     reason: Mapped[str] = mapped_column(String(64), nullable=False)
     reference_type: Mapped[str] = mapped_column(String(64), nullable=False)
     reference_id: Mapped[UUID | None] = mapped_column(Uuid(as_uuid=True), nullable=True)
