@@ -98,11 +98,6 @@
   $: playerTotal = intOrNull(ps.player_total);
   $: dealerTotal = 'dealer_total' in ps ? intOrNull(ps.dealer_total) : null;
   $: walletBalance = intOrNull(ps.wallet_balance);
-  $: ruleset =
-    typeof ps.ruleset_version === 'string'
-      ? (ps.ruleset_version as string)
-      : (snapshot?.rulesetVersion ?? 'blackjack-gfl-skeleton-1');
-  $: stateVersion = snapshot?.stateVersion ?? 0;
 
   // Номер раздачи: сервер его не присылает, считаем по входу в новую игру из ожидания/итога.
   // Карты привязаны к нему ключом — на каждой раздаче они монтируются заново и снова «прилетают».
@@ -190,8 +185,6 @@
 >
   <div class="room-intro">
     <div>
-      <span class="room-kicker">GFL POST-COLLAPSE · SECTOR 09 PERIMETER</span>
-      <h2>Blackjack</h2>
       <p>{isDemo ? 'Заброшенный корпус за полицейским периметром. Демо-раздачу и результат показывает клиент.' : 'Заброшенный корпус за полицейским периметром. Раздаёт только сервер.'}</p>
     </div>
     <span class="bet-chip" data-testid="blackjack-wallet">
@@ -343,7 +336,6 @@
   {/if}
 
   <div class="bj-status" data-testid="blackjack-status" aria-live="polite">
-    <span>PHASE {gamePhase} · {ruleset} · v{stateVersion}</span>
     <strong>
       {busy
         ? isDemo ? 'Ход демо-раунда' : 'Ожидаем сервер…'
@@ -383,14 +375,14 @@
 
 <style>
   .game-room { position: relative; z-index: 1; display: grid; gap: 14px; }
-  .room-intro { display: flex; justify-content: space-between; gap: 18px; }
-  .room-kicker { color: #78d3a2; font-size: 9px; font-weight: 800; letter-spacing: 0.13em; }
-  h2 { margin: 6px 0 5px; font-size: clamp(27px, 8vw, 38px); letter-spacing: -0.06em; }
-  p { max-width: 250px; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
-  .bet-chip { height: fit-content; padding: 7px 9px; border: 1px solid rgb(142 228 182 / 30%); border-radius: 999px; color: #a4f0c4; font-size: 10px; font-weight: 800; white-space: nowrap; }
+  .room-intro { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+  p { max-width: 260px; margin: 0; color: #d6d0c8; font-size: 12px; line-height: 1.45; text-shadow: 0 1px 6px rgb(0 0 0 / 80%); }
+  .bet-chip { height: fit-content; padding: 7px 10px; border: 1px solid rgb(142 228 182 / 40%); border-radius: 999px; background: rgb(6 20 18 / 70%); color: #a4f0c4; font-size: 10px; font-weight: 800; white-space: nowrap; backdrop-filter: blur(8px); }
   .perimeter-tape { overflow: hidden; border-radius: 8px; background: repeating-linear-gradient(-45deg, #e7bb70 0 14px, #14141c 14px 28px); padding: 3px; }
   .perimeter-tape span { display: block; padding: 5px 10px; border-radius: 6px; background: rgb(11 11 17 / 88%); color: #e7bb70; font-size: 9px; font-weight: 800; letter-spacing: 0.16em; text-align: center; }
-  .felt-table { position: relative; display: grid; align-content: space-between; gap: 14px; min-height: 368px; overflow: hidden; padding: 25px 20px; border: 1px solid rgb(142 228 182 / 32%); border-radius: 42% / 18%; background: radial-gradient(ellipse at 50% 18%, rgb(58 74 92 / 55%), transparent 55%), radial-gradient(ellipse at center, #174a40, #0a2829 72%); box-shadow: inset 0 0 40px rgb(0 0 0 / 40%), 0 18px 42px rgb(0 0 0 / 25%); }
+  .felt-table { position: relative; display: grid; align-content: space-between; gap: 14px; min-height: 368px; overflow: hidden; padding: 25px 20px; border: 1px solid rgb(142 228 182 / 38%); border-radius: 42% / 18%; background: radial-gradient(ellipse at 50% 18%, rgb(58 74 92 / 45%), transparent 55%), radial-gradient(ellipse at center, rgb(23 74 64 / 88%), rgb(10 40 41 / 92%) 72%); box-shadow: inset 0 0 40px rgb(0 0 0 / 40%), 0 0 0 1px rgb(0 0 0 / 30%), 0 18px 50px rgb(0 0 0 / 55%), 0 0 60px rgb(64 196 150 / 14%); backdrop-filter: blur(6px); }
+  /* Медленный блик по сукну — как живой свет лампы над столом. */
+  .felt-table::after { content: ''; position: absolute; inset: -40% -60%; background: linear-gradient(105deg, transparent 42%, rgb(255 240 200 / 7%) 50%, transparent 58%); animation: feltSheen 9s ease-in-out infinite; pointer-events: none; }
   .table-orbit { position: absolute; inset: 16px; border: 1px solid rgb(142 228 182 / 12%); border-radius: 42% / 20%; pointer-events: none; }
   .orbit-two { inset: 28px; border-color: rgb(231 187 112 / 12%); }
   .dealer-line { position: relative; z-index: 1; display: flex; align-items: center; gap: 9px; justify-self: center; padding: 6px 12px 6px 6px; border: 1px solid rgb(255 247 237 / 16%); border-radius: 999px; background: rgb(11 11 17 / 55%); color: rgb(255 247 237 / 80%); font-size: 9px; font-weight: 800; letter-spacing: 0.12em; }
@@ -426,16 +418,18 @@
   .total { color: rgb(255 247 237 / 72%); font-size: 13px; font-weight: 800; }
   .total.bright { color: var(--brass-300); }
   .table-mark { position: absolute; top: 50%; left: 50%; color: rgb(231 187 112 / 15%); font-size: 58px; font-weight: 800; transform: translate(-50%, -50%); }
-  .bet-panel { --bet-accent: var(--brass-300); --bet-line: var(--line); --bet-ink: var(--ivory); display: grid; gap: 10px; padding: 13px 14px; border: 1px solid var(--line); border-radius: var(--radius-md); background: rgb(255 247 237 / 4%); }
+  .bet-panel { --bet-accent: var(--brass-300); --bet-line: rgb(255 247 237 / 16%); --bet-ink: var(--ivory); display: grid; gap: 10px; padding: 14px; border: 1px solid rgb(231 187 112 / 26%); border-radius: 20px; background: rgb(10 12 16 / 72%); backdrop-filter: blur(12px); box-shadow: 0 14px 40px rgb(0 0 0 / 45%); }
   .bet-hint { max-width: none; color: #ff9cae; font-size: 11px; }
   .deal-action { min-height: 52px; border: 0; border-radius: 15px; background: linear-gradient(120deg, var(--brass-300), #c98f4e); color: #2a1820; font: inherit; font-size: 14px; font-weight: 850; cursor: pointer; }
   .deal-action:disabled { cursor: not-allowed; filter: saturate(0.6); opacity: 0.75; }
   .action-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .action-grid button { min-height: 54px; border: 1px solid var(--line); border-radius: 13px; background: rgb(255 247 237 / 6%); color: var(--ivory); font-weight: 800; font-size: 13px; cursor: pointer; transition: transform 160ms ease, border-color 160ms ease; }
+  .action-grid button { min-height: 58px; border: 1px solid rgb(255 247 237 / 18%); border-radius: 16px; background: rgb(10 12 16 / 72%); color: var(--ivory); font-weight: 800; font-size: 14px; letter-spacing: .04em; cursor: pointer; backdrop-filter: blur(10px); transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease; }
+  .action-grid button:hover:not(:disabled) { transform: translateY(-2px); border-color: rgb(231 187 112 / 60%); box-shadow: 0 6px 22px rgb(213 144 59 / 28%); }
+  .action-grid button:active:not(:disabled) { transform: translateY(1px) scale(.97); }
   .action-grid button small { display: block; color: var(--muted); font-size: 9px; font-weight: 700; }
   .action-grid button:disabled { cursor: wait; opacity: 0.65; }
-  .action-grid .action-primary { border-color: rgb(231 187 112 / 55%); }
-  .bj-status { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+  .action-grid .action-primary { border-color: rgb(231 187 112 / 70%); background: linear-gradient(180deg, rgb(239 192 107 / 22%), rgb(10 12 16 / 75%)); box-shadow: 0 0 18px rgb(213 144 59 / 22%); }
+  .bj-status { display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
   .bj-status strong { color: var(--brass-300); }
   .demo-note { max-width: none; padding: 10px 12px; border: 1px dashed rgb(231 187 112 / 48%); border-radius: 12px; background: rgb(231 187 112 / 8%); color: var(--brass-300); font-size: 11px; font-weight: 800; line-height: 1.45; }
   .bj-error { max-width: none; padding: 11px 12px; border: 1px solid rgb(255 156 174 / 45%); border-radius: 12px; background: rgb(255 156 174 / 8%); color: #ffc2cd; font-size: 11px; line-height: 1.45; }
@@ -449,13 +443,13 @@
   .settle-balance { color: var(--success); font-size: 9px; font-weight: 800; letter-spacing: 0.1em; }
   .rules-line { max-width: none; color: var(--muted); font-size: 10px; letter-spacing: 0.04em; }
   button:focus-visible { outline: 2px solid var(--brass-300); outline-offset: 3px; }
+  @keyframes feltSheen { 0%, 100% { transform: translateX(-30%); } 50% { transform: translateX(30%); } }
   @keyframes dealCard {
     from { opacity: 0; transform: translate3d(0, calc(-22px + var(--card-offset)), 0) rotate(calc(var(--card-rotation) - 8deg)) scale(0.92); }
     to { opacity: 1; transform: translate3d(0, var(--card-offset), 0) rotate(var(--card-rotation)) scale(1); }
   }
   @media (max-width: 390px) {
     .playing-card { width: 96px; }
-    .action-grid { grid-template-columns: 1fr; }
   }
   @media (min-width: 720px) {
     .playing-card { width: 118px; }
@@ -463,5 +457,6 @@
   @media (prefers-reduced-motion: reduce) {
     .playing-card { animation: none; }
     .action-grid button { transition: none; }
+    .felt-table::after { animation: none; }
   }
 </style>

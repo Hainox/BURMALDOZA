@@ -644,7 +644,7 @@
 <div class="app-shell" class:hub-mode={!selectedGame || !roomState.snapshot}>
   {#if selectedGame && roomState.snapshot}
     <div class="room-entry" in:fade={{duration:session.reducedMotion || hubMotionPaused ? 0 : 180}}>
-    <RoomShell room={roomState.snapshot} connection={session.connection} motion={roomState.motion} onBack={backToRooms} onResync={resync}>
+    <RoomShell room={roomState.snapshot} theme={selectedGame} connection={session.connection} motion={roomState.motion} balance={session.balance} quiet={session.reducedMotion || hubMotionPaused} onBack={backToRooms} onResync={resync}>
       {#if selectedGame === 'slot'}
         <SlotRoom motion={roomState.motion} result={roomState.result} busy={isRunning} balance={session.balance} onAction={runAction} resultSource={liveApiEnabled ? 'live' : 'demo'} rulesetVersion={roomState.snapshot.rulesetVersion} publicState={roomState.snapshot.publicState} />
       {:else if selectedGame === 'blackjack'}
@@ -675,10 +675,6 @@
         </svelte:fragment>
       </HubLobby>
     </div>
-  {/if}
-  {#if selectedGame && roomState.snapshot}
-  <Leaderboard apiClient={ledgerReady ? apiClient : null} live={liveApiEnabled} revision={ledgerRevision} />
-  <LedgerHistory apiClient={ledgerReady ? apiClient : null} live={liveApiEnabled} revision={ledgerRevision} />
   {/if}
 </div>
 
