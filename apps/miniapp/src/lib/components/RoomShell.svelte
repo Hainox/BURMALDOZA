@@ -82,7 +82,7 @@
   /* Slot Siege: тактический холод, дым и медленные лучи прожекторов. */
   .theme-slot .scene { background: radial-gradient(120% 70% at 50% 0%, #1d2a33 0%, #0b1116 55%, #06090c 100%); }
   .theme-slot .fx-a { inset: -30% -60%; background: conic-gradient(from 180deg at 50% 0%, transparent 0deg, rgb(205 228 240 / 10%) 8deg, transparent 18deg, transparent 340deg, rgb(205 228 240 / 8%) 350deg, transparent 360deg); animation: searchlight 14s ease-in-out infinite alternate; transform-origin: 50% 0%; }
-  .theme-slot .fx-b { background: radial-gradient(60% 30% at 20% 85%, rgb(170 190 200 / 12%), transparent 70%), radial-gradient(55% 28% at 80% 75%, rgb(170 190 200 / 10%), transparent 70%); filter: blur(18px); animation: smoke 22s ease-in-out infinite alternate; }
+  .theme-slot .fx-b { background: radial-gradient(60% 30% at 20% 85%, rgb(170 190 200 / 12%), transparent 70%), radial-gradient(55% 28% at 80% 75%, rgb(170 190 200 / 10%), transparent 70%); animation: smoke 22s ease-in-out infinite alternate; }
 
   /* Hold'em: ворота Камуро-тё, мерцающий неон. */
   .theme-holdem .backdrop { object-position: 50% 40%; opacity: .62; filter: blur(2px) saturate(1.1); transform: scale(1.06); }

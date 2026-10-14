@@ -325,12 +325,12 @@
   @media (max-width: 390px) { .free-spins-panel { align-items: stretch; flex-direction: column; } .free-spin-action { width: 100%; } }
   @media (prefers-reduced-motion: reduce) { .reel.travel, .reel.landing, .reel.landed, .symbol.winning, .machine-lights i { animation: none; } .reel-track { transition: none; } }
 
-  /* Siege в стиле хаба: стекло поверх тактической сцены, холодное свечение, луч сканера. */
-  .siege { background: rgb(10 15 19 / 72%); border-color: rgb(116 138 151 / 55%); border-radius: 18px; backdrop-filter: blur(12px); box-shadow: 0 18px 50px rgb(0 0 0 / 50%), 0 0 40px rgb(190 208 220 / 8%); }
+  /* Siege в стиле хаба: стекло поверх тактической сцены, холодное свечение рамки и луч сканера.
+     Без backdrop-filter и анимированного blur: они срывали плавность вращения барабанов. */
+  .siege { background: rgb(10 15 19 / 86%); border-color: rgb(116 138 151 / 55%); border-radius: 18px; box-shadow: 0 18px 50px rgb(0 0 0 / 50%), 0 0 40px rgb(190 208 220 / 8%); }
   .siege .room-intro p { color: #c3d0d8; }
-  .siege .slot-machine { box-shadow: inset 0 -80px 60px -60px #c3d5de44, 0 0 0 1px rgb(190 208 220 / 18%), 0 0 36px rgb(190 208 220 / 12%); transition: box-shadow .4s ease; }
-  .siege .slot-machine.resolving, .siege .slot-machine:not([data-slot-phase='idle']):not([data-slot-phase='settled']) { box-shadow: inset 0 -80px 60px -60px #c3d5de55, 0 0 0 1px rgb(222 239 255 / 45%), 0 0 46px rgb(190 220 240 / 28%); }
-  .siege .slot-machine::after { content: ''; position: absolute; inset: 0; z-index: 3; background: linear-gradient(180deg, transparent 0%, rgb(222 239 255 / 14%) 48%, transparent 52%); opacity: 0; pointer-events: none; }
+  .siege .slot-machine { box-shadow: inset 0 -80px 60px -60px #c3d5de44, 0 0 0 1px rgb(190 208 220 / 22%), 0 0 36px rgb(190 208 220 / 14%); }
+  .siege .slot-machine::after { content: ''; position: absolute; inset: 0; z-index: 3; background: linear-gradient(180deg, transparent 0%, rgb(222 239 255 / 14%) 48%, transparent 52%); opacity: 0; pointer-events: none; will-change: transform; }
   .siege .slot-machine:not([data-slot-phase='idle']):not([data-slot-phase='settled'])::after { opacity: 1; animation: scan 1.1s linear infinite; }
   .siege .slot-meta { justify-content: center; }
   .lines-chip { padding: 5px 10px; border: 1px solid rgb(190 208 220 / 30%); border-radius: 999px; color: #d1dce3; font-size: 9px; letter-spacing: .1em; }
