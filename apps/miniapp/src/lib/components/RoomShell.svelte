@@ -101,14 +101,14 @@
 
   /* Шапка в стиле хаба. */
   .room-topbar { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding-top: env(safe-area-inset-top); }
-  .back { display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid #b8955d; border-radius: 50%; background: #0a0e14c9; cursor: pointer; transition: transform .2s ease, background .2s ease; }
+  .back { display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid #b8955d; border-radius: 50%; background: #0a0e14c9; cursor: pointer; transition: transform .2s ease, opacity .2s ease; }
   .back img { transform: rotate(180deg); }
   .back:hover { background: #241b13; transform: translateX(-2px); }
   .back:active { transform: scale(.94); }
   .room-heading { min-width: 0; }
   .room-heading span { display: block; color: #f8d38b; font-size: 9px; font-weight: 700; letter-spacing: .2em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   h1 { margin: 3px 0 0; color: #fff1ca; font: 500 clamp(22px, 6.6vw, 30px)/1.05 Georgia, 'Times New Roman', serif; letter-spacing: -.03em; }
-  .balance { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 12px 6px 10px; border: 1px solid #b8955d; border-radius: 22px; background: #0c0f16e6; color: #fff4d9; cursor: pointer; transition: transform .2s ease, box-shadow .2s ease; }
+  .balance { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 12px 6px 10px; border: 1px solid #b8955d; border-radius: 22px; background: #0c0f16e6; color: #fff4d9; cursor: pointer; transition: transform .2s ease, opacity .2s ease; }
   .balance:hover { box-shadow: 0 0 18px #d5903b44; }
   .balance:active { transform: scale(.97); }
   .balance > span { display: grid; gap: 3px; text-align: left; }

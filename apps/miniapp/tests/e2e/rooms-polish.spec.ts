@@ -125,12 +125,14 @@ for (const game of ['slot', 'blackjack', 'holdem'] as const) {
     await page.setViewportSize({ width: 320, height: 844 });
     await roomFixture(page, game);
     await page.goto('/');
+    await expect(page.getByTestId('balance-pill')).toContainText('LIVE');
     await page.getByTestId('hub-motion-toggle').click();
+    await expect(page.getByTestId('dashboard')).toHaveAttribute('data-motion-paused', 'true');
     await openRoom(page, game);
     await expect(page.getByTestId('room-shell')).toHaveClass(/quiet/);
     expect(await page.locator('.scene .backdrop').evaluate(node => getComputedStyle(node).animationName)).toBe('none');
     for (const img of await page.locator('.scene img').all()) {
-      expect(await img.evaluate(node => (node as HTMLImageElement).complete && (node as HTMLImageElement).naturalWidth > 0)).toBe(true);
+      await expect.poll(() => img.evaluate(node => (node as HTMLImageElement).complete && (node as HTMLImageElement).naturalWidth > 0)).toBe(true);
     }
     if (game === 'slot') {
       await page.getByTestId('slot-spin').click();

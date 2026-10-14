@@ -442,7 +442,7 @@
   .deal-action { min-height: 52px; border: 0; border-radius: 15px; background: linear-gradient(120deg, var(--brass-300), #c98f4e); color: #2a1820; font: inherit; font-size: 14px; font-weight: 850; cursor: pointer; }
   .deal-action:disabled { cursor: not-allowed; filter: saturate(0.6); opacity: 0.75; }
   .action-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .action-grid button { min-height: 58px; border: 1px solid rgb(255 247 237 / 18%); border-radius: 16px; background: rgb(10 12 16 / 72%); color: var(--ivory); font-weight: 800; font-size: 14px; letter-spacing: .04em; cursor: pointer; backdrop-filter: blur(10px); transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease; }
+  .action-grid button { min-height: 58px; border: 1px solid rgb(255 247 237 / 18%); border-radius: 16px; background: rgb(10 12 16 / 72%); color: var(--ivory); font-weight: 800; font-size: 14px; letter-spacing: .04em; cursor: pointer; backdrop-filter: blur(10px); transition: transform 180ms ease, opacity 180ms ease; }
   .action-grid button:hover:not(:disabled) { transform: translateY(-2px); border-color: rgb(231 187 112 / 60%); box-shadow: 0 6px 22px rgb(213 144 59 / 28%); }
   .action-grid button:active:not(:disabled) { transform: translateY(1px) scale(.97); }
   .action-grid button small { display: block; color: var(--muted); font-size: 9px; font-weight: 700; }
