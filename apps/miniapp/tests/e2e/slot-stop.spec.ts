@@ -189,7 +189,7 @@ test.describe('Slot v2 stop continuity', () => {
 
     await spin.click();
     await expect(machine).toHaveAttribute('data-slot-phase', 'spinning', { timeout: 2_000 });
-    await expect(status).toContainText('TRAVEL');
+    await expect(status).toContainText('Барабаны вращаются');
     await expect(spin).toBeDisabled();
     await expect(spin).toContainText('Барабаны останавливаются');
 
@@ -199,7 +199,7 @@ test.describe('Slot v2 stop continuity', () => {
     expect(seqAfterSecondTap).toBe(seqBefore === null ? '1' : String(Number(seqBefore) + 1));
 
     await expect(machine).toHaveAttribute('data-slot-phase', 'settled', { timeout: 5_000 });
-    await expect(status).toContainText('SETTLED');
+    await expect(status).toContainText('Итог');
     await expect(spin).toBeEnabled();
   });
 
@@ -320,7 +320,7 @@ test.describe('Slot v2 stop continuity', () => {
     await openRoom(page, 'slot');
     await expect(page.getByTestId('room-shell')).toBeVisible();
     await expect(page.locator('.slot-room')).toContainText('Полная прокрутка барабанов. Сервер подтверждает сетку, клиент показывает движение.');
-    await expect(page.getByTestId('slot-status')).toContainText('READY · SERVER-FIRST');
+    await expect(page.getByTestId('slot-status')).toContainText('Готово · LIVE');
     await page.getByTestId('slot-spin').click();
     await expect(page.getByTestId('result-band')).toContainText('RESOLVING · SERVER RESULT');
     await expect(page.getByTestId('slot-machine')).toHaveAttribute('data-stopped-reels', '3', { timeout: 5_000 });
@@ -328,7 +328,7 @@ test.describe('Slot v2 stop continuity', () => {
     await expect(page.getByTestId('result-band')).toContainText('+20 JG');
     await expect(page.getByTestId('slot-confirmed-grid')).toBeVisible();
     await expect(page.getByTestId('slot-confirmed-grid')).toContainText('SERVER GRID CONFIRMED');
-    await expect(page.getByTestId('slot-status')).toContainText('SETTLED · SERVER GRID');
+    await expect(page.getByTestId('slot-status')).toContainText('Итог подтверждён сервером');
     await expect(page.getByTestId('confirmed-balance')).toContainText('BALANCE 1010 JG');
 
     await page.getByTestId('resync-button').click();

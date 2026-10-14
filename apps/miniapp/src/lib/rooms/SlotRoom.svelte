@@ -63,6 +63,7 @@
   let elapsedMs = 0;
   let startedAt = 0;
   let spinSeq = 0;
+  let spinBet = BET_MIN;
   let reducedMotion = false;
   let reelOffsets = [0, 0, 0];
   let ticker: number | null = null;
@@ -81,6 +82,9 @@
   $: winningRows = slotOutcome?.winningRows ?? [];
   // A reconnect snapshot may restore parent motion while the local reels still travel.
   $: showConfirmedGrid = Boolean(slotOutcome) && (slotPhase === 'settled' || (spinSeq === 0 && (motion === 'outcome' || motion === 'settle')));
+  // При reconnect ставка восстанавливается из подтверждённых gross/net, не из текущего поля ввода.
+  $: confirmedBet = typeof lastResult === 'object' && lastResult !== null && 'net_delta' in lastResult && typeof lastResult.net_delta === 'number' && slotOutcome
+    ? slotOutcome.payout - lastResult.net_delta : spinBet;
   $: if (spinSeq === 0 && slotOutcome && (motion === 'outcome' || motion === 'settle')) renderFrame(SLOT_SPIN_DURATION);
   $: sectionReelPhase = slotPhase === 'settled' ? 'outcome' : slotPhase;
   $: isSpinning = slotPhase !== 'idle' && slotPhase !== 'settled';
@@ -113,6 +117,7 @@
   function startSpin() {
     cancelTicker();
     spinSeq += 1;
+    spinBet = bet;
     frozenOperation = knownOperation(publicState.operation_id) ? publicState.operation_id : 'op1';
     frozenMetadata = {...publicState};
     reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -150,18 +155,18 @@
   $: isLive = resultSource === 'live';
 
   function phaseLabel(phase: SlotPhase) {
-    if (phase === 'spinning') return 'TRAVEL · 60 FPS';
-    if (phase === 'stopping-left') return 'LANDING · LEFT REEL';
-    if (phase === 'stopping-center') return 'LANDING · CENTER REEL';
-    if (phase === 'stopping-right') return 'LANDING · RIGHT REEL';
-    if (phase === 'settled') return isLive ? 'SETTLED · SERVER GRID' : 'SETTLED · DEMO GRID';
-    return isLive ? 'READY · SERVER-FIRST' : 'READY · DEMO';
+    if (phase === 'spinning') return 'Барабаны вращаются';
+    if (phase === 'stopping-left') return 'Останавливается левый';
+    if (phase === 'stopping-center') return 'Останавливается средний';
+    if (phase === 'stopping-right') return 'Останавливается правый';
+    if (phase === 'settled') return isLive ? 'Итог подтверждён сервером' : 'Итог демо · без сервера';
+    return isLive ? 'Готово · LIVE' : 'Готово · DEMO';
   }
 
   onDestroy(cancelTicker);
 </script>
 
-<div class="game-room slot-room" class:siege={isSiege}>
+<div class="game-room slot-room" class:siege={isSiege} class:has-result={Boolean(result)}>
   <div class="room-intro">
     <div>
       {#if !isSiege}<span class="room-kicker">THREE REELS · SEVEN ROWS</span>
@@ -181,8 +186,12 @@
     data-spin-duration={SLOT_SPIN_DURATION}
     data-spin-seq={spinSeq}
     data-testid="slot-machine"
+    data-big-win={showConfirmedGrid && confirmedBet > 0 && (slotOutcome?.payout ?? 0) >= confirmedBet * 20}
     aria-label="Слот 3 на 7"
   >
+    {#if showConfirmedGrid && confirmedBet > 0 && (slotOutcome?.payout ?? 0) >= confirmedBet * 20}
+      {#key spinSeq}<div class="big-win" aria-hidden="true"><span>КРУПНЫЙ ВЫИГРЫШ</span><i></i><i></i><i></i></div>{/key}
+    {/if}
     <div class="machine-rim" aria-hidden="true"></div>
     <div class="reel-grid">
       {#each reelTracks as track, reelIndex}
@@ -235,7 +244,7 @@
     <div class="payline" class:visible={showConfirmedGrid && !isSiege} data-testid="slot-payline" aria-hidden="true"></div>
     {#if showConfirmedGrid}
       <div class="confirmed-grid" data-testid="slot-confirmed-grid" aria-live="polite">
-        <span>{isLive ? 'SERVER GRID CONFIRMED' : 'DEMO GRID · CLIENT RESULT'}</span>
+        <span>{isLive ? 'SERVER GRID CONFIRMED' : 'ДЕМО · исход без сервера'}</span>
         <strong>{slotOutcome?.winningLines?.length ?? slotOutcome?.winningRows.length ?? 0} PAYLINE{(slotOutcome?.winningLines?.length ?? slotOutcome?.winningRows.length ?? 0) === 1 ? '' : 'S'}</strong>
       </div>
     {/if}
@@ -244,10 +253,12 @@
 
   <div class="slot-status" data-testid="slot-status" aria-live="polite">
     <span>{phaseLabel(slotPhase)}</span>
-    <strong>{stoppedReels}/{reelBases.length} REELS LANDED</strong>
+    <strong>{stoppedReels}/{reelBases.length} остановлены</strong>
   </div>
 
   <div class="slot-meta">
+  {#if isSiege}<details class="sources"><summary>Источники изображений</summary><p>© Ubisoft Entertainment. Некоммерческий фанатский интерфейс по решению владельца; общая лицензия не заявляется.</p><a href={`${base}/slot/sources.json`} target="_blank" rel="noreferrer">Оперативники и источники портретов</a></details>{/if}
+
     <span class="lines-chip" data-testid="slot-lines"><b>LINES</b> {activeLines} active</span>
   </div>
 
@@ -263,19 +274,19 @@
     </section>
   {/if}
 
-  <div class="slot-bet">
+  <details class="slot-bet" open={!isSiege}><summary>Ставка: {bet} JG <span>Изменить ▾</span></summary>
     <BetPicker bind:value={bet} min={BET_MIN} max={betMax} presets={BET_PRESETS} disabled={motion === 'resolving' || isSpinning} inputId="slot-bet" inputTestId="slot-bet" />
-  </div>
+  </details>
   <button class="primary-action" on:click={() => handleAction('spin')} disabled={busy || motion === 'resolving' || isSpinning || !betValid} data-testid="slot-spin">
     <span class="action-icon" aria-hidden="true">↻</span>
     {isSpinning ? 'Барабаны останавливаются…' : motion === 'resolving' ? (isLive ? 'Ждём сервер…' : 'Готовим демо…') : betValid ? `Крутить за ${bet} JG` : 'Выберите ставку'}
   </button>
   <ResultBand {result} {motion} source={resultSource} />
-  {#if isSiege}<details class="sources"><summary>Источники изображений</summary><p>© Ubisoft Entertainment. Некоммерческий фанатский интерфейс по решению владельца; общая лицензия не заявляется.</p><a href={`${base}/slot/sources.json`} target="_blank" rel="noreferrer">Оперативники и источники портретов</a></details>{/if}
+
 </div>
 
 <style>
-  .siege{--siege-ice:#bed0dc;background:#0c1115;padding:12px;color:#e9eff3;border:1px solid #748a97;padding-bottom:max(12px,env(safe-area-inset-bottom))}.siege h2{font-weight:300;letter-spacing:.12em;text-transform:uppercase}.siege .room-kicker,.siege .bet-chip,.siege .slot-status strong{color:var(--siege-ice)}.siege .slot-machine{border-color:#687c87;border-radius:4px;background:radial-gradient(ellipse at 50% 0,#8babb633,transparent 65%),linear-gradient(110deg,#ffffff09,transparent 30%,#ffffff09 65%,transparent),#10171c;box-shadow:inset 0 -80px 60px -60px #c3d5de44}.siege .machine-rim,.siege .reel{border-color:#748794;border-radius:2px}.siege .symbol{border-radius:2px;background:#070d11;overflow:hidden}.operator-face{width:100%;height:100%;object-fit:contain;filter:grayscale(1);transition:filter .2s}.winning .operator-face{filter:none}.siege .symbol.winning{background:#344a56;color:#fff;box-shadow:0 0 12px #d5e8f266}.siege .primary-action{border-radius:3px;background:#d1dce3;color:#10171c;box-shadow:none}.siege .machine-lights i{background:#b9d1de}.beams{position:absolute;top:62px;left:10px;width:calc(100% - 20px);height:calc(7 * (clamp(34px,8vw,52px) + 6px) - 6px);pointer-events:none;filter:drop-shadow(0 0 5px #deefff);z-index:2}.beams polyline{fill:none;stroke:#ecf6fc;stroke-width:2;stroke-dasharray:700;stroke-dashoffset:700;animation:beam .6s ease forwards}.sources{font-size:11px;color:#d1dce3}.sources summary{min-height:44px;display:flex;align-items:center;cursor:pointer}.sources a{color:#c7e5f4}.sources p{margin:8px 0}.siege button:focus-visible,.sources a:focus-visible,.sources summary:focus-visible{outline:3px solid #fff;outline-offset:3px}@keyframes beam{to{stroke-dashoffset:0}}@media(prefers-reduced-motion:reduce){.beams polyline{animation:none;stroke-dashoffset:0}.operator-face{transition:none}}
+  .siege{--siege-ice:#bed0dc;background:#0c1115;padding:12px;color:#e9eff3;border:1px solid #748a97;padding-bottom:max(12px,env(safe-area-inset-bottom))}.siege h2{font-weight:300;letter-spacing:.12em;text-transform:uppercase}.siege .room-kicker,.siege .bet-chip,.siege .slot-status strong{color:var(--siege-ice)}.siege .slot-machine{border-color:#687c87;border-radius:4px;background:radial-gradient(ellipse at 50% 0,#8babb633,transparent 65%),linear-gradient(110deg,#ffffff09,transparent 30%,#ffffff09 65%,transparent),#10171c;box-shadow:inset 0 -80px 60px -60px #c3d5de44}.siege .machine-rim,.siege .reel{border-color:#748794;border-radius:2px}.siege .symbol{border-radius:2px;background:#070d11;overflow:hidden}.operator-face{width:100%;height:100%;object-fit:contain;filter:grayscale(1);transition:none}.winning .operator-face{filter:none}.siege .symbol.winning{background:#344a56;color:#fff;box-shadow:0 0 12px #d5e8f266}.siege .primary-action{border-radius:3px;background:#d1dce3;color:#10171c;box-shadow:none}.siege .machine-lights i{background:#b9d1de}.beams{position:absolute;top:62px;left:10px;width:calc(100% - 20px);height:calc(7 * (clamp(34px,8vw,52px) + 6px) - 6px);pointer-events:none;filter:drop-shadow(0 0 5px #deefff);z-index:2}.beams polyline{fill:none;stroke:#ecf6fc;stroke-width:2;stroke-dasharray:700;stroke-dashoffset:0;animation:beam .6s ease forwards}.sources{font-size:11px;color:#d1dce3}.sources summary{min-height:44px;display:flex;align-items:center;cursor:pointer}.sources a{color:#c7e5f4}.sources p{margin:8px 0}.siege button:focus-visible,.sources a:focus-visible,.sources summary:focus-visible{outline:3px solid #fff;outline-offset:3px}@keyframes beam{from{opacity:0;transform:scaleX(.8)}to{opacity:1;transform:scaleX(1)}}@media(prefers-reduced-motion:reduce){.beams polyline{animation:none;stroke-dashoffset:0}.operator-face{transition:none}}
   .game-room { position: relative; z-index: 1; display: grid; gap: 18px; }
   .siege .reel-grid{position:relative}.siege .symbol.tone-brass,.siege .symbol.tone-pink{background:#070d11;color:#e9eff3}.siege .symbol.winning{background:#344a56}.siege .beams{top:8px;left:0;width:100%}
   .room-intro { display: flex; justify-content: space-between; gap: 18px; }
@@ -313,13 +324,13 @@
   .free-spins-panel > div { display: grid; gap: 4px; }
   .free-spins-kicker { color: var(--success); font-size: 8px; font-weight: 800; letter-spacing: 0.12em; }
   .free-spins-panel strong { color: var(--ivory); font-size: 16px; }
-  .free-spin-action { min-height: 38px; padding: 0 12px; border: 1px solid rgb(142 228 182 / 42%); border-radius: 11px; background: rgb(142 228 182 / 12%); color: var(--success); font: inherit; font-size: 11px; font-weight: 800; cursor: pointer; transition: transform 160ms ease, background 160ms ease; }
+  .free-spin-action { min-height: 38px; padding: 0 12px; border: 1px solid rgb(142 228 182 / 42%); border-radius: 11px; background: rgb(142 228 182 / 12%); color: var(--success); font: inherit; font-size: 11px; font-weight: 800; cursor: pointer; transition: transform 160ms ease, opacity 160ms ease; }
   .free-spin-action:hover { transform: translateY(-1px); background: rgb(142 228 182 / 19%); }
-  .primary-action { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; border: 0; border-radius: 15px; background: linear-gradient(120deg, var(--brass-300), #c98f4e); color: #2a1820; font: inherit; font-size: 14px; font-weight: 850; cursor: pointer; box-shadow: 0 10px 24px rgb(231 187 112 / 18%); transition: transform 160ms ease, filter 160ms ease; }
+  .primary-action { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; border: 0; border-radius: 15px; background: linear-gradient(120deg, var(--brass-300), #c98f4e); color: #2a1820; font: inherit; font-size: 14px; font-weight: 850; cursor: pointer; box-shadow: 0 10px 24px rgb(231 187 112 / 18%); transition: transform 160ms ease, opacity 160ms ease; }
   .primary-action:hover { filter: brightness(1.06); transform: translateY(-2px); } .primary-action:active { transform: translateY(1px); } .primary-action:disabled { cursor: wait; filter: saturate(0.7); } .action-icon { font-size: 21px; }
   @keyframes reelLaunchWave { 0% { transform: translate3d(0, 5px, 0) scale(.98); opacity: .72; } 55% { transform: translate3d(0, -2px, 0) scale(1.01); opacity: 1; } 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 1; } }
   @keyframes reelLandingWave { 0% { transform: translate3d(0, 0, 0) scale(1); } 55% { transform: translate3d(0, -1px, 0) scale(1.012); } 100% { transform: translate3d(0, 0, 0) scale(1); } }
-  @keyframes reelLanded { from { filter: brightness(1.1); } to { filter: brightness(1); } }
+  @keyframes reelLanded { from { opacity: .8; } to { opacity: 1; } }
   @keyframes confirmedGridIn { from { opacity: 0; transform: translate3d(0, -7px, 0) scale(.97); } to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); } }
   @keyframes winningPulse { from { transform: scale(1); } to { transform: scale(1.04); } } @keyframes lightBlink { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
   @media (max-width: 390px) { .free-spins-panel { align-items: stretch; flex-direction: column; } .free-spin-action { width: 100%; } }
@@ -340,13 +351,39 @@
   .siege .reel-window { --symbol-size: clamp(50px, 15vw, 72px); --reel-gap: 5px; }
   .siege .operator-face { object-fit: cover; object-position: 50% 30%; }
   .siege .beams { height: calc(7 * (clamp(50px, 15vw, 72px) + 5px) - 5px); }
-  .siege .slot-meta { justify-content: center; }
+  .siege .slot-meta { justify-content: space-between; align-items: center; }
+  .slot-meta .sources { font-size: 9px; }
+  .slot-meta .sources summary { min-height: 44px; }
+  .slot-meta .sources[open] { position: absolute; left: 10px; right: 10px; z-index: 6; padding: 8px; background: #071017; border: 1px solid #9fbcc9; border-radius: 12px; }
   .lines-chip { padding: 5px 10px; border: 1px solid rgb(190 208 220 / 30%); border-radius: 999px; color: #d1dce3; font-size: 9px; letter-spacing: .1em; }
   .lines-chip b { display: inline; margin: 0 4px 0 0; }
-  .siege .slot-bet { background: rgb(6 10 13 / 60%); backdrop-filter: blur(8px); }
-  .siege .primary-action { min-height: 56px; border-radius: 14px; background: linear-gradient(180deg, #e3ecf1, #b9c8d1); box-shadow: 0 0 24px rgb(190 220 240 / 25%); transition: transform .18s ease, box-shadow .18s ease, filter .18s ease; }
+  .siege .slot-bet { background: rgb(6 10 13 / 90%); }
+  .siege .primary-action { min-height: 56px; border-radius: 14px; background: linear-gradient(180deg, #e3ecf1, #b9c8d1); box-shadow: 0 0 24px rgb(190 220 240 / 25%); transition: transform .18s ease, opacity .18s ease; }
   .siege .primary-action:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 0 34px rgb(190 220 240 / 42%); }
   .siege .primary-action:active:not(:disabled) { transform: translateY(1px) scale(.98); }
+  .game-room.siege { gap: 6px; padding: 10px; }
+  .siege .room-intro { display: none; }
+  .siege:not(.has-result) :global(.result-band) { display: none; }
+  .siege .room-intro p { font-size: 10px; line-height: 1.3; }
+  .siege .slot-machine { min-height: 0; padding: 24px 6px 12px; }
+  /* Ячейки крупные по просьбе владельца (#101): кнопка спина всё равно в первом экране. */
+  .siege .reel-window { --symbol-size: clamp(48px,14.2vw,70px); }
+  .siege .beams { height: calc(7 * (clamp(48px,14.2vw,70px) + 5px) - 5px); }
+  .siege :global(.result-band) { padding-block: 8px; }
+  .slot-bet summary { display: flex; justify-content: space-between; align-items: center; min-height: 44px; font-size: 12px; color: #e2c78b; cursor: pointer; }
+  .slot-bet summary span { font-size: 10px; }
+  .slot-bet { padding: 0 10px; }
+  .slot-bet[open] { padding-bottom: 10px; }
+  .slot-bet summary:focus-visible { outline: 2px solid #fff1b8; outline-offset: 2px; }
+  .primary-action { position: sticky; bottom: max(8px,env(safe-area-inset-bottom)); z-index: 4; }
+  .big-win { position: absolute; inset: 0; pointer-events: none; z-index: 3; display: grid; place-items: center; background: radial-gradient(ellipse,#fff1ba44,transparent 70%); animation: bigWin 1.2s ease-out both; }
+  .big-win span { position: absolute; top: 42%; padding: 12px 18px; border: 1px solid #fff0b8; border-radius: 12px; background: #171311e8; color: #ffe59c; font-size: 15px; font-weight: 850; text-align: center; }
+  .big-win i { position: absolute; width: 36px; height: 36px; border: 2px solid #ffe6a5; border-radius: 50%; animation: winRing 1.1s ease-out both; }
+  .big-win i:nth-of-type(2) { animation-delay: .12s; }
+  .big-win i:nth-of-type(3) { animation-delay: .24s; }
+  @keyframes bigWin { 0% { opacity: 0; transform: scale(.8); } 25% { opacity: 1; } 100% { opacity: 0; transform: scale(1.1); } }
+  @keyframes winRing { from { opacity: .8; transform: scale(1); } to { opacity: 0; transform: scale(9); } }
+  @media(prefers-reduced-motion:reduce) { .big-win { display: none; } }
   @keyframes scan { from { transform: translateY(-60%); } to { transform: translateY(60%); } }
   @media (prefers-reduced-motion: reduce) { .siege .slot-machine::after { animation: none; opacity: 0; } .siege .primary-action { transition: none; } }
 </style>

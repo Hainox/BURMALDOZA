@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
+  import { getContext, onMount, onDestroy } from 'svelte';
   import { base } from '$app/paths';
   import type { ApiClient } from '$lib/api/client';
   import { createHoldem, parseHoldem, type HoldemMode, type HoldemView } from '$lib/api/holdem';
@@ -10,6 +10,7 @@
   export let client: ApiClient | null = null;
   export let live = false;
   export let reducedMotion = false;
+  const quiet = getContext<() => boolean>('room-motion-quiet') ?? (() => false);
   export let onBalance: (balance:number) => void = () => undefined;
   let mode: HoldemMode = 'bot';
   let buyIn = 100;
@@ -57,7 +58,7 @@
     if (live && parsed.balance !== null && parsed.balance !== lastBalance) {lastBalance=parsed.balance;onBalance(parsed.balance);}
     seconds = parsed.deadline ? Math.max(0,Math.ceil((Date.parse(parsed.deadline)-Date.now())/1000)) : 0;
     const knownHero = mode === 'bot' && parsed.heroCode && parsed.heroCode in heroes;
-    if (knownHero && introRoom !== next.roomId) { introRoom = next.roomId; showIntro = !reducedMotion; }
+    if (knownHero && introRoom !== next.roomId) { introRoom = next.roomId; showIntro = !reducedMotion && !quiet(); }
   }
   function stream(roomId:string) {
     stopStream?.();
@@ -168,7 +169,7 @@
   .neon{color:#ffe9ee;text-shadow:0 0 6px #ff2e60,0 0 18px #ff2e6099,0 0 34px #ff2e6055;animation:sign 7s linear infinite}
   .lobby fieldset{border:0;padding:0;margin:0;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:8px}
   .lobby legend{margin-bottom:8px;padding:0;letter-spacing:.14em;text-transform:uppercase;font-size:10px}
-  .lobby label{position:relative;display:grid;align-content:center;justify-items:center;gap:4px;min-height:64px;padding:10px 6px;border:1px solid rgb(201 162 74 / 35%);border-radius:14px;background:rgb(12 9 9 / 62%);text-align:center;cursor:pointer;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease,background .18s ease}
+  .lobby label{position:relative;display:grid;align-content:center;justify-items:center;gap:4px;min-height:64px;padding:10px 6px;border:1px solid rgb(201 162 74 / 35%);border-radius:14px;background:rgb(12 9 9 / 62%);text-align:center;cursor:pointer;transition:transform .18s ease,opacity .18s ease}
   .lobby label:hover{transform:translateY(-2px);border-color:rgb(233 205 132 / 70%)}
   .lobby label:has(input:checked){border-color:#e9cd84;background:linear-gradient(180deg,rgb(122 11 19 / 55%),rgb(12 9 9 / 70%));box-shadow:0 0 22px rgb(255 46 96 / 28%),inset 0 0 0 1px rgb(233 205 132 / 40%)}
   .lobby label:has(input:disabled){opacity:.45;cursor:not-allowed}
@@ -177,9 +178,14 @@
   .lobby label b{font:600 20px/1 Georgia,serif;color:#fff1ca}
   .lobby label b em{font-style:normal;font-size:11px;color:#e9cd84}
   .lobby label small{color:#cdbfa8}
-  .primary{min-height:56px;border:1px solid #ff8aa5;border-radius:14px;background:linear-gradient(180deg,#a3121f,#6b0911);box-shadow:0 0 26px rgb(255 46 96 / 35%);transition:transform .18s ease,box-shadow .18s ease}
+  .primary{min-height:56px;border:1px solid #ff8aa5;border-radius:14px;background:linear-gradient(180deg,#a3121f,#6b0911);box-shadow:0 0 26px rgb(255 46 96 / 35%);transition:transform .18s ease,opacity .18s ease}
   .primary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 0 36px rgb(255 46 96 / 55%)}
   .primary:active:not(:disabled){transform:translateY(1px) scale(.98)}
   @keyframes sign{0%,100%{opacity:1}61%{opacity:1}62%{opacity:.55}63%{opacity:1}66%{opacity:.7}67%{opacity:1}}
   @media(prefers-reduced-motion:reduce){.neon{animation:none}.lobby label,.primary{transition:none}}
+
+  .poker-room button { border-radius: 14px; min-height: 48px; border-color: #e9cd8499; background: linear-gradient(180deg,#63151e,#260c12); box-shadow: inset 0 1px #ffb7c02b,0 0 16px #ff2e601c; transition: transform .18s ease, opacity .18s ease; }
+  .poker-room button:active:not(:disabled) { transform: scale(.97); }
+  .poker-room { gap: 10px; }
+
 </style>

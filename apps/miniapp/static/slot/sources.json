@@ -301,5 +301,16 @@
    "processing": "face-centred crop, 272x160 WebP with alpha",
    "centred_by": "silhouette"
   }
- ]
+ ],
+ "generated_scenes": [
+ {
+  "file": "scene/room.webp",
+  "width": 1080,
+  "height": 1920,
+  "bytes": 221850,
+  "sha256": "02ae6d8f1cec88633eb6ee958b93172568e0838903bf550ddda72e8e2208aaac",
+  "source": "Built-in ImageGen original environment illustration for #100. Siege tactical cold, concrete, searchlights and smoke; © Ubisoft thematic fan interface.",
+  "rights_note": "Non-commercial fan interface; generated environment, not official game artwork; no general reuse license asserted."
+ }
+]
 }

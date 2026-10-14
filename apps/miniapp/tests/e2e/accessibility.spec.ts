@@ -20,7 +20,7 @@ test.describe('Mini App shell', () => {
     const slotRoom = page.locator('.slot-room');
     await expect(slotRoom).toContainText('Демо-прокрутка барабанов. Клиент показывает сетку и движение; сервер не подтверждает исход.');
     await expect(slotRoom).not.toContainText('Сервер подтверждает сетку');
-    await expect(page.getByTestId('slot-status')).toContainText('READY · DEMO');
+    await expect(page.getByTestId('slot-status')).toContainText('Готово · DEMO');
     await expect(page.getByTestId('slot-reel-track-0')).toHaveAttribute('data-track-length', '28');
     await expect(page.getByTestId('slot-machine')).toHaveAttribute('data-spin-duration', '2940');
     await page.getByTestId('slot-spin').click();
@@ -30,10 +30,10 @@ test.describe('Mini App shell', () => {
     await expect(resultBand).toContainText('Линия подтверждена');
     await expect(resultBand).toContainText('Демо-исход: сервер не подтверждал этот результат.');
     await expect(page.getByTestId('confirmed-balance')).toHaveCount(0);
-    await expect(page.getByTestId('slot-confirmed-grid')).toContainText('DEMO GRID · CLIENT RESULT');
+    await expect(page.getByTestId('slot-confirmed-grid')).toContainText('ДЕМО · исход без сервера');
     await expect(page.getByTestId('slot-confirmed-grid')).not.toContainText('SERVER GRID CONFIRMED');
     await expect(page.getByTestId('slot-free-spins')).toHaveCount(0);
-    await expect(page.getByTestId('slot-status')).toContainText('SETTLED · DEMO GRID');
+    await expect(page.getByTestId('slot-status')).toContainText('Итог демо · без сервера');
   });
 
   test('labels an in-progress slot demo result as demo', async ({ page }) => {

@@ -2535,5 +2535,16 @@
    "processing": "cropped 708x362 (photo-mode UI strip removed), WebP",
    "rights_note": "Copyright SEGA / Ryu Ga Gotoku Studio. Used with attribution in a non-commercial fan design preview per owner decision; no general reuse license is asserted."
   }
- ]
+ ],
+ "generated_scenes": [
+ {
+  "file": "scene/room.webp",
+  "width": 1080,
+  "height": 1920,
+  "bytes": 247416,
+  "sha256": "4184524992e966e4a4a2599771ceb20f840257c5bfbec1832fbd3136d9031cbb",
+  "source": "Built-in ImageGen original environment illustration for #100. Kamurocho inspired night gate, rain, warm red neon and lanterns; © SEGA / RGG thematic fan interface.",
+  "rights_note": "Non-commercial fan interface; generated environment, not official game artwork; no general reuse license asserted."
+ }
+]
 }

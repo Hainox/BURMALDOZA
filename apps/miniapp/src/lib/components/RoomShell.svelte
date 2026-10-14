@@ -3,6 +3,7 @@
 </script>
 
 <script lang="ts">
+  import { setContext } from 'svelte';
   import { base } from '$app/paths';
   import type { MotionState } from '$lib/game/motion';
   import type { ConnectionStatus } from '$lib/state/session.svelte';
@@ -17,6 +18,7 @@
   export let quiet = false;
   export let onBack: () => void = () => undefined;
   export let onResync: () => void = () => undefined;
+  setContext('room-motion-quiet', () => quiet);
 
   const connectionLabel = {
     demo: 'DEMO',
@@ -28,9 +30,9 @@
 
   // Сцена каждой комнаты: фон из утверждённых концептов, концепция комнат не меняется.
   const scenes: Record<RoomTheme, { kicker: string; title: string; backdrop: string | null }> = {
-    slot: { kicker: 'RAINBOW SIX · SIEGE', title: 'Slot Siege', backdrop: null },
+    slot: { kicker: 'RAINBOW SIX · SIEGE', title: 'Slot Siege', backdrop: 'slot/scene/room.webp' },
     blackjack: { kicker: 'GFL · SECTOR 09', title: 'Blackjack', backdrop: 'blackjack/room.webp' },
-    holdem: { kicker: '神室町 · HEADS-UP', title: 'Hold’em', backdrop: 'holdem/scene/kamurocho-gate.webp' }
+    holdem: { kicker: '神室町 · HEADS-UP', title: 'Hold’em', backdrop: 'holdem/scene/room.webp' }
   };
   $: scene = scenes[theme];
 </script>
@@ -89,18 +91,24 @@
   .theme-holdem .fx-a { background: radial-gradient(70% 34% at 50% 18%, rgb(255 46 96 / 22%), transparent 70%); animation: neon 6s linear infinite; }
   .theme-holdem .fx-b { background: radial-gradient(60% 30% at 50% 95%, rgb(201 162 74 / 16%), transparent 70%); }
 
-  .quiet .scene * { animation-play-state: paused; }
+  .quiet .scene *, .quiet :global(.game-room *), .quiet :global(.game-room *::after), .quiet :global(.poker-room *), .quiet :global(.poker-room *::after) { animation: none !important; transition: none !important; }
+  .quiet .room-stage :global(.game-room) { animation: none; }
+  .quiet :global(.win-light), .quiet :global(.prize-chips), .quiet :global(.pot-chips), .quiet :global(.big-win) { display: none; }
+  .theme-holdem .backdrop { opacity: .9; filter: none; }
+  .theme-blackjack .backdrop { object-position: 50% 0; }
+  .theme-blackjack .backdrop { top: -60px; bottom: auto; }
+  .room-shell { min-height: calc(100dvh - 42px); gap: 10px; }
 
   /* Шапка в стиле хаба. */
   .room-topbar { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding-top: env(safe-area-inset-top); }
-  .back { display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid #b8955d; border-radius: 50%; background: #0a0e14c9; cursor: pointer; transition: transform .2s ease, background .2s ease; }
+  .back { display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid #b8955d; border-radius: 50%; background: #0a0e14c9; cursor: pointer; transition: transform .2s ease, opacity .2s ease; }
   .back img { transform: rotate(180deg); }
   .back:hover { background: #241b13; transform: translateX(-2px); }
   .back:active { transform: scale(.94); }
   .room-heading { min-width: 0; }
   .room-heading span { display: block; color: #f8d38b; font-size: 9px; font-weight: 700; letter-spacing: .2em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   h1 { margin: 3px 0 0; color: #fff1ca; font: 500 clamp(22px, 6.6vw, 30px)/1.05 Georgia, 'Times New Roman', serif; letter-spacing: -.03em; }
-  .balance { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 12px 6px 10px; border: 1px solid #b8955d; border-radius: 22px; background: #0c0f16e6; color: #fff4d9; cursor: pointer; transition: transform .2s ease, box-shadow .2s ease; }
+  .balance { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 12px 6px 10px; border: 1px solid #b8955d; border-radius: 22px; background: #0c0f16e6; color: #fff4d9; cursor: pointer; transition: transform .2s ease, opacity .2s ease; }
   .balance:hover { box-shadow: 0 0 18px #d5903b44; }
   .balance:active { transform: scale(.97); }
   .balance > span { display: grid; gap: 3px; text-align: left; }

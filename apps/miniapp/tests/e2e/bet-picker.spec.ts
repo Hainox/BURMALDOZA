@@ -68,6 +68,7 @@ test('blackjack presets and slider set the deal amount', async ({ page }) => {
 test('demo slot payout follows the chosen bet', async ({ page }) => {
   await page.goto('/');
   await openRoom(page, 'slot');
+  await page.locator('.slot-bet summary').click();
   await page.getByRole('button', { name: '50', exact: true }).click();
   await page.getByTestId('slot-spin').click();
   await expect(page.getByTestId('result-band')).toContainText('200', { timeout: 8_000 });

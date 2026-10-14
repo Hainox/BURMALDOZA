@@ -38,7 +38,7 @@ test('server faces stay with immutable spin and switch on next operation',async(
 });
 test('demo portraits and immediate reduced motion have attribution and no server claim',async({page})=>{
   await page.emulateMedia({reducedMotion:'reduce'});await page.setViewportSize({width:1440,height:900});await page.goto('/');await openRoom(page,'slot');await page.getByTestId('slot-spin').click();
-  await expect(page.getByTestId('slot-machine')).toHaveAttribute('data-stopped-reels','3');await expect(page.getByTestId('slot-confirmed-grid')).toContainText('DEMO GRID');await expect(page.locator('.slot-room')).not.toContainText('SERVER CONFIRMED');
+  await expect(page.getByTestId('slot-machine')).toHaveAttribute('data-stopped-reels','3');await expect(page.getByTestId('slot-confirmed-grid')).toContainText('ДЕМО · исход без сервера');await expect(page.locator('.slot-room')).not.toContainText('SERVER CONFIRMED');
   await expect(page.getByTestId('slot-free-spins')).toHaveCount(0);await expect(page.locator('.operator-face').first()).toHaveAttribute('src',/\/slot\/faces\//);
   await page.getByText('Источники изображений',{exact:true}).click();await expect(page.getByRole('link',{name:'Оперативники и источники портретов'})).toBeVisible();
 });
