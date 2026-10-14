@@ -1,0 +1,49 @@
+{
+  "reference": "assets/design/hub-atrium/selected.png",
+  "assets": [
+    {
+      "file": "atrium.webp",
+      "source": "ImageGen composition based on approved option 2",
+      "bytes": 310786,
+      "sha256": "c5dc839ee3cf5e8a0b6f23819b6a4d0e8c8f0f0252bf0f72adbadc525742ebd6"
+    },
+    {
+      "file": "blackjack-portal.webp",
+      "source": "ImageGen composition based on approved option 2",
+      "bytes": 195244,
+      "sha256": "242a9d8cfacc41814ea96ad67911586ea62a43a6179dbe31c631affc184315ea"
+    },
+    {
+      "file": "brand-cat.webp",
+      "source": "ImageGen composition based on approved option 2",
+      "bytes": 8936,
+      "sha256": "0c165535a085b14629a98a763b2716fe54375500e0edfb6ada594e472de81378"
+    },
+    {
+      "file": "holdem-portal.webp",
+      "source": "ImageGen composition based on approved option 2",
+      "bytes": 174168,
+      "sha256": "395e9950fbd7d08799c0cf62834b84a9a16e1de32a41e5966fd46dcdc2a312e5"
+    },
+    {
+      "file": "slot-portal.webp",
+      "source": "ImageGen composition based on approved option 2",
+      "bytes": 190064,
+      "sha256": "99ba9cb19371f2507fafd565933ab68dce997b1971b3dff3ea59e1865dd7fed3"
+    },
+    {
+      "file": "welcome.webp",
+      "source": "ImageGen composition based on approved option 2",
+      "bytes": 304942,
+      "sha256": "c2394ca7b6f227b4a968b488fc08157f533ddfd7cf90cb869519373a0dc5d194"
+    }
+  ],
+  "icons": {
+    "library": "Tabler Icons via Supericons",
+    "source": "https://github.com/tabler/tabler-icons",
+    "license": "MIT",
+    "license_file": "icons/Tabler-LICENSE.txt"
+  },
+  "blackjack": "M4 SOPMOD / SOPPO added using two owner-provided portrait references; original publication unknown",
+  "approved": "Owner selected option 2 on 2026-10-14"
+}

@@ -5,7 +5,7 @@ test.describe('Mini App shell', () => {
   test('exposes the three rooms and a clear demo boundary', async ({ page }) => {
     await page.goto('/');
 
-    await expect(page.getByRole('heading', { name: 'Игровой лаунж' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Вечер начинается здесь.' })).toBeVisible();
     await expect(page.getByTestId('demo-banner')).toContainText('ДЕМО-КОНТУР');
     await expect(page.locator('[data-testid^="room-card-"]')).toHaveCount(3);
     await expect(page.getByTestId('balance-pill')).toHaveAccessibleName(/Баланс/);

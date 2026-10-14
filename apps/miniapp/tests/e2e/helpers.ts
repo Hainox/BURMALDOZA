@@ -8,7 +8,10 @@ import { expect, type Page } from '@playwright/test';
 export async function openRoom(page: Page, game: 'slot' | 'blackjack' | 'holdem') {
   const shell = page.getByTestId('room-shell');
   await expect(async () => {
-    if (!(await shell.isVisible())) await page.getByTestId(`room-card-${game}`).click();
+    if (!(await shell.isVisible())) {
+      await page.getByTestId(`room-card-${game}`).click();
+      await page.getByTestId('hub-open-room').click();
+    }
     await expect(shell).toBeVisible({ timeout: 1_500 });
   }).toPass({ timeout: 15_000 });
 }
