@@ -710,3 +710,9 @@
 - Проверки: miniapp:check — 0 errors/0 warnings; miniapp:test — 46 passed; полный miniapp:e2e — 63 passed. Стресс Slot slot-stop.spec.ts:9, repeat-each=8/workers=6 — три прогона по 8, 24/24. Весь blackjack-room.spec.ts с теми же параметрами — три прогона по 80, 240/240. Размеры/хэши трёх сцен и размеры всех 24 PNG проверены; git diff --check — passed.
 - Два независимых read-only review (code и TypeScript, gpt-6-sol/high): исправлены зеркальное лицо при flip, обрезка итога и противоречивые fixtures; блокирующих замечаний после исправлений нет. Изменённые старые тесты открывают новую панель ставки, проверяют новые человеческие подписи и ждут cleanup после outro; data-testid сохранены.
 - Осталось: Verify на опубликованном head, review Claude/владельца и ручная Telegram iOS/Android приёмка после выпуска. Новых runtime-зависимостей нет; для проверок использованы pnpm 11.19.0, проектные frontend зависимости, Playwright Chromium и Pillow 12.2.0 для сжатия арта. Docker/серверные проверки — CI, настоящий API/Telegram здесь не тестировался. Merge/Pages/server deploy не выполнялись.
+
+## 2026-10-14 — доводка комнат (#100, PR #103): завершение за Codex
+
+- Claude Code замещает Codex (лимит). Закоммичены незавершённые правки Codex: переходы только по `transform`/`opacity`, лучи линий появляются через `opacity`; e2e 320px ждёт LIVE, паузу хаба и загрузку сцены вместо разового чтения (причина падения CI на `a0ca2a0`).
+- Review: ячейки слота Codex уменьшил до `clamp(38px, 10.25vw, 50px)` ради «всё в экран» — это противоречило решению владельца (#101). Возвращено `clamp(48px, 14.2vw, 70px)`; кнопка спина остаётся в первом экране (низ на 802 px из 844), e2e проверяет именно её. Имена на картах Blackjack больше не рвутся посреди слова. Скриншоты «после» обновлены.
+- Проверки: `pnpm miniapp:check` — 0/0; `pnpm miniapp:test` — 46 passed; Playwright — 63 passed; стресс `slot-stop.spec.ts:9` — 16/16, `rooms-polish` 320px ×5 — 15/15.

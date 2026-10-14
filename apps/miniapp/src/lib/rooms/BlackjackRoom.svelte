@@ -426,7 +426,7 @@
   .corner.bottom { right: 7px; top: 7px; color: #e6c17b; font-size: 12px; }
   .red .corner.bottom { color: #e47d83; }
   .dossier { position: relative; z-index: 2; display: grid; gap: 1px; text-align: left; }
-  .dossier strong { font: 700 13px/1.05 Georgia, serif; text-shadow: 0 2px 8px #000; overflow-wrap: anywhere; }
+  .dossier strong { font: 700 11.5px/1.05 Georgia, serif; letter-spacing: -.01em; text-shadow: 0 2px 8px #000; overflow-wrap: normal; word-break: normal; }
   .dossier em { color: #c3bdb8; font-style: normal; font-size: 8px; font-weight: 800; letter-spacing: 0.06em; }
   .red .dossier em { color: #e9a3a8; }
   .sources { margin-top: 0; color: var(--muted, #b9b2a8); font-size: 11px; }

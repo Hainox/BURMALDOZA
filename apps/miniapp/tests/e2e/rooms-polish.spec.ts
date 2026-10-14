@@ -116,7 +116,15 @@ for (const game of ['slot', 'blackjack', 'holdem'] as const) {
         if (game === 'slot') expect(await page.getByTestId('slot-spin').evaluate(node => node.getBoundingClientRect().bottom <= innerHeight)).toBe(true);
       }
       await screenshot(page, game, outcome);
-      if (capture !== 'before') expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(844);
+      if (capture !== 'before') {
+        if (game === 'slot') {
+          // Крупные ячейки (решение владельца, #101): вся страница длиннее экрана, но кнопка спина — в первом экране.
+          const spin = await page.getByTestId('slot-spin').boundingBox();
+          expect((spin?.y ?? 0) + (spin?.height ?? 0)).toBeLessThanOrEqual(844);
+        } else {
+          expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(844);
+        }
+      }
       if (game === 'holdem') await page.getByRole('button', { name: 'Выбрать стол' }).click();
     }
   });

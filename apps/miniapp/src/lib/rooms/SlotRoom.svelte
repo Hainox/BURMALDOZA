@@ -366,8 +366,9 @@
   .siege:not(.has-result) :global(.result-band) { display: none; }
   .siege .room-intro p { font-size: 10px; line-height: 1.3; }
   .siege .slot-machine { min-height: 0; padding: 24px 6px 12px; }
-  .siege .reel-window { --symbol-size: clamp(38px,10.25vw,50px); }
-  .siege .beams { height: calc(7 * (clamp(38px,10.25vw,50px) + 5px) - 5px); }
+  /* Ячейки крупные по просьбе владельца (#101): кнопка спина всё равно в первом экране. */
+  .siege .reel-window { --symbol-size: clamp(48px,14.2vw,70px); }
+  .siege .beams { height: calc(7 * (clamp(48px,14.2vw,70px) + 5px) - 5px); }
   .siege :global(.result-band) { padding-block: 8px; }
   .slot-bet summary { display: flex; justify-content: space-between; align-items: center; min-height: 44px; font-size: 12px; color: #e2c78b; cursor: pointer; }
   .slot-bet summary span { font-size: 10px; }
