@@ -62,7 +62,8 @@ test('pvp profile loads authenticated blob, restores on reload and falls back on
   const blobUrl=await page.getByAltText('Аватар соперника').getAttribute('src');expect(blobUrl).toMatch(/^blob:/);
   await page.waitForTimeout(2200);expect(requests).toBe(1);
   await page.getByRole('button',{name:'Назад к комнатам'}).click();
-  expect(await page.evaluate(()=>sessionStorage.getItem('avatar-revoked'))).toBe(blobUrl);
+  // Выход из комнаты теперь анимирован: освобождение blob происходит после outro.
+  await expect.poll(()=>page.evaluate(()=>sessionStorage.getItem('avatar-revoked'))).toBe(blobUrl);
   fail=true;await openRoom(page,'holdem');
   await expect(page.getByTestId('holdem-opponent-nickname')).toHaveText('@fixture_opponent');
   await expect(page.getByTestId('holdem-avatar-placeholder')).toBeVisible();

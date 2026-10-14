@@ -112,6 +112,14 @@
   $: busy = pending || motion === 'resolving';
   $: isConfirmed = result !== null && (motion === 'outcome' || motion === 'settle');
   $: outcome = result?.blackjackOutcome ?? null;
+  $: tableOutcome = isConfirmed ? outcome?.outcome ?? '' : '';
+  let previousHoleShown = false;
+  let revealRound = -1;
+  $: trackHole(holeShown, roundSeq);
+  function trackHole(shown: boolean, round: number) {
+    if (previousHoleShown && !shown) revealRound = round;
+    previousHoleShown = shown;
+  }
 
   let bet = 25;
   let reducedMotion = false;
@@ -201,9 +209,13 @@
     </p>
   {/if}
 
-  <section class="felt-table" aria-label="Blackjack table">
+  <section class="felt-table" class:won={tableOutcome === 'win' || tableOutcome === 'blackjack'} class:lost={tableOutcome === 'loss'} aria-label="Blackjack table" data-outcome={tableOutcome}>
     <div class="table-orbit orbit-one"></div>
     <div class="table-orbit orbit-two"></div>
+    <div class="dealer-deck" aria-hidden="true"><img src={`${base}/blackjack/card-back.webp`} alt="" /></div>
+    {#if tableOutcome === 'win' || tableOutcome === 'blackjack'}
+      {#key result}<div class="win-light" aria-hidden="true"></div><div class="prize-chips" aria-hidden="true"><i></i><i></i><i></i></div>{/key}
+    {:else if tableOutcome === 'loss'}<div class="loss-shade" aria-hidden="true"></div>{/if}
 
     <div class="dealer-line" data-testid="blackjack-dealer">
       <img class="dealer-avatar" src={portraitUrl(dealerName)} alt="" aria-hidden="true" decoding="async" data-testid="blackjack-dealer-portrait" />
@@ -217,11 +229,13 @@
           {@const doll = dollFor(card.rank, card.suit)}
           <div
             class="playing-card"
+            class:revealed={index === 1 && revealRound === roundSeq && !holeShown}
             class:red={isRedSuit(card.suit)}
             style={`--card-delay: ${cardDelay(index)}; --card-rotation: ${index % 2 === 0 ? '-4deg' : '5deg'}; --card-offset: ${index % 2 === 0 ? '0px' : '3px'}`}
             data-card={`${card.rank}-${card.suit}`}
             aria-label={`${card.rank} ${suitGlyph(card.suit)} · ${doll ?? 'карта'}`}
           >
+            <div class="card-front">
             {#if doll}<img class="portrait" src={portraitUrl(doll)} alt="" loading="eager" decoding="async" />{/if}
             <span class="corner top">{card.rank}{suitGlyph(card.suit)}</span>
             <span class="dossier">
@@ -229,6 +243,8 @@
               <em>{card.rank}{suitGlyph(card.suit)} · {rankHint(card.rank)}</em>
             </span>
             <span class="corner bottom">{card.rank}{suitGlyph(card.suit)}</span>
+            </div>
+            <img class="flip-back" src={`${base}/blackjack/card-back.webp`} alt="" aria-hidden="true" />
           </div>
         {/each}
         {#if holeShown}
@@ -283,14 +299,11 @@
       </span>
     </div>
   </section>
-  <details class="sources">
-    <summary>Источники изображений</summary>
-    <p>Портреты T-Doll © MICA Team / SUNBORN, источник — IOP Wiki. Некоммерческий фанатский интерфейс по решению владельца. Общая лицензия на изображения не заявляется.</p>
-    <a href={`${base}/blackjack/sources.json`} target="_blank" rel="noreferrer">Источники портретов Deck A</a>
-  </details>
+
 
   {#if canDeal}
     <section class="bet-panel" aria-label="Выбор ставки">
+      <details class="bet-settings" open={!outcome}><summary>Ставка: {bet} JG <span>Изменить ▾</span></summary>
       <BetPicker
         bind:value={bet}
         min={BET_MIN}
@@ -303,6 +316,7 @@
       {#if !betValid}
         <p class="bet-hint" role="alert">Ставка — целое число от {BET_MIN} до {betMax} JG (ваш баланс).</p>
       {/if}
+      </details>
       <button
         type="button"
         class="deal-action"
@@ -369,7 +383,12 @@
     </section>
   {/if}
 
-  <ResultBand {result} {motion} source={resultSource} />
+  <ResultBand {result} {motion} source={resultSource} compact={Boolean(outcome) || canDeal} />
+  <details class="sources">
+    <summary>Источники изображений</summary>
+    <p>Портреты T-Doll © MICA Team / SUNBORN, источник — IOP Wiki. Некоммерческий фанатский интерфейс по решению владельца. Общая лицензия на изображения не заявляется.</p>
+    <a href={`${base}/blackjack/sources.json`} target="_blank" rel="noreferrer">Источники портретов Deck A</a>
+  </details>
   <p class="rules-line">{isDemo ? 'Soft 17 — stand · Natural 3:2 · Split нет · Демо-раунд без серверного подтверждения' : 'Soft 17 — stand · Natural 3:2 · Split нет · Только серверный snapshot'}</p>
 </div>
 
@@ -410,7 +429,7 @@
   .dossier strong { font: 700 13px/1.05 Georgia, serif; text-shadow: 0 2px 8px #000; overflow-wrap: anywhere; }
   .dossier em { color: #c3bdb8; font-style: normal; font-size: 8px; font-weight: 800; letter-spacing: 0.06em; }
   .red .dossier em { color: #e9a3a8; }
-  .sources { margin-top: 10px; color: var(--muted, #b9b2a8); font-size: 11px; }
+  .sources { margin-top: 0; color: var(--muted, #b9b2a8); font-size: 11px; }
   .sources summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; }
   .sources p { margin: 6px 0; }
   .sources a { color: inherit; }
@@ -445,17 +464,56 @@
   button:focus-visible { outline: 2px solid var(--brass-300); outline-offset: 3px; }
   @keyframes feltSheen { 0%, 100% { transform: translateX(-30%); } 50% { transform: translateX(30%); } }
   @keyframes dealCard {
-    from { opacity: 0; transform: translate3d(0, calc(-22px + var(--card-offset)), 0) rotate(calc(var(--card-rotation) - 8deg)) scale(0.92); }
+    from { opacity: 0; transform: translate3d(0, calc(-140px + var(--card-offset)), 0) rotate(calc(var(--card-rotation) - 8deg)) scale(0.92); }
     to { opacity: 1; transform: translate3d(0, var(--card-offset), 0) rotate(var(--card-rotation)) scale(1); }
   }
+  .blackjack-room { gap: 8px; }
+  .blackjack-room[data-game-phase='player_turn'] .room-intro { display: none; }
+  .blackjack-room[data-game-phase='settled'] .room-intro { display: none; }
+  .felt-table { min-height: 280px; padding: 14px 12px; gap: 8px; }
+  .blackjack-room[data-game-phase='player_turn'] .felt-table { margin-top: 70px; }
+  .playing-card { width: 78px; padding: 0 6px 6px; }
+  .blackjack-room[data-game-phase='settled'] .playing-card { width: 66px; flex-basis: 66px; }
+  .blackjack-room[data-game-phase='settled'] .total { display: none; }
+  .blackjack-room[data-game-phase='waiting'] .felt-table { min-height: 190px; }
+  .dealer-line { padding: 3px 9px 3px 3px; }
+  .dealer-avatar { width: 28px; height: 28px; }
+  .dealer-copy small { display: none; }
+  .hand { gap: 4px; }
+  .cards { flex-wrap: nowrap; max-width: 100%; }
+  .cards .playing-card { flex: 0 1 78px; min-width: 34px; }
+  .dossier strong { font-size: 10px; }
+  .bet-panel { padding: 8px; gap: 8px; backdrop-filter: none; }
+  .bet-settings summary { display: flex; align-items: center; justify-content: space-between; min-height: 44px; cursor: pointer; font-size: 12px; color: #ffe0a1; }
+  .bet-settings summary span { font-size: 10px; }
+  .action-grid button { min-height: 48px; backdrop-filter: none; }
+  .dealer-deck { position: absolute; top: 15px; right: 27px; width: 23px; height: 34px; transform: rotate(12deg); border-radius: 3px; border: 1px solid #d1ac72; box-shadow: 3px 3px #0c171e, 5px 5px #d1ac72; }
+  .dealer-deck img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+  .win-light, .loss-shade { position: absolute; inset: 0; pointer-events: none; border-radius: inherit; }
+  .win-light { background: radial-gradient(ellipse,#ffe3a766,transparent 72%); animation: tableWin 900ms ease-out both; }
+  .loss-shade { background: #03071066; animation: lossIn 300ms ease both; }
+  .prize-chips { position: absolute; left: 50%; top: 43%; display: flex; gap: 6px; pointer-events: none; }
+  .prize-chips i { width: 24px; height: 12px; border-radius: 50%; background: #d4a450; border: 3px dashed #fff0bc; box-shadow: 0 3px #705029; animation: chipsToPlayer 750ms ease-out both; }
+  .prize-chips i:nth-child(2) { animation-delay: 90ms; }
+  .prize-chips i:nth-child(3) { animation-delay: 180ms; }
+  .playing-card.revealed { overflow: visible; transform-style: preserve-3d; backface-visibility: visible; animation: dealerFlip 620ms ease both; }
+  .card-front { position: absolute; inset: 0; display: grid; align-content: end; padding: 0 6px 6px; overflow: hidden; border-radius: inherit; background: #0d1017; backface-visibility: hidden; }
+  .flip-back { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; transform: rotateY(180deg); backface-visibility: hidden; }
+  .card-front::after { content: ''; position: absolute; inset: 0; background: linear-gradient(transparent 35%,#0a0b10ee); }
+  .dealer-hand .cards { perspective: 900px; }
+  @keyframes dealerFlip { from { transform: translateY(var(--card-offset)) rotate(var(--card-rotation)) rotateY(-180deg); } to { transform: translateY(var(--card-offset)) rotate(var(--card-rotation)) rotateY(0); } }
+  @keyframes tableWin { 0% { opacity: 0; transform: scale(.7); } 30% { opacity: 1; } 100% { opacity: 0; transform: scale(1.3); } }
+  @keyframes chipsToPlayer { from { opacity: 0; transform: translate(-50%,0) scale(.5); } 20% { opacity: 1; } to { opacity: 0; transform: translate(-50%,130px) scale(1.2); } }
+  @keyframes lossIn { from { opacity: 0; } to { opacity: 1; } }
   @media (max-width: 390px) {
-    .playing-card { width: 96px; }
+    .playing-card { width: 78px; }
   }
   @media (min-width: 720px) {
     .playing-card { width: 118px; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .playing-card { animation: none; }
+    .playing-card, .playing-card.revealed, .win-light, .loss-shade, .prize-chips i { animation: none; }
+    .win-light, .prize-chips { display: none; }
     .action-grid button { transition: none; }
     .felt-table::after { animation: none; }
   }

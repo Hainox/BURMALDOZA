@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
 
   import HubLobby from '$lib/components/hub/HubLobby.svelte';
-  import { fade } from 'svelte/transition';
+  import { cubicOut } from 'svelte/easing';
 
   import RoomShell from '$lib/components/RoomShell.svelte';
   import WalletGrantControls from '$lib/components/WalletGrantControls.svelte';
@@ -114,6 +114,14 @@
   let hubActivity: GameType = 'slot';
   let hubPanel: 'play' | 'ranking' | 'history' = 'play';
   let hubMotionPaused = false;
+  let portalOrigin = '50% 60%';
+  function portalTransition(_node: Element, options: { room: boolean }) {
+    return {
+      duration: session.reducedMotion || hubMotionPaused ? 0 : 340,
+      easing: cubicOut,
+      css: (t: number) => `transform-origin:${portalOrigin};transform:scale(${options.room ? .65 + .35 * t : 1 + .55 * (1 - t)});opacity:${t};`
+    };
+  }
   let pokerRoom: PokerRoom | null = null;
   let isRunning = false;
   let timers: number[] = [];
@@ -186,6 +194,8 @@
   }
 
   async function openRoom(gameType: GameType) {
+    const portal = document.querySelector(`[data-testid="room-card-${gameType}"]`)?.getBoundingClientRect();
+    if (portal) portalOrigin = `${portal.left + portal.width / 2}px ${portal.top + portal.height / 2}px`;
     if (apiLoading) return;
     clearTimers();
     isRunning = false;
@@ -643,7 +653,7 @@
 
 <div class="app-shell" class:hub-mode={!selectedGame || !roomState.snapshot}>
   {#if selectedGame && roomState.snapshot}
-    <div class="room-entry" in:fade={{duration:session.reducedMotion || hubMotionPaused ? 0 : 180}}>
+    <div class="room-entry" transition:portalTransition={{room:true}}>
     <RoomShell room={roomState.snapshot} theme={selectedGame} connection={session.connection} motion={roomState.motion} balance={session.balance} quiet={session.reducedMotion || hubMotionPaused} onBack={backToRooms} onResync={resync}>
       {#if selectedGame === 'slot'}
         <SlotRoom motion={roomState.motion} result={roomState.result} busy={isRunning} balance={session.balance} onAction={runAction} resultSource={liveApiEnabled ? 'live' : 'demo'} rulesetVersion={roomState.snapshot.rulesetVersion} publicState={roomState.snapshot.publicState} />
@@ -664,7 +674,7 @@
     </RoomShell>
     </div>
   {:else}
-    <div in:fade={{duration:session.reducedMotion || hubMotionPaused ? 0 : 180}}>
+    <div transition:portalTransition={{room:false}}>
       <HubLobby balance={session.balance} balanceReady={!liveApiEnabled || ledgerReady} currencyCode={session.currencyCode} connection={session.connection} live={liveApiEnabled} busy={apiLoading} {apiError} reducedMotion={session.reducedMotion} bind:paused={hubMotionPaused} bind:activity={hubActivity} bind:panel={hubPanel} onOpen={openRoom}>
         <Leaderboard slot="ranking" apiClient={ledgerReady ? apiClient : null} live={liveApiEnabled} revision={ledgerRevision} />
         <LedgerHistory slot="history" apiClient={ledgerReady ? apiClient : null} live={liveApiEnabled} revision={ledgerRevision} />

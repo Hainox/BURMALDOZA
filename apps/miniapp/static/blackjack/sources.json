@@ -466,5 +466,14 @@
     "source": "https://iopwiki.com/images/1/1d/Nagant_Revolver_S.png",
     "bytes": 100887,
     "rights_note": "Copyright MICA Team/SUNBORN; source: IOP Wiki file page. The project owner approves this non-commercial fan design preview with attribution; no general reuse license is asserted."
+  },
+  {
+    "file": "room.webp",
+    "width": 1080,
+    "height": 1920,
+    "bytes": 244768,
+    "sha256": "6522dbb8213d1997d7ada10ae06d6838e788a58f618e09ee35db6b43b4c99e67",
+    "source": "Built-in ImageGen original environment illustration for #100. GFL Sector 09 police perimeter, vertical recomposition of approved assets/design/blackjack-gfl/deck-a/web/room-police-perimeter.png; lights above table area. © SUNBORN / MICA Team thematic fan interface.",
+    "rights_note": "Non-commercial fan interface; generated environment, not official game artwork; no general reuse license asserted."
   }
 ]

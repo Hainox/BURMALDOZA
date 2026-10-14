@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
+  import { getContext, onMount, onDestroy } from 'svelte';
   import { base } from '$app/paths';
   import type { ApiClient } from '$lib/api/client';
   import { createHoldem, parseHoldem, type HoldemMode, type HoldemView } from '$lib/api/holdem';
@@ -10,6 +10,7 @@
   export let client: ApiClient | null = null;
   export let live = false;
   export let reducedMotion = false;
+  const quiet = getContext<() => boolean>('room-motion-quiet') ?? (() => false);
   export let onBalance: (balance:number) => void = () => undefined;
   let mode: HoldemMode = 'bot';
   let buyIn = 100;
@@ -57,7 +58,7 @@
     if (live && parsed.balance !== null && parsed.balance !== lastBalance) {lastBalance=parsed.balance;onBalance(parsed.balance);}
     seconds = parsed.deadline ? Math.max(0,Math.ceil((Date.parse(parsed.deadline)-Date.now())/1000)) : 0;
     const knownHero = mode === 'bot' && parsed.heroCode && parsed.heroCode in heroes;
-    if (knownHero && introRoom !== next.roomId) { introRoom = next.roomId; showIntro = !reducedMotion; }
+    if (knownHero && introRoom !== next.roomId) { introRoom = next.roomId; showIntro = !reducedMotion && !quiet(); }
   }
   function stream(roomId:string) {
     stopStream?.();
@@ -182,4 +183,9 @@
   .primary:active:not(:disabled){transform:translateY(1px) scale(.98)}
   @keyframes sign{0%,100%{opacity:1}61%{opacity:1}62%{opacity:.55}63%{opacity:1}66%{opacity:.7}67%{opacity:1}}
   @media(prefers-reduced-motion:reduce){.neon{animation:none}.lobby label,.primary{transition:none}}
+
+  .poker-room button { border-radius: 14px; min-height: 48px; border-color: #e9cd8499; background: linear-gradient(180deg,#63151e,#260c12); box-shadow: inset 0 1px #ffb7c02b,0 0 16px #ff2e601c; transition: transform .18s ease, opacity .18s ease; }
+  .poker-room button:active:not(:disabled) { transform: scale(.97); }
+  .poker-room { gap: 10px; }
+
 </style>

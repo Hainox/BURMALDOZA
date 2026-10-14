@@ -3,6 +3,7 @@
 </script>
 
 <script lang="ts">
+  import { setContext } from 'svelte';
   import { base } from '$app/paths';
   import type { MotionState } from '$lib/game/motion';
   import type { ConnectionStatus } from '$lib/state/session.svelte';
@@ -17,6 +18,7 @@
   export let quiet = false;
   export let onBack: () => void = () => undefined;
   export let onResync: () => void = () => undefined;
+  setContext('room-motion-quiet', () => quiet);
 
   const connectionLabel = {
     demo: 'DEMO',
@@ -28,9 +30,9 @@
 
   // Сцена каждой комнаты: фон из утверждённых концептов, концепция комнат не меняется.
   const scenes: Record<RoomTheme, { kicker: string; title: string; backdrop: string | null }> = {
-    slot: { kicker: 'RAINBOW SIX · SIEGE', title: 'Slot Siege', backdrop: null },
+    slot: { kicker: 'RAINBOW SIX · SIEGE', title: 'Slot Siege', backdrop: 'slot/scene/room.webp' },
     blackjack: { kicker: 'GFL · SECTOR 09', title: 'Blackjack', backdrop: 'blackjack/room.webp' },
-    holdem: { kicker: '神室町 · HEADS-UP', title: 'Hold’em', backdrop: 'holdem/scene/kamurocho-gate.webp' }
+    holdem: { kicker: '神室町 · HEADS-UP', title: 'Hold’em', backdrop: 'holdem/scene/room.webp' }
   };
   $: scene = scenes[theme];
 </script>
@@ -89,7 +91,13 @@
   .theme-holdem .fx-a { background: radial-gradient(70% 34% at 50% 18%, rgb(255 46 96 / 22%), transparent 70%); animation: neon 6s linear infinite; }
   .theme-holdem .fx-b { background: radial-gradient(60% 30% at 50% 95%, rgb(201 162 74 / 16%), transparent 70%); }
 
-  .quiet .scene * { animation-play-state: paused; }
+  .quiet .scene *, .quiet :global(.game-room *), .quiet :global(.game-room *::after), .quiet :global(.poker-room *), .quiet :global(.poker-room *::after) { animation: none !important; transition: none !important; }
+  .quiet .room-stage :global(.game-room) { animation: none; }
+  .quiet :global(.win-light), .quiet :global(.prize-chips), .quiet :global(.pot-chips), .quiet :global(.big-win) { display: none; }
+  .theme-holdem .backdrop { opacity: .9; filter: none; }
+  .theme-blackjack .backdrop { object-position: 50% 0; }
+  .theme-blackjack .backdrop { top: -60px; bottom: auto; }
+  .room-shell { min-height: calc(100dvh - 42px); gap: 10px; }
 
   /* Шапка в стиле хаба. */
   .room-topbar { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding-top: env(safe-area-inset-top); }

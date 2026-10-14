@@ -1,13 +1,47 @@
 <script lang="ts">
+  import { getContext, onDestroy } from 'svelte';
   import type { MotionState } from '$lib/game/motion';
   import type { RoomResult } from '$lib/state/room.svelte';
 
   export let result: RoomResult | null = null;
   export let motion: MotionState = 'idle';
   export let source: 'demo' | 'live' = 'demo';
+  export let compact = false;
+  const quiet = getContext<() => boolean>('room-motion-quiet') ?? (() => false);
+  let displayedAmount = 0;
+  let amountKey: RoomResult | null = null;
+  let counterFrame: number | null = null;
+  function countAmount(confirmed: boolean, next: RoomResult | null) {
+    if (!confirmed || next?.amount === undefined) {
+      if (counterFrame !== null) cancelAnimationFrame(counterFrame);
+      counterFrame = null;
+      amountKey = null;
+      displayedAmount = 0;
+      return;
+    }
+    if (next === amountKey) return;
+    amountKey = next;
+    if (counterFrame !== null) cancelAnimationFrame(counterFrame);
+    const target = next.amount;
+    if (!next.slotOutcome || typeof window === 'undefined' || quiet() || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      displayedAmount = target;
+      counterFrame = null;
+      return;
+    }
+    const start = performance.now();
+    displayedAmount = 0;
+    const tick = (now: number) => {
+      const progress = quiet() ? 1 : Math.min(1, (now - start) / 650);
+      displayedAmount = Math.round(target * (1 - (1 - progress) ** 3));
+      counterFrame = progress < 1 ? requestAnimationFrame(tick) : null;
+    };
+    counterFrame = requestAnimationFrame(tick);
+  }
 
   $: hasSettledResult = result !== null && (motion === 'outcome' || motion === 'settle');
   $: isServerConfirmed = hasSettledResult && source === 'live';
+  $: countAmount(hasSettledResult, result);
+  onDestroy(() => { if (counterFrame !== null) cancelAnimationFrame(counterFrame); });
   $: resultKicker = isServerConfirmed
     ? 'SERVER CONFIRMED · LIVE'
     : hasSettledResult
@@ -31,7 +65,7 @@
       : 'Исход появится после следующего раунда.';
 </script>
 
-<section class="result-band" class:settled={hasSettledResult} data-testid="result-band" aria-live="polite">
+<section class="result-band" class:compact class:settled={hasSettledResult} data-testid="result-band" aria-live="polite">
   <span class="result-kicker">{resultKicker}</span>
   <div class="result-row">
     <div>
@@ -39,7 +73,7 @@
       <p>{resultDetail}</p>
     </div>
     {#if hasSettledResult && result?.amount !== undefined}
-      <span class="result-amount">{result.amount > 0 ? '+' : ''}{result.amount} <small>JG</small></span>
+      <span class="result-amount" data-testid="result-amount" aria-label={`${result.amount} JG`}>{displayedAmount > 0 ? '+' : ''}{displayedAmount} <small>JG</small></span>
     {:else if result}
       <span class="result-state" aria-hidden="true"><i></i><i></i><i></i></span>
     {/if}
@@ -50,7 +84,9 @@
 </section>
 
 <style>
-  .result-band { display: grid; gap: 8px; padding: 14px 16px; border: 1px solid rgb(255 247 237 / 14%); border-radius: 20px; background: rgb(10 12 16 / 72%); backdrop-filter: blur(12px); box-shadow: 0 14px 40px rgb(0 0 0 / 40%); transition: border-color 240ms var(--ease-smooth), box-shadow 240ms var(--ease-smooth), transform 240ms var(--ease-smooth); }
+  .result-band.compact { padding: 7px 10px; }
+  .compact .result-row { display: none; }
+  .result-band { display: grid; gap: 5px; padding: 10px 12px; border: 1px solid rgb(255 247 237 / 14%); border-radius: 16px; background: rgb(10 12 16 / 90%); box-shadow: 0 14px 40px rgb(0 0 0 / 40%); }
   .result-band.settled { border-color: rgb(231 187 112 / 60%); background: linear-gradient(105deg, rgb(231 187 112 / 16%), rgb(10 12 16 / 78%) 60%); box-shadow: 0 0 34px rgb(213 144 59 / 26%), 0 14px 40px rgb(0 0 0 / 40%); animation: resultConfirmIn 460ms var(--ease-enter) both; }
   .result-kicker { color: var(--brass-300); font-size: 9px; font-weight: 800; letter-spacing: 0.15em; }
   .result-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
