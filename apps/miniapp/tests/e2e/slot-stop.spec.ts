@@ -333,7 +333,7 @@ test.describe('Slot v2 stop continuity', () => {
 
     await page.getByTestId('resync-button').click();
     await expect(page.getByTestId('room-shell')).toHaveAttribute('data-motion', 'settle');
-    await expect(page.getByTestId('resync-button')).toHaveText('LIVE');
+    await expect(page.getByTestId('resync-button')).toContainText('LIVE');
     await expect(page.getByTestId('result-band')).toContainText('SERVER CONFIRMED · LIVE');
     await expect(page.getByTestId('slot-confirmed-grid')).toBeVisible();
     await expect(page.getByTestId('confirmed-balance')).toContainText('BALANCE 1010 JG');

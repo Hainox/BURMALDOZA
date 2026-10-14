@@ -21,15 +21,15 @@
     },
     {
       "file": "holdem-portal.webp",
-      "source": "ImageGen composition based on approved option 2",
-      "bytes": 174168,
-      "sha256": "395e9950fbd7d08799c0cf62834b84a9a16e1de32a41e5966fd46dcdc2a312e5"
+      "source": "Owner request 14.10.2026: Kazuma Kiryu (Like a Dragon: Infinite Wealth) as the Hold'em portal hero. Composite of the previous ImageGen portal and the RGG character portrait from the project's RGG portrait set (© SEGA / Ryu Ga Gotoku Studio); non-commercial fan interface.",
+      "bytes": 131516,
+      "sha256": "414c5e3b5982116eb17873a8a2a29ae61400ca18f309c7ca25f396b3f4465f84"
     },
     {
       "file": "slot-portal.webp",
-      "source": "ImageGen composition based on approved option 2",
-      "bytes": 190064,
-      "sha256": "99ba9cb19371f2507fafd565933ab68dce997b1971b3dff3ea59e1865dd7fed3"
+      "source": "Owner request 14.10.2026: Tachanka as the Slot portal hero. Composite of the previous ImageGen portal and the official Rainbow Six Siege operator portrait Tachanka (© Ubisoft, see apps/miniapp/static/slot/sources.json), warm-graded; non-commercial fan interface.",
+      "bytes": 138930,
+      "sha256": "8926d735a2880ef8ed0252b415e43196d7677112fc365042684e9b593d014c5f"
     },
     {
       "file": "welcome.webp",

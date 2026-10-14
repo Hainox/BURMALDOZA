@@ -116,6 +116,10 @@ test('rereads after confirmed game actions even before a round has settled', asy
   await page.getByTestId('hub-nav-play').click();
   await openRoom(page, 'blackjack');
   await page.getByTestId('blackjack-deal').click();
+  await expect(page.getByTestId('blackjack-room')).toHaveAttribute('data-game-phase', 'player_turn');
+  // История живёт в хабе: возвращаемся и открываем вкладку «История».
+  await page.getByRole('button', { name: 'Назад к комнатам' }).click();
+  await page.getByTestId('hub-nav-history').click();
   await expect(page.getByTestId('ledger-entry')).toHaveCount(2);
   await expect(page.getByTestId('ledger-history')).toContainText('Баланс после: 975 JG');
 });
