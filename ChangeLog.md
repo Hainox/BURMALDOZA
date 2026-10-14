@@ -8,6 +8,8 @@
 
 - Store monetary balances and amounts as BIGINT to keep large slot payouts durable; migration `20261014_0007` is required. Slot and Blackjack custom bets now respect the existing 1,000,000 JG server ceiling as well as the wallet balance. Downgrading refuses amounts outside the INTEGER range without modifying funds.
 
+- Integrate the TACHANKA’S LUCK title into the Tachanka hub portal artwork, replacing the temporary title plate.
+
 - Renamed the Siege slot to «Tachanka’s Luck» and Kamurocho to «Kamurocho 神室町» across the hub, room headers and portals.
 
 - Replace temporary Slot and Hold'em hub portal collages with integrated Tachanka and Infinite Wealth Kiryu illustrations.

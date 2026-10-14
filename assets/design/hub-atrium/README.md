@@ -55,3 +55,30 @@ Telegram на Android/iOS (safe areas, вход/возврат, фон/пауз�
 PR #92 (`claude/bet-picker`) появился параллельно: при интеграции сверить +page.svelte,
 не заменять его игровые обработчики. PR #87 профиля Hold’em — отдельная задача.
 Merge меняет публичный Pages; серверный deploy и merge этим редизайном не выполнены.
+
+## TACHANKA’S LUCK — #106
+
+Встроенный ImageGen перегенерировал портал из иллюстрации PR #102 (`b6196d0`).
+`tachanka-reference-102.webp` — исходный арт для воспроизводимого сравнения.
+Тачанка, Maska «Д 045», пулемёт, арка, дым, кейс и фишки сохранены.
+Новая надпись встроена в иллюстрацию: светлая верхняя строка `TACHANKA’S`
+(типографский апостроф U+2019), золотая нижняя `LUCK`, без таблички.
+
+Промпт встроенного ImageGen: edit only the two-line SLOT SIEGE title in the
+lower third of the referenced 1:2 cinematic portal. First line exactly
+TACHANKA’S, ivory distressed condensed block capitals; second line exactly
+LUCK, larger gold distressed block capitals. Integrate cracks, dimensional
+shading, wear and smoke with the artwork. No plaque, plate or rectangular
+panel. Preserve Tachanka’s Maska helmet Д 045, machine gun, golden arch,
+spade, smoke, tactical case, chips, reflective floor and warm gold lighting.
+Final portrait size 640×1280; no crop of arch or foreground.
+
+Runtime WebP: Pillow resize/encoding only, quality 80, 194 736 bytes,
+SHA256 `c064e61ee967140216541b1767f7a91d297cf51e389781004ba123fbd731d700`.
+Перерисовка надписи — ImageGen; ручного наложения текста нет.
+Сравнение хаба Chromium DEMO, reduced motion, 390×844 CSS px:
+`tachankas-luck-before-390.png` / `tachankas-luck-after-390.png`.
+
+Ручная приёмка: открыть хаб на 390×844 и 320 px, проверить обе строки и
+апостроф, отсутствие таблички/обрезки, выбрать портал и войти в слот,
+вернуться в хаб. Telegram iOS/Android — отдельная приёмка владельца.
