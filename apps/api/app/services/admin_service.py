@@ -69,10 +69,13 @@ class AdminService:
             if not username:
                 raise AdminError(422, "empty player reference")
             statement = select(User).where(func.lower(User.username) == username.lower())
-        user = (await self.session.execute(statement)).scalars().first()
-        if user is None:
+        users = (await self.session.execute(statement.limit(2))).scalars().all()
+        if not users:
             raise AdminError(404, "player not found")
-        return user
+        if len(users) > 1:
+            # username не уникален: старый владелец ника мог не заходить после смены. Не угадываем.
+            raise AdminError(409, "ambiguous username, use Telegram ID")
+        return users[0]
 
     async def lookup(self, actor_telegram_id: int, query: str) -> AdminTarget:
         self.require_admin(actor_telegram_id)
@@ -109,6 +112,9 @@ class AdminService:
                 .scalars()
                 .first()
             )
+            # Сначала блокируем кошелёк, потом ищем ключ: параллельное подтверждение той же карточки
+            # дождётся блокировки и увидит уже записанную операцию (без второго аудита и уведомления).
+            before = (await self.wallet.get_or_create_in_transaction(target.id)).balance
             replay = (
                 (
                     await self.session.execute(
@@ -120,7 +126,6 @@ class AdminService:
                 .scalars()
                 .first()
             )
-            before = (await self.wallet.get_or_create_in_transaction(target.id)).balance
             if replay is None and before + delta < 0:
                 raise AdminError(409, "insufficient balance")
             result = await self.wallet.apply_delta_in_transaction(

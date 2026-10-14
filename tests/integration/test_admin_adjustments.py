@@ -1,3 +1,4 @@
+import asyncio
 from uuid import uuid4
 
 import pytest
@@ -99,3 +100,32 @@ async def test_take_cannot_go_below_zero_and_amount_is_capped(session_factory):
     async with session_factory() as session:
         assert (await session.get(Wallet, 2)).balance == 0
         assert (await session.scalar(select(func.count()).select_from(AdminAuditLog))) == 2
+
+
+@pytest.mark.asyncio
+async def test_ambiguous_username_is_refused(session_factory):
+    await seed(session_factory)
+    async with session_factory() as session, session.begin():
+        # Прежний владелец ника не заходил после смены — в базе два игрока с одним username.
+        session.add(User(id=3, telegram_user_id=3003, display_name="Old", username="lucky_one"))
+    async with session_factory() as session:
+        with pytest.raises(AdminError) as ambiguous:
+            await service(session).lookup(ADMIN, "@Lucky_One")
+    assert ambiguous.value.status == 409
+
+
+@pytest.mark.asyncio
+async def test_concurrent_confirmations_write_one_entry_and_one_audit(session_factory):
+    await seed(session_factory)
+    key = uuid4()
+
+    async def confirm():
+        async with session_factory() as session:
+            return await service(session).adjust(ADMIN, PLAYER, 700, "", key)
+
+    first, second = await asyncio.gather(confirm(), confirm())
+    assert sorted([first.replayed, second.replayed]) == [False, True]
+    async with session_factory() as session:
+        assert (await session.get(Wallet, 2)).balance == 700
+        assert (await session.scalar(select(func.count()).select_from(LedgerEntry))) == 1
+        assert (await session.scalar(select(func.count()).select_from(AdminAuditLog))) == 1

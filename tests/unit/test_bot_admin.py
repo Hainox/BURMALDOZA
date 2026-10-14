@@ -129,7 +129,8 @@ async def test_failed_confirm_keeps_the_same_key_for_a_safe_retry(config: BotCon
     await admin.handle_confirmation(callback, config, api)
     keys = [call.args[4] for call in api.admin_adjust.await_args_list]
     assert len(keys) == 2 and keys[0] == keys[1]
-    callback.bot.send_message.assert_not_awaited()  # повтор не уведомляет игрока второй раз
+    # первый ответ потерялся — игрок всё равно получает ровно одно уведомление после успешного повтора
+    callback.bot.send_message.assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -144,3 +145,47 @@ async def test_take_below_zero_and_bad_amounts_are_refused_before_confirmation(
         await admin.handle_adjust(msg, command("give", f"@lucky {bad}"), config, api, 1)
         assert "Сумма — целое число" in msg.answer.await_args.args[0]
     assert admin._pending == {}
+
+
+@pytest.mark.asyncio
+async def test_reply_to_forwarded_message_targets_the_original_author(config: BotConfig) -> None:
+    api = SimpleNamespace(admin_lookup=AsyncMock(return_value=target()))
+    msg = message(ADMIN)
+    msg.reply_to_message = SimpleNamespace(
+        forward_origin=SimpleNamespace(sender_user=SimpleNamespace(id=2002, is_bot=False)),
+        from_user=SimpleNamespace(id=ADMIN, is_bot=False),
+    )
+    await admin.handle_adjust(msg, command("give", "500"), config, api, 1)
+    assert api.admin_lookup.await_args.args == (ADMIN, "2002")
+
+    hidden = message(ADMIN)
+    hidden.reply_to_message = SimpleNamespace(
+        forward_origin=SimpleNamespace(sender_user_name="Скрыт"), from_user=None
+    )
+    await admin.handle_adjust(hidden, command("give", "500"), config, api, 1)
+    assert "скрыл аккаунт" in hidden.answer.await_args.args[0]
+    assert api.admin_lookup.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_long_comment_is_refused_before_confirmation(config: BotConfig) -> None:
+    api = SimpleNamespace(admin_lookup=AsyncMock(return_value=target()))
+    msg = message(ADMIN)
+    await admin.handle_adjust(msg, command("give", "@lucky 500 " + "x" * 201), config, api, 1)
+    assert "длиннее 200" in msg.answer.await_args.args[0]
+    api.admin_lookup.assert_not_awaited()
+    assert admin._pending == {}
+
+
+@pytest.mark.asyncio
+async def test_second_tap_while_request_is_in_flight_does_nothing(config: BotConfig) -> None:
+    api = SimpleNamespace(admin_lookup=AsyncMock(return_value=target()), admin_adjust=AsyncMock())
+    msg = message(ADMIN)
+    await admin.handle_adjust(msg, command("give", "@lucky 500"), config, api, 1)
+    data = msg.answer.await_args.kwargs["reply_markup"].inline_keyboard[0][0].callback_data
+    admin._inflight.add(data.split(":")[2])
+    callback = SimpleNamespace(data=data, from_user=SimpleNamespace(id=ADMIN), answer=AsyncMock())
+    await admin.handle_confirmation(callback, config, api)
+    api.admin_adjust.assert_not_awaited()
+    assert callback.answer.await_args.args[0] == "Выполняется…"
+    admin._inflight.clear()

@@ -22,6 +22,7 @@ from ..main import BotConfig
 router = Router(name="admin")
 
 MAX_AMOUNT = 1_000_000
+MAX_COMMENT = 200
 PENDING_TTL_SECONDS = 300
 
 HELP = (
@@ -47,6 +48,10 @@ class PendingAdjustment:
 
 # Ожидающие подтверждения операции (в памяти процесса бота, живут 5 минут).
 _pending: dict[str, PendingAdjustment] = {}
+# Карточки, по которым запрос уже в пути: второе нажатие не шлёт второй запрос и второе уведомление.
+# Уведомление игроку уходит по первому успешному ответу карточки, даже если сервер вернул повтор
+# (прежний ответ мог потеряться в сети); после успеха карточка удаляется — второго уведомления нет.
+_inflight: set[str] = set()
 
 
 def _fmt(value: int) -> str:
@@ -74,17 +79,28 @@ def _parse_amount(text: str) -> int | None:
     return value if 0 < value <= MAX_AMOUNT else None
 
 
+HIDDEN_FORWARD = "hidden-forward"
+
+
 def _target_and_rest(message: Message, command: CommandObject) -> tuple[str | None, list[str]]:
     args = (command.args or "").split()
     reply = message.reply_to_message
-    if reply is not None and reply.from_user is not None and not reply.from_user.is_bot:
-        return str(reply.from_user.id), args
+    # В личке с ботом сообщение игрока бывает только пересланным: адресат — исходный автор пересылки.
+    origin = getattr(reply, "forward_origin", None) if reply is not None else None
+    if origin is not None:
+        sender = getattr(origin, "sender_user", None)
+        if sender is not None and not sender.is_bot:
+            return str(sender.id), args
+        return HIDDEN_FORWARD, args
     if not args:
         return None, []
     return args[0], args[1:]
 
 
 async def _lookup(message: Message, api_client: BotApiClient, query: str) -> dict | None:
+    if query == HIDDEN_FORWARD:
+        await message.answer("Игрок скрыл аккаунт в пересылке — укажите @ник или Telegram ID.")
+        return None
     try:
         return await api_client.admin_lookup(message.from_user.id, query)
     except BotApiError as error:
@@ -92,6 +108,8 @@ async def _lookup(message: Message, api_client: BotApiClient, query: str) -> dic
             await message.answer("Игрок не найден. Он должен хотя бы раз открыть Mini App.")
         elif error.status == 403:
             await message.answer("Сервер не подтвердил права администратора.")
+        elif error.status == 409:
+            await message.answer("Этот ник есть у нескольких игроков — укажите Telegram ID.")
         else:
             await message.answer("Сервер недоступен, попробуйте позже.")
         return None
@@ -130,6 +148,10 @@ async def handle_adjust(
     if amount is None:
         await message.answer(f"Сумма — целое число от 1 до {_fmt(MAX_AMOUNT)}. {usage}")
         return
+    comment = " ".join(rest[1:])
+    if len(comment) > MAX_COMMENT:
+        await message.answer(f"Комментарий длиннее {MAX_COMMENT} символов — сократите.")
+        return
     target = await _lookup(message, api_client, query)
     if not target:
         return
@@ -147,7 +169,7 @@ async def handle_adjust(
         target=int(target["telegram_user_id"]),
         target_label=_label(target),
         delta=delta,
-        comment=" ".join(rest[1:]),
+        comment=comment,
         key=str(uuid.uuid4()),
         created=time.monotonic(),
     )
@@ -188,16 +210,21 @@ async def handle_confirmation(
         _pending.pop(token, None)
         await callback.answer("Подтверждение устарело — повторите команду.", show_alert=True)
         return
+    if token in _inflight:
+        await callback.answer("Выполняется…")
+        return
     if action == "no":
         _pending.pop(token, None)
         await callback.message.edit_text("Отменено, баланс не менялся.")
         await callback.answer()
         return
+    _inflight.add(token)
     try:
         result = await api_client.admin_adjust(
             pending.actor, pending.target, pending.delta, pending.comment, pending.key
         )
     except BotApiError as error:
+        _inflight.discard(token)
         reason = {
             409: "недостаточно средств",
             403: "нет прав",
@@ -210,24 +237,22 @@ async def handle_confirmation(
         await callback.answer(f"Не выполнено: {reason}", show_alert=True)
         return
     _pending.pop(token, None)
+    _inflight.discard(token)
     done = "Начислено" if pending.delta > 0 else "Списано"
     await callback.message.edit_text(
         f"{done} {_fmt(abs(pending.delta))} JG — {pending.target_label}.\n"
         f"Баланс: {_fmt(int(result['balance_before']))} → {_fmt(int(result['balance_after']))} JG"
     )
     await callback.answer("Готово")
-    if not result.get("replayed"):
-        verb = "начислил вам" if pending.delta > 0 else "списал у вас"
-        comment = f"\nКомментарий: {pending.comment}" if pending.comment else ""
-        try:
-            await callback.bot.send_message(
-                pending.target,
-                f"Администратор {verb} {_fmt(abs(pending.delta))} JG. Баланс: {_fmt(int(result['balance_after']))} JG{comment}",
-            )
-        except Exception:  # noqa: BLE001 — игрок мог закрыть личку с ботом; начисление уже проведено
-            await callback.message.answer(
-                "Уведомление игроку не доставлено (личка с ботом закрыта)."
-            )
+    verb = "начислил вам" if pending.delta > 0 else "списал у вас"
+    comment = f"\nКомментарий: {pending.comment}" if pending.comment else ""
+    try:
+        await callback.bot.send_message(
+            pending.target,
+            f"Администратор {verb} {_fmt(abs(pending.delta))} JG. Баланс: {_fmt(int(result['balance_after']))} JG{comment}",
+        )
+    except Exception:  # noqa: BLE001 — игрок мог закрыть личку с ботом; начисление уже проведено
+        await callback.message.answer("Уведомление игроку не доставлено (личка с ботом закрыта).")
 
 
 @router.message(Command("admin"))
