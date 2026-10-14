@@ -227,8 +227,13 @@
     roomState.reset();
   }
 
-  function buildDemoSlotResult(action: string): RoomResult {
+  // Демо-выплата масштабируется от выбранной ставки; Free Spin берёт ставку последнего спина.
+  let demoSlotBet = 10;
+
+  function buildDemoSlotResult(action: string, fields: Record<string, unknown> = {}): RoomResult {
     const isFreeSpin = action === 'free-spin';
+    if (!isFreeSpin && typeof fields.bet === 'number') demoSlotBet = fields.bet;
+    const payout = demoSlotBet * (isFreeSpin ? 6 : 4);
     demoFreeSpinsRemaining = isFreeSpin
       ? Math.max(0, demoFreeSpinsRemaining - 1)
       : 5;
@@ -236,8 +241,8 @@
     const slotOutcome: SlotOutcome = {
       reels: demoSlotReels,
       winningRows: [3],
-      payout: isFreeSpin ? 60 : 40,
-      balance: session.balance + (isFreeSpin ? 60 : 40),
+      payout,
+      balance: session.balance + payout,
       freeSpinsAwarded: isFreeSpin ? 0 : 5,
       freeSpinsRemaining: demoFreeSpinsRemaining
     };
@@ -425,7 +430,7 @@
       return;
     }
 
-    const confirmedResult = selectedGame === 'slot' ? buildDemoSlotResult(action) : demoPokerResult;
+    const confirmedResult = selectedGame === 'slot' ? buildDemoSlotResult(action, fields) : demoPokerResult;
 
     after(SLOT_ACTION_ACCEPT_DELAY, () => {
       roomState.transition({ type: 'ACTION_ACCEPTED' }, session.reducedMotion);
