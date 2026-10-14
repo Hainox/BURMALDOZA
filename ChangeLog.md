@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Renamed the Siege slot to «Tachanka’s Luck» and Kamurocho to «Kamurocho 神室町» across the hub, room headers and portals.
+
 - Replace temporary Slot and Hold'em hub portal collages with integrated Tachanka and Infinite Wealth Kiryu illustrations.
 
 - Add portrait room scenes, portal zoom transitions, compact phone layouts, and confirmed-result animations for Blackjack, Slot Siege, and Hold'em; respect hub motion pause and reduced motion.

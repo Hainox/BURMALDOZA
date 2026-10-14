@@ -91,7 +91,7 @@
         if (!disposed) stream(next.roomId);
       } else {
         mode = 'bot';
-        accept({roomId:`demo-${crypto.randomUUID()}`,gameType:'holdem',title:'Камуро-тё',rulesetVersion:'holdem-demo-1',stateVersion:1,publicState:{phase:'active',buy_in:buyIn,seat:0,hero_code:'Kazuma_Kiryu',game_phase:'pre_flop',pot:buyIn*0.15,stacks:[buyIn*0.95,buyIn*0.9],street_contributions:[buyIn*0.05,buyIn*0.1],current_seat:0,current_bet:buyIn*0.1,minimum_raise:buyIn*0.2,legal_actions:['fold','call'],community_cards:[],hole_cards:[{rank:'A',suit:'S'},{rank:'K',suit:'S'}],showdown:false}});
+        accept({roomId:`demo-${crypto.randomUUID()}`,gameType:'holdem',title:'Kamurocho 神室町',rulesetVersion:'holdem-demo-1',stateVersion:1,publicState:{phase:'active',buy_in:buyIn,seat:0,hero_code:'Kazuma_Kiryu',game_phase:'pre_flop',pot:buyIn*0.15,stacks:[buyIn*0.95,buyIn*0.9],street_contributions:[buyIn*0.05,buyIn*0.1],current_seat:0,current_bet:buyIn*0.1,minimum_raise:buyIn*0.2,legal_actions:['fold','call'],community_cards:[],hole_cards:[{rank:'A',suit:'S'},{rank:'K',suit:'S'}],showdown:false}});
       }
     } catch(e) {
       if (typeof e === 'object' && e !== null && 'status' in e && typeof e.status === 'number' && e.status >= 400 && e.status < 500) {pendingCreate=null;sessionStorage.removeItem('holdem-create');error='Сервер отклонил вход. Проверьте баланс и выберите стол.';}
@@ -142,7 +142,7 @@
 </script>
 <svelte:head><link rel="stylesheet" href={`${base}/holdem/font.css`} /></svelte:head>
 <div class="poker-room" aria-busy={busy}>
-  <header><h2 class="neon">Камуро-тё</h2><p>{live ? 'Одна раздача. Два места. Итог с сервера.' : 'DEMO · записанная демонстрационная раздача. Баланс не меняется.'}</p></header>
+  <header><h2 class="neon">Kamurocho <span class="kanji">神室町</span></h2><p>{live ? 'Одна раздача. Два места. Итог с сервера.' : 'DEMO · записанная демонстрационная раздача. Баланс не меняется.'}</p></header>
   {#if error}<div class="error" role="alert">{error} {#if pendingCreate}<button on:click={start} disabled={busy}>Повторить</button>{/if}{#if pendingAction}<button on:click={() => action('retry')} disabled={busy}>Повторить ход</button>{/if}{#if snapshot}<button on:click={refresh} disabled={busy}>Синхронизировать</button>{/if}</div>{/if}
   {#if !view}
     <section class="lobby" aria-label="Лобби Hold’em">
@@ -164,7 +164,7 @@
 <style>
   .poker-room{position:relative;display:grid;gap:16px;background:#171313;color:#f3ede2;padding:16px;border:1px solid #c9a24a55;padding-bottom:max(16px,env(safe-area-inset-bottom))}h2{font:32px Georgia,serif;margin:8px 0}p{font-size:12px;line-height:1.5;margin:4px 0;color:inherit}.lobby{display:grid;gap:16px}fieldset{display:grid;gap:8px;border:1px solid #c9a24a55;padding:12px}legend{color:#e9cd84;font-size:12px}label{padding:8px;font-size:14px}label small{display:block;margin:4px 0 0 22px;color:#ccc3b4;font-size:11px}input{accent-color:#b8141f}button{min-height:44px;border:1px solid #c9a24a;background:#321014;color:#f3ede2;padding:8px 16px;font:inherit;cursor:pointer}button:disabled{opacity:.5;cursor:default}button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #fff1b8;outline-offset:3px}.primary{background:#7a0b13}.error{padding:12px;border:1px solid #ea8e8e;font-size:13px}.error button{margin-top:8px}.search{text-align:center;padding:24px 8px}.sources{font-size:11px;color:#d4cbbd}.sources summary{min-height:44px;display:flex;align-items:center;cursor:pointer}.sources a{color:#e9cd84}.intro{position:absolute;z-index:4;inset:0;display:grid;align-content:center;background:#0c0a0af5;overflow:hidden;padding:16px}.intro>img{width:100%;aspect-ratio:4/5;object-fit:cover;filter:grayscale(1);mask-image:linear-gradient(transparent,#000 15%,#000 80%,transparent)}.intro>div{margin-top:-80px;z-index:1;text-align:center}.intro h3,.intro p{font-family:Permanent Marker,cursive;color:#b8141f;-webkit-text-stroke:1px #fff;paint-order:stroke fill;text-shadow:2px 2px #000}.intro h3{font-size:clamp(24px,7vw,42px);margin:8px 0}.intro p{font-size:16px;margin:8px 0}.intro button{margin-top:16px}@media(min-width:768px){.lobby fieldset:last-of-type{grid-template-columns:repeat(3,1fr)}.intro>img{max-height:520px;object-fit:contain}.poker-room{max-width:720px;margin:auto;width:100%;box-sizing:border-box}}@media(prefers-reduced-motion:reduce){.intro{display:none}}
 
-  /* Камуро-тё в стиле хаба: стекло над воротами, неоновая вывеска, карточки-таблички вместо переключателей. */
+  /* Kamurocho в стиле хаба: стекло над воротами, неоновая вывеска, карточки-таблички вместо переключателей. */
   .poker-room{background:rgb(23 19 19 / 86%);border-radius:18px;border-color:rgb(201 162 74 / 45%);box-shadow:0 18px 50px rgb(0 0 0 / 55%),0 0 40px rgb(255 46 96 / 8%)}
   .neon{color:#ffe9ee;text-shadow:0 0 6px #ff2e60,0 0 18px #ff2e6099,0 0 34px #ff2e6055;animation:sign 7s linear infinite}
   .lobby fieldset{border:0;padding:0;margin:0;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:8px}
@@ -181,6 +181,7 @@
   .primary{min-height:56px;border:1px solid #ff8aa5;border-radius:14px;background:linear-gradient(180deg,#a3121f,#6b0911);box-shadow:0 0 26px rgb(255 46 96 / 35%);transition:transform .18s ease,opacity .18s ease}
   .primary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 0 36px rgb(255 46 96 / 55%)}
   .primary:active:not(:disabled){transform:translateY(1px) scale(.98)}
+  .neon .kanji{font-size:.62em;letter-spacing:.08em;vertical-align:.18em}
   @keyframes sign{0%,100%{opacity:1}61%{opacity:1}62%{opacity:.55}63%{opacity:1}66%{opacity:.7}67%{opacity:1}}
   @media(prefers-reduced-motion:reduce){.neon{animation:none}.lobby label,.primary{transition:none}}
 
