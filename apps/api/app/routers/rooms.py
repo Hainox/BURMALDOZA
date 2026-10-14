@@ -108,7 +108,7 @@ class GameInfo(BaseModel):
 _RULESETS: dict[GameType, dict[str, object]] = {
     GameType.SLOT: {
         "game_type": GameType.SLOT,
-        "version": "slot-siege-1",
+        "version": "slot-siege-2",
         "columns": 3,
         "rows": 7,
         "min_bet": 10,
@@ -137,7 +137,7 @@ _RULESETS: dict[GameType, dict[str, object]] = {
 async def games(current_user: CurrentUser = Depends(get_current_user)) -> list[GameInfo]:
     del current_user
     return [
-        GameInfo(game_type=GameType.SLOT, ruleset_version="slot-siege-1"),
+        GameInfo(game_type=GameType.SLOT, ruleset_version="slot-siege-2"),
         GameInfo(game_type=GameType.BLACKJACK, ruleset_version="blackjack-gfl-skeleton-1"),
         GameInfo(game_type=GameType.HOLDEM, ruleset_version="holdem-v1"),
     ]

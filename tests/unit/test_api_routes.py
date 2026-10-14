@@ -322,8 +322,8 @@ def test_slot_catalog_exposes_siege_and_keeps_skeleton_metadata() -> None:
     try:
         with TestClient(app) as client:
             games = client.get("/api/v1/games").json()
-            assert next(game for game in games if game["game_type"] == "slot")["ruleset_version"] == "slot-siege-1"
-            for version in ("slot-skeleton-1", "slot-siege-1"):
+            assert next(game for game in games if game["game_type"] == "slot")["ruleset_version"] == "slot-siege-2"
+            for version in ("slot-skeleton-1", "slot-siege-1", "slot-siege-2"):
                 response = client.get(f"/api/v1/rulesets/slot/{version}")
                 assert response.status_code == 200
                 assert response.json()["version"] == version
@@ -347,8 +347,8 @@ async def test_persisted_skeleton_room_uses_old_rules_after_api_upgrade() -> Non
                 )
             new = (await client.post("/api/v1/rooms", headers=headers,
                 json={"game_type": "slot", "mode": "solo"})).json()
-            assert new["ruleset_version"] == "slot-siege-1"
-            for room_id, version in ((str(old.room_id), "slot-skeleton-1"), (new["room_id"], "slot-siege-1")):
+            assert new["ruleset_version"] == "slot-siege-2"
+            for room_id, version in ((str(old.room_id), "slot-skeleton-1"), (new["room_id"], "slot-siege-2")):
                 action_id = str(uuid4())
                 response = await client.post(f"/api/v1/rooms/{room_id}/actions", headers=headers,
                     json={"action_id": action_id, "expected_state_version": 0,

@@ -32,7 +32,7 @@ from burmaldoza_domain.games.blackjack import (
 )
 from burmaldoza_domain.games.slot import SlotConfig, SlotOutcome, spin
 from burmaldoza_domain.games.slot_operations import OperationOverride, select_operation
-from burmaldoza_domain.games.slot_ruleset import load_slot_config
+from burmaldoza_domain.games.slot_ruleset import SIEGE_RULESET_VERSIONS, load_slot_config
 from burmaldoza_domain.rng import RandomSource, SystemRandomSource
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -88,7 +88,7 @@ class MemoryRoomStore:
 
 
 _RULESET_VERSIONS = {
-    GameType.SLOT: "slot-siege-1",
+    GameType.SLOT: "slot-siege-2",
     GameType.BLACKJACK: "blackjack-gfl-skeleton-1",
     GameType.HOLDEM: "holdem-skeleton-1",
 }
@@ -314,7 +314,7 @@ class RoomService:
             if game_type is GameType.SLOT else _RULESET_VERSIONS[game_type]
         )
         public_state = _initial_public_state(game_type)
-        if game_type is GameType.SLOT and ruleset_version == "slot-siege-1":
+        if game_type is GameType.SLOT and ruleset_version in SIEGE_RULESET_VERSIONS:
             public_state.update(self._slot_operation_metadata())
 
         if self.store is not None:
@@ -417,7 +417,7 @@ class RoomService:
         ).model_dump(mode="json")
 
     def _with_slot_operation(self, snapshot: RoomSnapshot) -> RoomSnapshot:
-        if snapshot.game_type is GameType.SLOT and snapshot.ruleset_version == "slot-siege-1":
+        if snapshot.game_type is GameType.SLOT and snapshot.ruleset_version in SIEGE_RULESET_VERSIONS:
             return snapshot.model_copy(update={
                 "public_state": {**snapshot.public_state, **self._slot_operation_metadata()}
             })
@@ -600,7 +600,7 @@ class RoomService:
             ):
                 raise RoomServiceError("slot paylines must be a list of integer indexes")
             active_paylines = tuple(raw_paylines)
-            operation = self._slot_operation_metadata() if config.ruleset_version == "slot-siege-1" else {}
+            operation = self._slot_operation_metadata() if config.ruleset_version in SIEGE_RULESET_VERSIONS else {}
 
             try:
                 outcome = spin(config, bet, active_paylines, self.slot_rng)

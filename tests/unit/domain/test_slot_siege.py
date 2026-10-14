@@ -11,18 +11,19 @@ from devtools.monte_carlo.slot import main, run_slot_simulation
 
 
 def test_ruleset_registry_preserves_skeleton_and_defaults_to_siege() -> None:
-    assert load_slot_config().ruleset_version == "slot-siege-1"
+    assert load_slot_config().ruleset_version == "slot-siege-2"
+    assert load_slot_config("slot-siege-1").ruleset_version == "slot-siege-1"
     assert load_slot_config("slot-skeleton-1") == load_skeleton_config()
 
 
-@pytest.mark.parametrize("version", ["unknown", "../slot_skeleton.json", "", "slot-siege-2"])
+@pytest.mark.parametrize("version", ["unknown", "../slot_skeleton.json", "", "slot-siege-3"])
 def test_ruleset_registry_rejects_unknown_versions(version: str) -> None:
     with pytest.raises(ValueError, match="unknown slot ruleset"):
         load_slot_config(version)
 
 
 def test_siege_dimensions_counts_and_paytable_match_approved_rules() -> None:
-    config = load_slot_config()
+    config = load_slot_config("slot-siege-1")
     assert (config.columns, config.rows) == (3, 7)
     assert config.paylines == ((3, 3, 3), (2, 3, 4), (4, 3, 2))
     assert config.wild_symbol == "W"
@@ -42,7 +43,7 @@ def test_siege_dimensions_counts_and_paytable_match_approved_rules() -> None:
 def test_siege_pays_each_symbol_with_wild_substitution(
     symbol: str, multiplier: int, wild_columns: tuple[int, ...]
 ) -> None:
-    config = load_slot_config()
+    config = load_slot_config("slot-siege-1")
     grid = tuple(("W" if column in wild_columns else symbol,) * 7 for column in range(3))
     lines = calculate_payout(config, grid, 10, (0, 1, 2))
     assert len(lines) == 3
@@ -51,11 +52,11 @@ def test_siege_pays_each_symbol_with_wild_substitution(
 
 def test_siege_mixed_nonwild_symbols_do_not_pay() -> None:
     grid = tuple((symbol,) * 7 for symbol in ("D1", "W", "D2"))
-    assert calculate_payout(load_slot_config(), grid, 10, (0, 1, 2)) == ()
+    assert calculate_payout(load_slot_config("slot-siege-1"), grid, 10, (0, 1, 2)) == ()
 
 
 def test_siege_spin_wraps_reels_and_reports_server_stops() -> None:
-    config = load_slot_config()
+    config = load_slot_config("slot-siege-1")
 
     class FixedStops:
         def __init__(self) -> None:
@@ -76,7 +77,7 @@ def test_siege_spin_wraps_reels_and_reports_server_stops() -> None:
 
 
 def test_siege_exact_rtp_from_actual_engine_with_all_wild_paid_once() -> None:
-    config = load_slot_config()
+    config = load_slot_config("slot-siege-1")
     counts = [Counter(strip) for strip in config.reel_strips]
     weighted_payout = 0
     weighted_hits = 0
@@ -98,7 +99,7 @@ def test_siege_exact_rtp_from_actual_engine_with_all_wild_paid_once() -> None:
 
 
 def test_siege_simulation_is_seeded_and_returns_new_ruleset() -> None:
-    config = load_slot_config()
+    config = load_slot_config("slot-siege-1")
     first = run_slot_simulation(config, trials=1000, bet=10, seed=42)
     assert first == run_slot_simulation(config, trials=1000, bet=10, seed=42)
     assert first.ruleset_version == "slot-siege-1"
@@ -124,3 +125,67 @@ def test_monte_carlo_cli_rejects_unknown_ruleset(monkeypatch: pytest.MonkeyPatch
     with pytest.raises(SystemExit) as error:
         main()
     assert error.value.code == 2
+
+
+# slot-siege-2 (#91): 9 линий — 7 рядов и 2 диагонали, ставка за спин, RTP как у siege-1.
+SIEGE_2_PAYLINES = tuple((row, row, row) for row in range(7)) + ((2, 3, 4), (4, 3, 2))
+
+
+def test_siege_2_has_nine_paylines_and_the_siege_1_paytable() -> None:
+    config = load_slot_config("slot-siege-2")
+    assert (config.columns, config.rows, config.wild_symbol) == (3, 7, "W")
+    assert config.paylines == SIEGE_2_PAYLINES
+    assert config.paytable == load_slot_config("slot-siege-1").paytable
+    assert all(len(strip) == 30 for strip in config.reel_strips)
+    for strip in config.reel_strips:
+        assert set(strip) == {"D1", "D2", "D3", "D4", "A1", "A2", "A3", "W"}
+        assert max(Counter(strip).values()) <= 10
+
+
+@pytest.mark.parametrize(
+    ("winning_rows", "expected_lines"),
+    [((0, 0, 0), (0,)), ((6, 6, 6), (6,)), ((2, 3, 4), (7,)), ((4, 3, 2), (8,))],
+)
+def test_siege_2_pays_top_bottom_rows_and_diagonals(
+    winning_rows: tuple[int, int, int], expected_lines: tuple[int, ...]
+) -> None:
+    config = load_slot_config("slot-siege-2")
+    filler = ("D1", "D2", "D3")
+    grid = tuple(
+        tuple("A3" if row == winning_rows[column] else filler[(row + column) % 3] for row in range(7))
+        for column in range(3)
+    )
+    lines = calculate_payout(config, grid, 10, tuple(range(9)))
+    winning = [line for line in lines if line.match_symbol == "A3"]
+    assert [line.payline_index for line in winning] == list(expected_lines)
+    assert all(line.payout == 200 for line in winning)
+
+
+def test_siege_2_pays_several_lines_in_one_spin() -> None:
+    config = load_slot_config("slot-siege-2")
+    grid = tuple(("D4",) * 7 for _ in range(3))
+    lines = calculate_payout(config, grid, 10, tuple(range(9)))
+    assert len(lines) == 9
+    assert sum(line.payout for line in lines) == 9 * 40
+
+
+def test_siege_2_exact_rtp_over_every_reel_stop() -> None:
+    config = load_slot_config("slot-siege-2")
+
+    class Stops:
+        def __init__(self, stops: tuple[int, int, int]) -> None:
+            self.stops = iter(stops)
+
+        def randbelow(self, upper: int) -> int:
+            return next(self.stops)
+
+    total = 0
+    hits = 0
+    for stops in product(range(30), repeat=3):
+        outcome = spin(config, 1, tuple(range(9)), Stops(stops))
+        total += outcome.gross_payout
+        hits += outcome.gross_payout > 0
+    rtp = total / 30**3
+    assert abs(rtp - 0.9626) <= 0.005
+    assert rtp == pytest.approx(0.9626666666666667)
+    assert round(hits / 30**3, 4) == 0.4418

@@ -31,7 +31,7 @@
 | Комната | Тема | Что в `main` | В работе |
 |---|---|---|---|
 | **Blackjack** | Girls' Frontline: колоды Deck A/B с персонажами, сцена Sector 09 | Hit / Stand / Double, закрытая карта дилера, DEMO-стол, resync после 409 | — |
-| **Slot 3×7** | Rainbow Six Siege: символы-оперативники, «операции» с недельной ротацией лиц | правила `slot-siege-1` (8 символов, RTP ≈ 96 %) для новых комнат, три линии, staged stop; превью дизайна — `assets/design/slot-r6` | символы-оперативники в интерфейсе комнаты (сейчас живой режим показывает коды `D1`…`W`), ротация операций на сервере |
+| **Slot 3×7** | Rainbow Six Siege: символы-оперативники, «операции» с недельной ротацией лиц | правила `slot-siege-2` (8 символов, 9 линий: 7 рядов и 2 диагонали, RTP ≈ 96 %) для новых комнат; комнаты на `slot-siege-1` (три линии) доигрывают по своим правилам, staged stop; превью дизайна — `assets/design/slot-r6` | символы-оперативники в интерфейсе комнаты (сейчас живой режим показывает коды `D1`…`W`), ротация операций на сервере |
 | **Hold’em** | игры RGG (Yakuza / Judgment): Камуро-тё, герои-соперники по столам | серверная игра против бота и живого игрока, столы 100 / 500 / 1 000, таймер хода 20 с; превью дизайна — `assets/design/holdem-rgg` | интерфейс комнаты в Mini App |
 
 Портреты персонажей используются в некоммерческом фанатском превью с атрибуцией источников (`sources.json` рядом с ассетами).
@@ -88,6 +88,7 @@ python -m devtools.monte_carlo.slot --trials 100000 --bet 10 --seed 42 --json
 python -m devtools.monte_carlo.blackjack --trials 100000 --bet 25 --seed 42 --json
 python -m devtools.monte_carlo.holdem --trials 100000 --seed 42 --json
 python -m devtools.monte_carlo.slot --ruleset slot-siege-1 --trials 200000 --bet 10 --seed 42 --json  # reports/monte-carlo/slot-siege-1.json
+python -m devtools.monte_carlo.slot --ruleset slot-siege-2 --trials 200000 --bet 10 --seed 42 --json  # reports/monte-carlo/slot-siege-2.json
 python -m devtools.monte_carlo.holdem_bot --trials 5000 --seed 53 --json  # reports/monte-carlo/holdem-bot-v1.json
 ```
 
