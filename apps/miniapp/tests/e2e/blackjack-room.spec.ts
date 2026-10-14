@@ -342,7 +342,7 @@ test.describe('Blackjack GFL room', () => {
 
     await page.getByTestId('blackjack-bet').fill('10');
     await expect(page.getByTestId('blackjack-deal')).toBeDisabled();
-    await expect(page.getByText(/Ставка — целое число от 25 до \d+ JG \(ваш баланс\)\./)).toBeVisible();
+    await expect(page.getByText(/Ставка — целое число от 25 до \d+ JG \(лимит с учётом баланса\)\./)).toBeVisible();
 
     await page.getByTestId('blackjack-bet').fill('10000000');
     await expect(page.getByTestId('blackjack-deal')).toBeDisabled();

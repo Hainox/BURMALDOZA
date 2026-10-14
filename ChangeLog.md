@@ -4,6 +4,8 @@
 
 - Added sound and haptics: a sound toggle in the hub and room headers (off by default, remembered), scene music for the hub and each room, synthesized card/chip/reel/stamp cues, Siege samples in the slot, the Blackjack dealer speaking with her T-Doll voice, and GFL interface sounds on taps and confirmations. Telegram haptics now fire on the same confirmed events. The game audio pack is served only from the production server (`/audio/`), not from the public repository or the Pages demo.
 
+- Store monetary balances and amounts as BIGINT to keep large slot payouts durable; migration `20261014_0007` is required. Slot and Blackjack custom bets now respect the existing 1,000,000 JG server ceiling as well as the wallet balance. Downgrading refuses amounts outside the INTEGER range without modifying funds.
+
 - Renamed the Siege slot to «Tachanka’s Luck» and Kamurocho to «Kamurocho 神室町» across the hub, room headers and portals.
 
 - Replace temporary Slot and Hold'em hub portal collages with integrated Tachanka and Infinite Wealth Kiryu illustrations.
