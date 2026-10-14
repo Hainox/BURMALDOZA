@@ -59,7 +59,7 @@
     if (live && parsed.balance !== null && parsed.balance !== lastBalance) {lastBalance=parsed.balance;onBalance(parsed.balance);}
     seconds = parsed.deadline ? Math.max(0,Math.ceil((Date.parse(parsed.deadline)-Date.now())/1000)) : 0;
     const knownHero = mode === 'bot' && parsed.heroCode && parsed.heroCode in heroes;
-    if (knownHero && introRoom !== next.roomId) { introRoom = next.roomId; showIntro = !reducedMotion && !quiet(); if (showIntro) sound.cue('intro'); }
+    if (knownHero && introRoom !== next.roomId) { introRoom = next.roomId; showIntro = !reducedMotion && !quiet(); if (showIntro) { sound.cue('intro'); const code = parsed.heroCode; if (code) setTimeout(() => sound.voice(code, 'quip'), 1100); } }
   }
   function stream(roomId:string) {
     stopStream?.();

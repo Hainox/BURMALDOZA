@@ -81,6 +81,11 @@ def build(pack: Path, out: Path) -> dict:
 
     for doll, spec in selection["voices"].items():
         groups: dict[str, list[str]] = {}
+        if isinstance(spec, dict) and "split" in spec:
+            # Склейки фраз (например, Ultimate Quotes Кирю): режем по паузам на короткие реплики.
+            manifest["voices"][doll] = {spec["group"]: split_quotes(need_dir(pack / spec["split"]), doll, spec, out)}
+            print("voice", doll, spec["group"], len(manifest["voices"][doll][spec["group"]]))
+            continue
         if isinstance(spec, str):
             files = sorted(p.name for p in need_dir(pack / spec).iterdir() if p.suffix == ".wav")
             spec = {
@@ -98,6 +103,40 @@ def build(pack: Path, out: Path) -> dict:
 
     (out / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return manifest
+
+
+def speech_segments(path: Path, low: float, high: float) -> list[tuple[float, float]]:
+    # Куски между паузами (тишина ниже -35 dB дольше 0,35 с) нужной длины.
+    probe = subprocess.run(
+        ["ffmpeg", "-hide_banner", "-i", str(path), "-af", "silencedetect=noise=-35dB:d=0.35", "-f", "null", "-"],
+        capture_output=True, text=True, check=True,
+    )
+    starts, ends = [0.0], []
+    for line in probe.stderr.splitlines():
+        if "silence_start:" in line:
+            ends.append(float(line.split("silence_start:")[1].split()[0]))
+        elif "silence_end:" in line:
+            starts.append(float(line.split("silence_end:")[1].split()[0]))
+    return [(a, b) for a, b in zip(starts, ends) if low <= b - a <= high]
+
+
+def split_quotes(folder: Path, who: str, spec: dict, out: Path) -> list[str]:
+    candidates = [
+        (path, start, end)
+        for path in sorted(folder.glob("*.mp3"))
+        for start, end in speech_segments(path, float(spec["min"]), float(spec["max"]))
+    ]
+    # Равномерно по всему диску, а не первые N.
+    limit = int(spec["limit"])
+    step = max(1, len(candidates) // limit)
+    chosen = candidates[::step][:limit]
+    names = []
+    for index, (path, start, end) in enumerate(chosen):
+        name = f"voice/{slug(who)}/{spec['group']}-{index:02d}.m4a"
+        trim = f"atrim={max(0.0, start - 0.05):.2f}:{end + 0.15:.2f},asetpts=PTS-STARTPTS,"
+        encode(path, out / name, trim + "loudnorm=I=-16:TP=-1.5", ["-ac", "1", "-b:a", "64k"])
+        names.append(name)
+    return names
 
 
 def need_dir(path: Path) -> Path:

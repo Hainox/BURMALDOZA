@@ -50,6 +50,13 @@
     "M4 SOPMOD II": "GFL/M4-SOPMODII",
     "Makarov": "GFL/Makarov",
     "Mosin-Nagant": "GFL/Mosin-Nagant",
-    "PPSh-41": "GFL/PPSh-41"
+    "PPSh-41": "GFL/PPSh-41",
+    "Kazuma_Kiryu": {
+      "split": "Yakuza/OST/17_Ultimate_Quotes_CD",
+      "group": "quip",
+      "min": 0.5,
+      "max": 4.0,
+      "limit": 48
+    }
   }
 }
