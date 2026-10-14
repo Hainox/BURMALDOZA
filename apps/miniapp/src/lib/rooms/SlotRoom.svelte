@@ -164,8 +164,8 @@
 <div class="game-room slot-room" class:siege={isSiege}>
   <div class="room-intro">
     <div>
-      <span class="room-kicker">{isSiege ? 'SIEGE · 3×7' : 'THREE REELS · SEVEN ROWS'}</span>
-      <h2>{isSiege ? 'Siege' : 'Однорукий бандит'}</h2>
+      {#if !isSiege}<span class="room-kicker">THREE REELS · SEVEN ROWS</span>
+      <h2>Однорукий бандит</h2>{/if}
       <p>{isLive ? 'Полная прокрутка барабанов. Сервер подтверждает сетку, клиент показывает движение.' : 'Демо-прокрутка барабанов. Клиент показывает сетку и движение; сервер не подтверждает исход.'}</p>
     </div>
     <span class="bet-chip" data-testid="slot-bet-chip">{betValid ? bet : BET_MIN} JG</span>
@@ -248,9 +248,7 @@
   </div>
 
   <div class="slot-meta">
-    <span><b>RULESET</b> {isSiege ? 'Siege' : 'skeleton-1'}</span>
-    <span data-testid="slot-lines"><b>LINES</b> {activeLines} active</span>
-    <span><b>MOTION</b> wave · 60 fps</span>
+    <span class="lines-chip" data-testid="slot-lines"><b>LINES</b> {activeLines} active</span>
   </div>
 
   {#if !isSiege && slotOutcome && hasFreeSpins(slotOutcome) && showConfirmedGrid}
@@ -326,4 +324,21 @@
   @keyframes winningPulse { from { transform: scale(1); } to { transform: scale(1.04); } } @keyframes lightBlink { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
   @media (max-width: 390px) { .free-spins-panel { align-items: stretch; flex-direction: column; } .free-spin-action { width: 100%; } }
   @media (prefers-reduced-motion: reduce) { .reel.travel, .reel.landing, .reel.landed, .symbol.winning, .machine-lights i { animation: none; } .reel-track { transition: none; } }
+
+  /* Siege в стиле хаба: стекло поверх тактической сцены, холодное свечение, луч сканера. */
+  .siege { background: rgb(10 15 19 / 72%); border-color: rgb(116 138 151 / 55%); border-radius: 18px; backdrop-filter: blur(12px); box-shadow: 0 18px 50px rgb(0 0 0 / 50%), 0 0 40px rgb(190 208 220 / 8%); }
+  .siege .room-intro p { color: #c3d0d8; }
+  .siege .slot-machine { box-shadow: inset 0 -80px 60px -60px #c3d5de44, 0 0 0 1px rgb(190 208 220 / 18%), 0 0 36px rgb(190 208 220 / 12%); transition: box-shadow .4s ease; }
+  .siege .slot-machine.resolving, .siege .slot-machine:not([data-slot-phase='idle']):not([data-slot-phase='settled']) { box-shadow: inset 0 -80px 60px -60px #c3d5de55, 0 0 0 1px rgb(222 239 255 / 45%), 0 0 46px rgb(190 220 240 / 28%); }
+  .siege .slot-machine::after { content: ''; position: absolute; inset: 0; z-index: 3; background: linear-gradient(180deg, transparent 0%, rgb(222 239 255 / 14%) 48%, transparent 52%); opacity: 0; pointer-events: none; }
+  .siege .slot-machine:not([data-slot-phase='idle']):not([data-slot-phase='settled'])::after { opacity: 1; animation: scan 1.1s linear infinite; }
+  .siege .slot-meta { justify-content: center; }
+  .lines-chip { padding: 5px 10px; border: 1px solid rgb(190 208 220 / 30%); border-radius: 999px; color: #d1dce3; font-size: 9px; letter-spacing: .1em; }
+  .lines-chip b { display: inline; margin: 0 4px 0 0; }
+  .siege .slot-bet { background: rgb(6 10 13 / 60%); backdrop-filter: blur(8px); }
+  .siege .primary-action { min-height: 56px; border-radius: 14px; background: linear-gradient(180deg, #e3ecf1, #b9c8d1); box-shadow: 0 0 24px rgb(190 220 240 / 25%); transition: transform .18s ease, box-shadow .18s ease, filter .18s ease; }
+  .siege .primary-action:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 0 34px rgb(190 220 240 / 42%); }
+  .siege .primary-action:active:not(:disabled) { transform: translateY(1px) scale(.98); }
+  @keyframes scan { from { transform: translateY(-60%); } to { transform: translateY(60%); } }
+  @media (prefers-reduced-motion: reduce) { .siege .slot-machine::after { animation: none; opacity: 0; } .siege .primary-action { transition: none; } }
 </style>
