@@ -21,15 +21,19 @@
     },
     {
       "file": "holdem-portal.webp",
-      "source": "Owner request 14.10.2026: Kazuma Kiryu (Like a Dragon: Infinite Wealth) as the Hold'em portal hero. Composite of the previous ImageGen portal and the RGG character portrait from the project's RGG portrait set (© SEGA / Ryu Ga Gotoku Studio); non-commercial fan interface.",
-      "bytes": 131516,
-      "sha256": "414c5e3b5982116eb17873a8a2a29ae61400ca18f309c7ca25f396b3f4465f84"
+      "source": "ImageGen integrated illustration based on approved hub option 2, current portal composition and character identity reference; non-commercial fan interface. Kazuma Kiryu identity reference from owner local Infinite Wealth portrait set (not published); character © SEGA / Ryu Ga Gotoku Studio.",
+      "bytes": 195514,
+      "sha256": "3e5045f657482862cfec3e03d23ae95b5897b37f920421f72b24e64269c5f11a",
+      "width": 640,
+      "height": 1280
     },
     {
       "file": "slot-portal.webp",
-      "source": "Owner request 14.10.2026: Tachanka as the Slot portal hero. Composite of the previous ImageGen portal and the official Rainbow Six Siege operator portrait Tachanka (© Ubisoft, see apps/miniapp/static/slot/sources.json), warm-graded; non-commercial fan interface.",
-      "bytes": 138930,
-      "sha256": "8926d735a2880ef8ed0252b415e43196d7677112fc365042684e9b593d014c5f"
+      "source": "ImageGen integrated illustration based on approved hub option 2, current portal composition and character identity reference; non-commercial fan interface. Tachanka Maska helmet reference from project operator portrait; character © Ubisoft.",
+      "bytes": 196558,
+      "sha256": "f3fd5aea592734d22c3eacfe745379906b8629a875b7e720c4bda0de78aed493",
+      "width": 640,
+      "height": 1280
     },
     {
       "file": "welcome.webp",
