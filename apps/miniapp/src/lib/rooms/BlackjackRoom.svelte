@@ -3,6 +3,7 @@
   import { base } from '$app/paths';
 
   import BetPicker from '$lib/components/BetPicker.svelte';
+  import { MAX_BET } from '$lib/game/bets';
   import ResultBand from '$lib/components/ResultBand.svelte';
   import type { MotionState } from '$lib/game/motion';
   import type { RoomResult, RoomSnapshot } from '$lib/state/room.svelte';
@@ -16,10 +17,10 @@
   export let resultSource: 'demo' | 'live' = 'demo';
 
   const BET_MIN = 25;
-  // Своя ставка — до всего баланса (решение владельца 14.10.2026); сервер проверяет баланс.
+  // Своя ставка ограничена балансом и техническим потолком сервера.
   export let balance = 1000;
   const BET_PRESETS = [25, 50, 100, 250, 500].map((value) => ({ value }));
-  $: betMax = Math.max(BET_MIN, Math.floor(balance));
+  $: betMax = Math.max(BET_MIN, Math.min(MAX_BET, Math.floor(balance)));
 
   const RANK_ORDER = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
@@ -314,7 +315,7 @@
         inputTestId="blackjack-bet"
       />
       {#if !betValid}
-        <p class="bet-hint" role="alert">Ставка — целое число от {BET_MIN} до {betMax} JG (ваш баланс).</p>
+        <p class="bet-hint" role="alert">Ставка — целое число от {BET_MIN} до {betMax} JG (лимит с учётом баланса).</p>
       {/if}
       </details>
       <button

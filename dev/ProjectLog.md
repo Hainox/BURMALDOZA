@@ -716,3 +716,43 @@
 - Claude Code замещает Codex (лимит). Закоммичены незавершённые правки Codex: переходы только по `transform`/`opacity`, лучи линий появляются через `opacity`; e2e 320px ждёт LIVE, паузу хаба и загрузку сцены вместо разового чтения (причина падения CI на `a0ca2a0`).
 - Review: ячейки слота Codex уменьшил до `clamp(38px, 10.25vw, 50px)` ради «всё в экран» — это противоречило решению владельца (#101). Возвращено `clamp(48px, 14.2vw, 70px)`; кнопка спина остаётся в первом экране (низ на 802 px из 844), e2e проверяет именно её. Имена на картах Blackjack больше не рвутся посреди слова. Скриншоты «после» обновлены.
 - Проверки: `pnpm miniapp:check` — 0/0; `pnpm miniapp:test` — 46 passed; Playwright — 63 passed; стресс `slot-stop.spec.ts:9` — 16/16, `rooms-polish` 320px ×5 — 15/15.
+
+## 2026-10-14 — независимое review #94/#95 и исправление #105
+
+- Codex, GPT-6; точный effort клиента не отображается (запрошен high).
+  Review опубликован комментариями в #94 и #95. База `main` `eb554ae`.
+- #94: замечаний нет. Независимый перебор JSON без движка по 27 000 остановкам:
+  RTP 361/375 = 0.9626666667, hit 11 929/27 000 = 44.1815%, максимум ×72.
+  Monte Carlo siege-2 seed42/200000/bet10 полностью совпал с report (RTP 0.959).
+- #95: P1 — разрешённая выплата переполняет INTEGER balance_after:
+  баланс 2 100 000 000, ставка 1 000 000, stops (15,16,17), выплата 72 000 000,
+  итог 2 171 000 000; PostgreSQL/asyncpg падает с value out of int32 range.
+  P2 — Slot/Blackjack предлагают ставку выше существующего API ceiling 1 000 000.
+- Владелец явно утвердил BIGINT и исправления; дополнение записано в BuildSpec.
+  Миграция 20261014_0007 переводит шесть денежных полей в BIGINT, UI ограничен
+  min(balance, 1 000 000). RNG/paytable/правила и стековый cap Hold'em не менялись.
+- Красные регрессии до правки: реальная выплата ×72 — int32 overflow;
+  два browser ceiling теста ожидали 1 000 000 и получили 2 171 000 000.
+  После правки: pytest с PostgreSQL18/Redis — 303 passed; ruff — passed;
+  miniapp:check — 0/0; miniapp:test — 46 passed; полный E2E workers=2 — 65 passed.
+  Новый concurrency-тест: две ставки на весь баланс в разных Blackjack-комнатах,
+  одна принята; DOUBLE без средств не меняет ни room state, ни ledger.
+  Durable slot replay в новой DB-сессии возвращает ту же выплату без повторного RNG.
+- Реальная Alembic-проверка на отдельной локальной БД: upgrade с 0006, все шесть
+  денежных типов bigint; downgrade/upgrade с 2.1b сохраняет баланс; при 2.171b
+  downgrade отклоняется до изменения типов, ревизия/суммы остаются прежними.
+  alembic check выявил 12 расхождений nullability timestamp вне этой задачи;
+  metadata comparison подтвердил отсутствие денежных/type diffs. Это не зелёный
+  общий alembic check; несвязанные timestamp не исправлялись.
+- Code/Python/TypeScript независимые read-only review: подтверждённых блокеров нет.
+  Старый E2E assertion обновлён только под уточнённую подпись лимита; новый Slot-тест
+  переоткрывает сворачиваемый блок после изменения суммы. Во время параллельных
+  локальных прогонов были timing flakes и конфликт двух сборок EPERM; финальный
+  изолированный полный E2E зелёный, flaky unrelated тесты не переписывались.
+- Dependencies: uv locked groups, Python 3.13.13, pnpm 11.19.0, Chromium,
+  локальные PostgreSQL18 и Redis (WSL); Docker daemon недоступен, compose build
+  остаётся CI. Новых runtime dependencies нет. Production/Telegram не проверялись.
+- Осталось: CI текущего head, review Claude/владельца; миграцию выполнять в окне
+  обслуживания (ALTER TYPE берёт блокировки/переписывает таблицы), backup и остановка
+  API перед upgrade, затем запуск нового API. Downgrade больших сумм запрещён,
+  безопасный путь отката кода — сохранить BIGINT-схему. Server deploy/merge не делались.
