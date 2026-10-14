@@ -1,15 +1,18 @@
 from __future__ import annotations
 
 import hmac
+from uuid import UUID
 
 from burmaldoza_contracts.wallet import WalletSnapshot
-from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, status
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import User, Wallet
 from app.db.session import get_session
 from app.dependencies import get_app_settings
+from app.services.admin_service import MAX_ADMIN_ADJUSTMENT, AdminError, AdminService
 from app.services.wallet_service import WalletService
 
 router = APIRouter(prefix="/api/v1/internal/bot", tags=["internal"])
@@ -65,3 +68,77 @@ async def internal_top(
         )
     ).all()
     return [{"display_name": display_name, "balance": balance} for display_name, balance in rows]
+
+
+# --- Админ-команды бота: токен бота + Telegram ID действующего в списке админов сервера. ---
+
+class AdminTargetOut(BaseModel):
+    telegram_user_id: int
+    display_name: str
+    username: str | None
+    balance: int
+
+
+class AdminAdjustIn(BaseModel):
+    actor_telegram_id: int
+    target_telegram_id: int
+    delta: int = Field(ge=-MAX_ADMIN_ADJUSTMENT, le=MAX_ADMIN_ADJUSTMENT)
+    comment: str = Field(default="", max_length=200)
+    idempotency_key: UUID
+
+
+class AdminAdjustOut(BaseModel):
+    target: AdminTargetOut
+    delta: int
+    balance_before: int
+    balance_after: int
+    operation_id: UUID
+    replayed: bool
+
+
+def _admin_service(request: Request, session: AsyncSession) -> AdminService:
+    return AdminService(session, get_app_settings(request).admin_ids)
+
+
+@router.get("/admin/users", response_model=AdminTargetOut)
+async def internal_admin_lookup(
+    request: Request,
+    actor: int = Query(),
+    query: str = Query(min_length=1, max_length=64),
+    x_internal_api_token: str | None = Header(default=None, alias="X-Internal-API-Token"),
+    session: AsyncSession = Depends(get_session),
+) -> AdminTargetOut:
+    _require_internal_api_token(request, x_internal_api_token)
+    try:
+        target = await _admin_service(request, session).lookup(actor, query)
+    except AdminError as error:
+        raise HTTPException(status_code=error.status, detail=error.detail) from error
+    return AdminTargetOut(**target.__dict__)
+
+
+@router.post("/admin/adjust", response_model=AdminAdjustOut)
+async def internal_admin_adjust(
+    payload: AdminAdjustIn,
+    request: Request,
+    x_internal_api_token: str | None = Header(default=None, alias="X-Internal-API-Token"),
+    session: AsyncSession = Depends(get_session),
+) -> AdminAdjustOut:
+    _require_internal_api_token(request, x_internal_api_token)
+    try:
+        result = await _admin_service(request, session).adjust(
+            payload.actor_telegram_id,
+            payload.target_telegram_id,
+            payload.delta,
+            payload.comment,
+            payload.idempotency_key,
+        )
+    except AdminError as error:
+        raise HTTPException(status_code=error.status, detail=error.detail) from error
+    return AdminAdjustOut(
+        target=AdminTargetOut(**result.target.__dict__),
+        delta=result.delta,
+        balance_before=result.balance_before,
+        balance_after=result.balance_after,
+        operation_id=result.operation_id,
+        replayed=result.replayed,
+    )

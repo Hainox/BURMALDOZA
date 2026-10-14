@@ -24,18 +24,32 @@ class Settings(BaseSettings):
     telegram_init_data_max_age_seconds: int = 86400
     environment: str = "development"
     api_port: int = 8000
+    # Telegram ID админов бота через запятую (только в .env сервера, не в репозитории).
+    admin_telegram_ids: str = ""
     slot_event_operation_id: str | None = None
     slot_event_starts_at: AwareDatetime | None = None
     slot_event_ends_at: AwareDatetime | None = None
 
     @model_validator(mode="after")
     def validate_slot_event(self) -> Settings:
+        _ = self.admin_ids  # опечатка в ADMIN_TELEGRAM_IDS — ошибка при старте, а не 500 на команде
         fields = (self.slot_event_operation_id, self.slot_event_starts_at, self.slot_event_ends_at)
         if any(value is not None for value in fields):
             if any(value is None for value in fields):
                 raise ValueError("slot event requires operation ID, start and end together")
             _ = self.slot_operation_override
         return self
+
+    @property
+    def admin_ids(self) -> frozenset[int]:
+        ids: set[int] = set()
+        for part in self.admin_telegram_ids.replace(";", ",").split(","):
+            part = part.strip()
+            if part:
+                if not part.isdigit():
+                    raise ValueError("ADMIN_TELEGRAM_IDS must be comma-separated Telegram user IDs")
+                ids.add(int(part))
+        return frozenset(ids)
 
     @property
     def slot_operation_override(self) -> OperationOverride | None:

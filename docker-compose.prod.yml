@@ -69,6 +69,8 @@ services:
       MINIAPP_URL: ${MINIAPP_URL:-https://burmaldoza.ru}
       ENVIRONMENT: production
       API_PORT: 8000
+      # Сервер сам проверяет права админа (не только бот).
+      ADMIN_TELEGRAM_IDS: ${ADMIN_TELEGRAM_IDS:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -94,6 +96,8 @@ services:
       # Private Docker service URL, reachable only through the internal bot_api network.
       API_BASE_URL: http://api:8000
       ENVIRONMENT: production
+      # Telegram ID админов бота через запятую; пусто — админ-команды выключены.
+      ADMIN_TELEGRAM_IDS: ${ADMIN_TELEGRAM_IDS:-}
     depends_on:
       api:
         condition: service_healthy
