@@ -23,6 +23,25 @@
   let stopStream: (() => void) | null = null;
   let polling = false;
   let disposed = false;
+  let avatarUrl = '';
+  let avatarRoom = '';
+  let avatarRequest: AbortController | null = null;
+  function clearAvatar() {
+    avatarRequest?.abort(); avatarRequest=null;
+    if (avatarUrl) URL.revokeObjectURL(avatarUrl);
+    avatarUrl=''; avatarRoom='';
+  }
+  async function loadAvatar(roomId:string, force=false) {
+    if (!live || !client || mode !== 'pvp' || !view?.opponentProfile) {clearAvatar();return;}
+    if (!force && avatarRoom === roomId) return;
+    clearAvatar(); avatarRoom=roomId;
+    const controller=new AbortController(); avatarRequest=controller;
+    try {
+      const blob=await client.getOpponentAvatar(roomId,controller.signal);
+      if (!disposed && !controller.signal.aborted && snapshot?.roomId === roomId && blob) avatarUrl=URL.createObjectURL(blob);
+    } catch { /* Optional photo failure leaves the neutral icon; resync retries explicitly. */ }
+    finally {if(avatarRequest === controller)avatarRequest=null;}
+  }
   let lastBalance: number | null = null;
   let pollTimer: ReturnType<typeof setInterval>;
   let clockTimer: ReturnType<typeof setInterval>;
@@ -34,6 +53,7 @@
     if (disposed || (snapshot?.roomId === next.roomId && next.stateVersion < snapshot.stateVersion)) return;
     const parsed = parseHoldem(next.publicState);
     snapshot = next; view = parsed;
+    void loadAvatar(next.roomId);
     if (live && parsed.balance !== null && parsed.balance !== lastBalance) {lastBalance=parsed.balance;onBalance(parsed.balance);}
     seconds = parsed.deadline ? Math.max(0,Math.ceil((Date.parse(parsed.deadline)-Date.now())/1000)) : 0;
     const knownHero = mode === 'bot' && parsed.heroCode && parsed.heroCode in heroes;
@@ -54,7 +74,7 @@
     catch { error = 'Не удалось обновить раздачу. Повторите синхронизацию.'; }
     finally { polling = false; }
   }
-  export async function resync() {error='';await refresh();if(snapshot && !disposed)stream(snapshot.roomId);}
+  export async function resync() {error='';await refresh();if(snapshot && !disposed){stream(snapshot.roomId);void loadAvatar(snapshot.roomId,true);}}
   async function start() {
     if (busy) return;
     busy = true; error = ''; showIntro = false;
@@ -103,7 +123,7 @@
       if (client) {try{accept(await client.getRoom(snapshot.roomId));}catch{error+=' Синхронизация недоступна.';}}
     } finally {busy=false;}
   }
-  function lobby() { stopStream?.();stopStream=null;snapshot=null;view=null;pendingAction=null;sessionStorage.removeItem('holdem-room');sessionStorage.removeItem('holdem-action'); }
+  function lobby() { clearAvatar();stopStream?.();stopStream=null;snapshot=null;view=null;pendingAction=null;sessionStorage.removeItem('holdem-room');sessionStorage.removeItem('holdem-action'); }
   function focusIntro(node:HTMLButtonElement) {node.focus();}
   function restoreAction(roomId:string) {
     try {const p=JSON.parse(sessionStorage.getItem('holdem-action') ?? 'null');if(p?.roomId === roomId && typeof p.id === 'string' && Number.isSafeInteger(p.version) && ['fold','check','call','raise','cancel'].includes(p.payload?.action)){pendingAction=p;error='Остался неподтверждённый запрос. Повторите ход с тем же идентификатором.';}}
@@ -117,7 +137,7 @@
       try { const stored=JSON.parse(sessionStorage.getItem('holdem-room') ?? 'null'); if(stored?.id && ['bot','pvp'].includes(stored.mode)) {mode=stored.mode;busy=true;client.getRoom(stored.id).then(next=>{accept(next);restoreAction(next.roomId);if(!disposed)stream(next.roomId);}).catch(()=>{sessionStorage.removeItem('holdem-room');error='Предыдущая раздача недоступна. Выберите стол.';}).finally(()=>{busy=false;});} } catch {sessionStorage.removeItem('holdem-room');}
     }
   });
-  onDestroy(() => {disposed=true;stopStream?.();clearInterval(pollTimer);clearInterval(clockTimer);});
+  onDestroy(() => {disposed=true;clearAvatar();stopStream?.();clearInterval(pollTimer);clearInterval(clockTimer);});
 </script>
 <svelte:head><link rel="stylesheet" href={`${base}/holdem/font.css`} /></svelte:head>
 <div class="poker-room" aria-busy={busy}>
@@ -134,7 +154,7 @@
   {:else if view.phase === 'cancelled'}
     <p role="status">Поиск завершён. Вход не списан.</p><button on:click={lobby}>Выбрать стол</button>
   {:else}
-    <div inert={showIntro}><HandTable {view} {hero} busy={busy || !!pendingAction} {seconds} {live} onAction={action} /></div>
+    <div inert={showIntro}><HandTable {view} {hero} {avatarUrl} busy={busy || !!pendingAction} {seconds} {live} onAction={action} /></div>
     {#if view.phase === 'settled'}<button on:click={lobby}>Выбрать стол</button>{/if}
     {#if showIntro && hero}<section class="intro" data-testid="holdem-intro" aria-label="Ваш соперник"><img src={`${base}/holdem/${hero.intro}`} alt="" /><div><h3>{hero.name}</h3><p>{hero.title}</p><button use:focusIntro on:click={() => showIntro=false}>К столу</button></div></section>{/if}
   {/if}

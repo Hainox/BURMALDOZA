@@ -53,3 +53,10 @@ class RoomSnapshot(BaseModel):
     ruleset_version: str
     state_version: int = Field(ge=0)
     public_state: dict[str, Any] = Field(default_factory=dict)
+
+
+class HoldemOpponentProfile(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    nickname: str = Field(min_length=1, max_length=256)
+    avatar_path: str

@@ -50,6 +50,9 @@ async def lifespan(application: FastAPI):
         timer.cancel()
         with suppress(asyncio.CancelledError):
             await timer
+        avatars = getattr(application.state, "opponent_avatars", None)
+        if avatars is not None:
+            await avatars.aclose()
 
 
 app = FastAPI(title="Burmaldoza API", version="0.1.0", lifespan=lifespan)

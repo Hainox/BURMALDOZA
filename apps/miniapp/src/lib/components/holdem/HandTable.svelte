@@ -8,6 +8,7 @@
   export let busy = false;
   export let seconds = 0;
   export let live = false;
+  export let avatarUrl = '';
   export let onAction: (action:string, fields?:Record<string,unknown>) => void;
   let raise = 0;
   let previousBounds = '';
@@ -27,8 +28,8 @@
 <section class="table" aria-label="Стол Hold’em" data-testid="holdem-table">
   <img class="scene" src={`${base}/holdem/scene/kamurocho-gate.webp`} alt="" />
   <div class="seat opponent">
-    {#if hero}<img class="avatar" src={`${base}/holdem/${hero.avatar}`} alt="" />{:else}<span class="avatar placeholder" aria-hidden="true">♟</span>{/if}
-    <div><b>{hero?.name ?? 'Живой игрок'}</b><small>Стек {view.stacks[1-view.seat]} JG</small></div>
+    {#if hero}<img class="avatar" src={`${base}/holdem/${hero.avatar}`} alt="" />{:else if avatarUrl}<img class="avatar" src={avatarUrl} alt="Аватар соперника" on:error={() => avatarUrl=''} />{:else}<span class="avatar placeholder" data-testid="holdem-avatar-placeholder" aria-hidden="true">♟</span>{/if}
+    <div><b data-testid="holdem-opponent-nickname">{hero?.name ?? view.opponentProfile?.nickname ?? 'Живой игрок'}</b><small>Стек {view.stacks[1-view.seat]} JG</small></div>
     <div class="hand" data-testid="holdem-opponent">{#each view.opponent as card}<PlayingCard {card} />{/each}</div>
   </div>
   <div class="pot"><small>{streets[view.street] ?? view.street}</small><span>БАНК</span><strong>{view.pot} <small>JG</small></strong></div>

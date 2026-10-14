@@ -11,6 +11,7 @@ export interface HoldemView {
   legal: string[]; minimumRaise: number; maximumRaise: number; call: number;
   board: HoldemCard[]; own: HoldemCard[]; opponent: HoldemCard[];
   deadline: string | null; balance: number | null;
+  opponentProfile: {nickname:string;avatarPath:string} | null;
   result: { winners: number[]; payout: number; net: number; outcome: string } | null;
 }
 const actions = ['fold', 'check', 'call', 'raise'];
@@ -42,6 +43,12 @@ export function parseHoldem(p: Record<string, unknown>): HoldemView {
   const seat = integer(p.seat);
   if (seat > 1) throw new Error('Некорректное место Hold’em');
   const playing = phase === 'active' || phase === 'settled';
+  let opponentProfile: HoldemView['opponentProfile'] = null;
+  if (p.opponent_profile != null) {
+    const profile = p.opponent_profile as Record<string,unknown>;
+    if (typeof profile !== 'object' || typeof profile.nickname !== 'string' || !profile.nickname || profile.nickname.length > 256 || typeof profile.avatar_path !== 'string' || !/^\/api\/v1\/rooms\/[0-9a-f-]{36}\/opponent-avatar$/.test(profile.avatar_path) || Object.keys(profile).some(key => !['nickname','avatar_path'].includes(key))) throw new Error('Некорректный профиль соперника');
+    opponentProfile = {nickname:profile.nickname,avatarPath:profile.avatar_path};
+  }
   const stacks = playing ? pair(p.stacks) : [buyIn, buyIn];
   const contributions = playing ? pair(p.street_contributions) : [0, 0];
   if (!Array.isArray(p.legal_actions) || p.legal_actions.some(a => !actions.includes(a))) throw new Error('Некорректные действия Hold’em');
@@ -54,7 +61,7 @@ export function parseHoldem(p: Record<string, unknown>): HoldemView {
     result = { winners: r.winner_seats, payout: pair(r.payouts)[seat], net: r.net_deltas[seat] as number, outcome: r.outcome as string };
   }
   return {
-    phase, buyIn, seat, stacks, contributions,
+    phase, buyIn, seat, stacks, contributions, opponentProfile,
     heroCode: typeof p.hero_code === 'string' ? p.hero_code : null,
     street: typeof p.game_phase === 'string' ? p.game_phase : '',
     currentSeat: playing ? integer(p.current_seat) : 0,

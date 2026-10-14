@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Any
 from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
 from burmaldoza_contracts.events import EventEnvelope
-from burmaldoza_contracts.rooms import ActionRequest, RoomSnapshot
+from burmaldoza_contracts.rooms import ActionRequest, HoldemOpponentProfile, RoomSnapshot
 from burmaldoza_domain.core import (
     InvalidActionError,
     StateVersionConflictError,
@@ -572,6 +572,15 @@ class HoldemService:
         if seat is None:
             raise RoomAccessError("user is not a room member")
         result = copy.deepcopy(public)
+        result["opponent_profile"] = None
+        if room.mode == "pvp" and len(members) == 2 and public.get("phase") in ("active", "settled"):
+            from app.db.models import User
+
+            opponent = await self.session.get(User, members[1 - seat])
+            result["opponent_profile"] = HoldemOpponentProfile(
+                nickname=f"@{opponent.username}" if opponent.username else "Живой игрок",
+                avatar_path=f"/api/v1/rooms/{room.id}/opponent-avatar",
+            ).model_dump()
         result["seat"] = seat
         result["legal_actions"] = result.pop("legal_actions_by_seat", [[], []])[seat]
         if room.private_state_json.get("state") and public.get("phase") in ("active", "settled"):

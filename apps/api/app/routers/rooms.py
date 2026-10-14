@@ -18,6 +18,7 @@ from fastapi import (
     Header,
     HTTPException,
     Query,
+    Request,
     WebSocket,
     WebSocketDisconnect,
     status,
@@ -25,7 +26,13 @@ from fastapi import (
 from pydantic import BaseModel, ConfigDict
 
 from app.core.idempotency import InvalidIdempotencyKey, parse_idempotency_key
-from app.dependencies import CurrentUser, get_current_user, get_event_bus, get_room_service
+from app.dependencies import (
+    CurrentUser,
+    get_app_settings,
+    get_current_user,
+    get_event_bus,
+    get_room_service,
+)
 from app.services.room_service import (
     RoomAccessError,
     RoomNotFoundError,
@@ -37,6 +44,57 @@ from app.services.wallet_service import WalletService
 router = APIRouter(prefix="/api/v1", tags=["rooms"])
 
 WEBSOCKET_AUTH_TIMEOUT_SECONDS = 5.0
+
+
+@router.get("/rooms/{room_id}/opponent-avatar")
+async def opponent_avatar(
+    room_id: UUID,
+    request: Request,
+    current_user: CurrentUser = Depends(get_current_user),
+    service: RoomService = Depends(get_room_service),
+):
+    from fastapi.responses import Response
+
+    from app.db.models import User
+    from app.services.holdem_service import HoldemService
+    from app.services.opponent_avatar import AvatarError, AvatarService
+
+    headers = {"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"}
+    try:
+        # snapshot checks membership even on a cache hit. Release the DB
+        # transaction before waiting on Telegram, without touching game state.
+        snapshot = await service.snapshot(room_id, current_user.user_id)
+        avatars = getattr(request.app.state, "opponent_avatars", None)
+        if avatars is None:
+            avatars = AvatarService(get_app_settings(request).bot_token)
+            request.app.state.opponent_avatars = avatars
+        avatars.check_viewer(current_user.user_id)
+        if snapshot.game_type != GameType.HOLDEM or snapshot.mode != "pvp":
+            return Response(status_code=204, headers=headers)
+        async with service.session.begin():
+            members = await HoldemService(service).members(room_id)
+            opponent_id = next((value for value in members.values()
+                                if value != current_user.user_id), None)
+            if opponent_id is None:
+                return Response(status_code=204, headers=headers)
+            opponent = await service.session.get(User, opponent_id)
+            telegram_id = opponent.telegram_user_id
+    except RoomNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except RoomAccessError as error:
+        raise HTTPException(status_code=403, detail=str(error)) from error
+    except AvatarError as error:
+        return Response(status_code=error.status,
+                        headers={**headers, "Retry-After": str(error.retry_after)})
+    try:
+        photo = await avatars.get(telegram_id)
+    except AvatarError as error:
+        return Response(status_code=error.status,
+                        headers={**headers, "Retry-After": str(error.retry_after)})
+    if photo is None:
+        return Response(status_code=204, headers=headers)
+    body, media_type = photo
+    return Response(body, media_type=media_type, headers=headers)
 
 
 class GameInfo(BaseModel):
