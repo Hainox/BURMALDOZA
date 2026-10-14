@@ -4,6 +4,7 @@
   import OperationBanner from '$lib/components/slot/OperationBanner.svelte';
   import { displayOperation, operatorForSymbol, knownOperation } from '$lib/components/slot/operations';
 
+  import BetPicker from '$lib/components/BetPicker.svelte';
   import ResultBand from '$lib/components/ResultBand.svelte';
   import {
     SLOT_LAUNCH_DURATION,
@@ -26,7 +27,13 @@
 
   export let motion: MotionState = 'idle';
   export let result: RoomResult | null = null;
-  export let onAction: (action: string) => void = () => undefined;
+  export let onAction: (action: string, fields?: Record<string, unknown>) => void = () => undefined;
+  // Сервер принимает целую ставку 10–100 JG за спин (room_service, slot bet).
+  const BET_MIN = 10;
+  const BET_MAX = 100;
+  const BET_PRESETS = [10, 20, 30, 50, 100].map((value) => ({ value }));
+  let bet = BET_MIN;
+  $: betValid = Number.isInteger(bet) && bet >= BET_MIN && bet <= BET_MAX;
   export let resultSource: 'demo' | 'live' = 'demo';
   export let rulesetVersion = 'slot-skeleton-1';
   export let publicState:Record<string,unknown> = {};
@@ -119,8 +126,9 @@
 
   function handleAction(action: string) {
     if (motion === 'resolving' || ticker !== null) return;
+    if (action === 'spin' && !betValid) return;
     startSpin();
-    onAction(action);
+    onAction(action, action === 'spin' ? { bet } : {});
   }
 
   function isWinningSymbol(reelIndex: number, symbolIndex: number) {
@@ -155,7 +163,7 @@
       <h2>{isSiege ? 'Siege' : 'Однорукий бандит'}</h2>
       <p>{isLive ? 'Полная прокрутка барабанов. Сервер подтверждает сетку, клиент показывает движение.' : 'Демо-прокрутка барабанов. Клиент показывает сетку и движение; сервер не подтверждает исход.'}</p>
     </div>
-    <span class="bet-chip">10 JG</span>
+    <span class="bet-chip" data-testid="slot-bet-chip">{betValid ? bet : BET_MIN} JG</span>
   </div>
   {#if isSiege}<OperationBanner {operationId} publicState={bannerState} />{/if}
 
@@ -252,9 +260,12 @@
     </section>
   {/if}
 
-  <button class="primary-action" on:click={() => handleAction('spin')} disabled={motion === 'resolving' || isSpinning} data-testid="slot-spin">
+  <div class="slot-bet">
+    <BetPicker bind:value={bet} min={BET_MIN} max={BET_MAX} presets={BET_PRESETS} disabled={motion === 'resolving' || isSpinning} inputId="slot-bet" inputTestId="slot-bet" />
+  </div>
+  <button class="primary-action" on:click={() => handleAction('spin')} disabled={motion === 'resolving' || isSpinning || !betValid} data-testid="slot-spin">
     <span class="action-icon" aria-hidden="true">↻</span>
-    {isSpinning ? 'Барабаны останавливаются…' : motion === 'resolving' ? (isLive ? 'Ждём сервер…' : 'Готовим демо…') : 'Крутить за 10 JG'}
+    {isSpinning ? 'Барабаны останавливаются…' : motion === 'resolving' ? (isLive ? 'Ждём сервер…' : 'Готовим демо…') : betValid ? `Крутить за ${bet} JG` : 'Выберите ставку'}
   </button>
   <ResultBand {result} {motion} source={resultSource} />
   {#if isSiege}<details class="sources"><summary>Источники изображений</summary><p>© Ubisoft Entertainment. Некоммерческий фанатский интерфейс по решению владельца; общая лицензия не заявляется.</p><a href={`${base}/slot/sources.json`} target="_blank" rel="noreferrer">Оперативники и источники портретов</a></details>{/if}
@@ -268,6 +279,8 @@
   .room-kicker { color: var(--brass-300); font-size: 9px; font-weight: 800; letter-spacing: 0.14em; }
   h2 { margin: 6px 0 5px; font-size: clamp(25px, 7vw, 36px); letter-spacing: -0.06em; }
   p { max-width: 280px; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+  .slot-bet { padding: 12px; border: 1px solid rgb(231 187 112 / 22%); border-radius: 12px; background: rgb(255 247 237 / 3%); --bet-accent: var(--brass-300); }
+  .siege .slot-bet { border-color: #687c87; border-radius: 4px; --bet-accent: #d1dce3; --bet-line: #748a97; --bet-ink: #e9eff3; }
   .bet-chip { height: fit-content; padding: 7px 9px; border: 1px solid rgb(231 187 112 / 30%); border-radius: 999px; color: var(--brass-300); font-size: 10px; font-weight: 800; white-space: nowrap; }
   .slot-machine { position: relative; display: grid; place-items: center; min-height: 430px; padding: 54px 10px 30px; overflow: hidden; border: 1px solid rgb(231 187 112 / 36%); border-radius: 24px; background: radial-gradient(circle at 50% 25%, rgb(143 53 89 / 32%), transparent 56%), #12121b; box-shadow: inset 0 0 0 8px rgb(0 0 0 / 14%), inset 0 0 35px rgb(0 0 0 / 52%), 0 18px 40px rgb(0 0 0 / 28%); }
   .machine-rim { position: absolute; inset: 11px; border: 1px solid rgb(231 187 112 / 18%); border-radius: 18px; pointer-events: none; }

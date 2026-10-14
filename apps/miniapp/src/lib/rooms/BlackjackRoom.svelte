@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { base } from '$app/paths';
 
+  import BetPicker from '$lib/components/BetPicker.svelte';
   import ResultBand from '$lib/components/ResultBand.svelte';
   import type { MotionState } from '$lib/game/motion';
   import type { RoomResult, RoomSnapshot } from '$lib/state/room.svelte';
@@ -16,6 +17,7 @@
 
   const BET_MIN = 25;
   const BET_MAX = 100;
+  const BET_PRESETS = [25, 40, 50, 75, 100].map((value) => ({ value }));
 
   const RANK_ORDER = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
@@ -166,9 +168,6 @@
     onAction(action);
   }
 
-  function setBet(value: number) {
-    bet = value;
-  }
 </script>
 
 <div
@@ -290,24 +289,15 @@
 
   {#if canDeal}
     <section class="bet-panel" aria-label="Выбор ставки">
-      <div class="bet-row">
-        <label for="blackjack-bet">Ставка · {BET_MIN}–{BET_MAX} JG</label>
-        <input
-          id="blackjack-bet"
-          data-testid="blackjack-bet"
-          type="number"
-          min={BET_MIN}
-          max={BET_MAX}
-          step="1"
-          bind:value={bet}
-          disabled={busy}
-        />
-      </div>
-      <div class="chip-row" role="group" aria-label="Быстрый выбор ставки">
-        <button type="button" on:click={() => setBet(25)} disabled={busy} aria-pressed={bet === 25}>25</button>
-        <button type="button" on:click={() => setBet(50)} disabled={busy} aria-pressed={bet === 50}>50</button>
-        <button type="button" on:click={() => setBet(100)} disabled={busy} aria-pressed={bet === 100}>100</button>
-      </div>
+      <BetPicker
+        bind:value={bet}
+        min={BET_MIN}
+        max={BET_MAX}
+        presets={BET_PRESETS}
+        disabled={busy}
+        inputId="blackjack-bet"
+        inputTestId="blackjack-bet"
+      />
       {#if !betValid}
         <p class="bet-hint" role="alert">Ставка — целое число от {BET_MIN} до {BET_MAX}.</p>
       {/if}
@@ -430,13 +420,7 @@
   .total { color: rgb(255 247 237 / 72%); font-size: 13px; font-weight: 800; }
   .total.bright { color: var(--brass-300); }
   .table-mark { position: absolute; top: 50%; left: 50%; color: rgb(231 187 112 / 15%); font-size: 58px; font-weight: 800; transform: translate(-50%, -50%); }
-  .bet-panel { display: grid; gap: 10px; padding: 13px 14px; border: 1px solid var(--line); border-radius: var(--radius-md); background: rgb(255 247 237 / 4%); }
-  .bet-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-  .bet-row label { color: var(--muted-strong); font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
-  .bet-row input { width: 110px; min-height: 44px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: rgb(11 11 17 / 60%); color: var(--ivory); font: inherit; font-size: 15px; font-weight: 800; text-align: center; }
-  .chip-row { display: flex; gap: 8px; }
-  .chip-row button { flex: 1; min-height: 44px; border: 1px solid var(--line); border-radius: 11px; background: rgb(255 247 237 / 6%); color: var(--ivory); font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
-  .chip-row button[aria-pressed='true'] { border-color: rgb(231 187 112 / 60%); color: var(--brass-300); }
+  .bet-panel { --bet-accent: var(--brass-300); --bet-line: var(--line); --bet-ink: var(--ivory); display: grid; gap: 10px; padding: 13px 14px; border: 1px solid var(--line); border-radius: var(--radius-md); background: rgb(255 247 237 / 4%); }
   .bet-hint { max-width: none; color: #ff9cae; font-size: 11px; }
   .deal-action { min-height: 52px; border: 0; border-radius: 15px; background: linear-gradient(120deg, var(--brass-300), #c98f4e); color: #2a1820; font: inherit; font-size: 14px; font-weight: 850; cursor: pointer; }
   .deal-action:disabled { cursor: not-allowed; filter: saturate(0.6); opacity: 0.75; }
@@ -458,7 +442,7 @@
   .settle-amount small { font-size: 10px; letter-spacing: 0.12em; }
   .settle-balance { color: var(--success); font-size: 9px; font-weight: 800; letter-spacing: 0.1em; }
   .rules-line { max-width: none; color: var(--muted); font-size: 10px; letter-spacing: 0.04em; }
-  button:focus-visible, input:focus-visible { outline: 2px solid var(--brass-300); outline-offset: 3px; }
+  button:focus-visible { outline: 2px solid var(--brass-300); outline-offset: 3px; }
   @keyframes dealCard {
     from { opacity: 0; transform: translate3d(0, calc(-22px + var(--card-offset)), 0) rotate(calc(var(--card-rotation) - 8deg)) scale(0.92); }
     to { opacity: 1; transform: translate3d(0, var(--card-offset), 0) rotate(var(--card-rotation)) scale(1); }
