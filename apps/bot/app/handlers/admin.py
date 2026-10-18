@@ -8,17 +8,20 @@
 
 from __future__ import annotations
 
+import logging
 import time
 import uuid
 from dataclasses import dataclass
 
 from aiogram import F, Router
+from aiogram.exceptions import TelegramAPIError
 from aiogram.filters import Command, CommandObject
 from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
 
 from ..api_client import BotApiClient, BotApiError
 from ..main import BotConfig
 
+logger = logging.getLogger(__name__)
 router = Router(name="admin")
 
 MAX_AMOUNT = 1_000_000
@@ -144,6 +147,10 @@ async def handle_adjust(
     if query is None or not rest:
         await message.answer(usage)
         return
+    # Числовое начало комментария неотличимо от разделённой пробелами суммы.
+    if len(rest) > 1 and rest[1].isdigit():
+        await message.answer("Укажите сумму без пробелов, а комментарий начните со слова. " + usage)
+        return
     amount = _parse_amount(rest[0])
     if amount is None:
         await message.answer(f"Сумма — целое число от 1 до {_fmt(MAX_AMOUNT)}. {usage}")
@@ -239,11 +246,15 @@ async def handle_confirmation(
     _pending.pop(token, None)
     _inflight.discard(token)
     done = "Начислено" if pending.delta > 0 else "Списано"
-    await callback.message.edit_text(
-        f"{done} {_fmt(abs(pending.delta))} JG — {pending.target_label}.\n"
-        f"Баланс: {_fmt(int(result['balance_before']))} → {_fmt(int(result['balance_after']))} JG"
-    )
-    await callback.answer("Готово")
+    try:
+        await callback.message.edit_text(
+            f"{done} {_fmt(abs(pending.delta))} JG — {pending.target_label}.\n"
+            f"Баланс: {_fmt(int(result['balance_before']))} → {_fmt(int(result['balance_after']))} JG"
+        )
+        await callback.answer("Готово")
+    except TelegramAPIError:
+        # Баланс уже зафиксирован: оформление карточки не должно отменять уведомление.
+        logger.warning("Admin adjustment committed; Telegram confirmation UI update failed")
     verb = "начислил вам" if pending.delta > 0 else "списал у вас"
     comment = f"\nКомментарий: {pending.comment}" if pending.comment else ""
     try:
