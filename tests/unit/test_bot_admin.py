@@ -189,3 +189,44 @@ async def test_second_tap_while_request_is_in_flight_does_nothing(config: BotCon
     api.admin_adjust.assert_not_awaited()
     assert callback.answer.await_args.args[0] == "Выполняется…"
     admin._inflight.clear()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("failed_call", ["edit_text", "answer"])
+async def test_card_failure_does_not_prevent_player_notification(config, failed_call):
+    from aiogram.exceptions import TelegramBadRequest
+    from aiogram.methods import AnswerCallbackQuery
+
+    api = SimpleNamespace(
+        admin_lookup=AsyncMock(return_value=target()),
+        admin_adjust=AsyncMock(return_value={"balance_before": 1250, "balance_after": 1750}),
+    )
+    msg = message(ADMIN)
+    await admin.handle_adjust(msg, command("give", "@lucky 500"), config, api, 1)
+    data = msg.answer.await_args.kwargs["reply_markup"].inline_keyboard[0][0].callback_data
+    callback = SimpleNamespace(
+        data=data, from_user=SimpleNamespace(id=ADMIN), answer=AsyncMock(),
+        message=SimpleNamespace(edit_text=AsyncMock(), answer=AsyncMock()),
+        bot=SimpleNamespace(send_message=AsyncMock()),
+    )
+    failure = TelegramBadRequest(
+        method=AnswerCallbackQuery(callback_query_id="test"), message="temporary failure"
+    )
+    (callback.message.edit_text if failed_call == "edit_text" else callback.answer).side_effect = failure
+    await admin.handle_confirmation(callback, config, api)
+    callback.bot.send_message.assert_awaited_once()
+    assert callback.bot.send_message.await_args.args[0] == 2002
+    callback.answer.side_effect = None
+    await admin.handle_confirmation(callback, config, api)
+    assert api.admin_adjust.await_count == 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("args", ["@lucky 1 000", "@lucky 1\u00a0000 приз", "@lucky 500 123"])
+async def test_ambiguous_grouped_amount_is_refused_before_confirmation(config, args):
+    api = SimpleNamespace(admin_lookup=AsyncMock(return_value=target()))
+    msg = message(ADMIN)
+    await admin.handle_adjust(msg, command("give", args), config, api, 1)
+    assert admin._pending == {}
+    assert "без пробелов" in msg.answer.await_args.args[0]
+    api.admin_lookup.assert_not_awaited()

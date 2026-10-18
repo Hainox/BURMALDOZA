@@ -16,7 +16,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import AdminAuditLog, User, WalletOperation
-from app.services.wallet_service import WalletService
+from app.services.wallet_service import WalletService, WalletServiceError
 
 # Потолок одной операции: опечатка не должна начислить миллиард.
 MAX_ADMIN_ADJUSTMENT = 1_000_000
@@ -128,10 +128,18 @@ class AdminService:
             )
             if replay is None and before + delta < 0:
                 raise AdminError(409, "insufficient balance")
-            result = await self.wallet.apply_delta_in_transaction(
-                target.id, delta, LedgerReason.ADMIN_ADJUSTMENT, None, idempotency_key
-            )
-            if result.user_id != target.id or result.delta != delta:
+            try:
+                result = await self.wallet.apply_delta_in_transaction(
+                    target.id, delta, LedgerReason.ADMIN_ADJUSTMENT, None, idempotency_key
+                )
+            except WalletServiceError as error:
+                raise AdminError(409, "idempotency key belongs to another operation") from error
+            if (
+                result.user_id != target.id
+                or result.delta != delta
+                or result.reason != LedgerReason.ADMIN_ADJUSTMENT
+                or result.reference_id is not None
+            ):
                 raise AdminError(409, "idempotency key belongs to another operation")
             if replay is None:
                 self.session.add(
