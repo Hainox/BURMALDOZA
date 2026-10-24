@@ -124,6 +124,7 @@
     };
   }
   let pokerRoom: PokerRoom | null = null;
+  let blackjackRoom: BlackjackRoom | null = null;
   let isRunning = false;
   let timers: number[] = [];
   let motionQuery: MediaQueryList | undefined;
@@ -585,6 +586,9 @@
 
   async function resync() {
     if (selectedGame === 'holdem') { await pokerRoom?.resync(); return; }
+    if (selectedGame === 'blackjack' && blackjackRoom?.isTableMode()) {
+      await blackjackRoom.resync(); return;
+    }
     if (!roomState.snapshot) return;
     clearTimers();
     isRunning = false;
@@ -669,6 +673,10 @@
         <SlotRoom motion={roomState.motion} result={roomState.result} busy={isRunning} balance={session.balance} onAction={runAction} resultSource={liveApiEnabled ? 'live' : 'demo'} rulesetVersion={roomState.snapshot.rulesetVersion} publicState={roomState.snapshot.publicState} />
       {:else if selectedGame === 'blackjack'}
         <BlackjackRoom
+          bind:this={blackjackRoom}
+          client={apiClient}
+          live={liveApiEnabled}
+          onBalance={(balance) => { session.setBalance(balance); ledgerRevision += 1; }}
           snapshot={roomState.snapshot}
           motion={roomState.motion}
           result={roomState.result}
