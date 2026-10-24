@@ -133,3 +133,16 @@ def test_generated_legal_sequences_terminate_and_preserve_chips(seed):
     assert state.current_seat is None
     result = settle_multiway(state)
     assert sum(a for _, a in result.awards) + sum(a for _, a in result.refunds) == state.pot
+
+
+def test_full_raise_after_short_opening_tracks_increment_not_target():
+    state = create_multiway_hand(((0, 100), (1, 24), (2, 100)), 0, SeededRandomSource(5), RULES)
+    state = apply_multiway_action(state, 0, HoldemAction("raise", 20), RULES).state
+    state = apply_multiway_action(state, 1, HoldemAction("call"), RULES).state
+    state = apply_multiway_action(state, 2, HoldemAction("call"), RULES).state
+    assert state.phase == HoldemPhase.FLOP and state.current_seat == 1
+    state = apply_multiway_action(state, 1, HoldemAction("raise", 4), RULES).state
+    assert multiway_raise_bounds(state, 2, RULES)[0] == 10
+    state = apply_multiway_action(state, 2, HoldemAction("raise", 14), RULES).state
+    assert state.last_full_raise_size == 10
+    assert multiway_raise_bounds(state, 0, RULES)[0] == 24

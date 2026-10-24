@@ -240,9 +240,9 @@ def apply_multiway_action(state, seat, action: HoldemAction, rules: MultiwayRule
             raise InvalidActionError("raise is below minimum or exceeds stack")
         cost = target - player.street_committed
         if target >= minimum:
-            increment = (
-                target if state.current_bet < rules.big_blind else target - state.current_bet
-            )
+            # Completing an incomplete opening preserves the minimum full increment;
+            # any larger raise tracks the actual increase, rather than the target.
+            increment = max(rules.big_blind, target - state.current_bet)
         current_bet = target
     if action.kind == HoldemActionType.FOLD and action.amount is not None:
         raise InvalidActionError("fold does not accept amount")

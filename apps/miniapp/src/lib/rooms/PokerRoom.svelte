@@ -5,6 +5,8 @@
   import { createHoldem, parseHoldem, type HoldemMode, type HoldemView } from '$lib/api/holdem';
   import type { RoomSnapshot } from '$lib/state/room.svelte';
   import HandTable from '$lib/components/holdem/HandTable.svelte';
+  import MultiplayerTable from '$lib/components/holdem/MultiplayerTable.svelte';
+  import { createHoldemTable, parseHoldemTable, type HoldemTableView } from '$lib/api/holdem-table';
   import { sound } from '$lib/audio/sound';
   import heroes from '$lib/components/holdem/heroes.json';
 
@@ -17,6 +19,28 @@
   let buyIn = 100;
   let snapshot: RoomSnapshot | null = null;
   let view: HoldemView | null = null;
+  let tableView: HoldemTableView | null = null;
+  let tableAvatars: Record<number,string> = {};
+  let tableAvatarRoom = '';
+  let tableAvatarAttempts = new Set<number>();
+  let tableAvatarRequests: AbortController[] = [];
+  function clearTableAvatars() {
+    for (const request of tableAvatarRequests) request.abort();
+    tableAvatarRequests=[];
+    for (const url of Object.values(tableAvatars)) URL.revokeObjectURL(url);
+    tableAvatars={};tableAvatarAttempts.clear();tableAvatarRoom='';
+  }
+  function loadTableAvatars(roomId: string) {
+    if(!client||!live||!tableView)return;
+    // Seat IDs are reusable while waiting; load only the immutable active roster.
+    if(tableView.phase!=='active'&&tableView.phase!=='settled'){clearTableAvatars();return;}
+    if(tableAvatarRoom!==roomId){clearTableAvatars();tableAvatarRoom=roomId;}
+    for(const player of tableView.players){
+      if(!player.avatarPath||player.seat===tableView.viewerSeat||tableAvatarAttempts.has(player.seat))continue;
+      tableAvatarAttempts.add(player.seat);const controller=new AbortController();tableAvatarRequests.push(controller);const seat=player.seat;
+      void client.getPlayerAvatar(roomId,seat,controller.signal).then(blob=>{if(!disposed&&!controller.signal.aborted&&tableAvatarRoom===roomId&&blob)tableAvatars={...tableAvatars,[seat]:URL.createObjectURL(blob)};}).catch(()=>{/* Optional avatars never block the game. */});
+    }
+  }
   let busy = false;
   let error = '';
   let introRoom = '';
@@ -48,12 +72,21 @@
   let lastBalance: number | null = null;
   let pollTimer: ReturnType<typeof setInterval>;
   let clockTimer: ReturnType<typeof setInterval>;
-  let pendingCreate: {mode:HoldemMode;buyIn:number;id:string} | null = null;
+  let pendingCreate: {mode:HoldemMode;buyIn:number;id:string;capacity?:6} | null = null;
   let pendingAction: {roomId:string;version:number;id:string;payload:Record<string,unknown>} | null = null;
   $: hero = mode === 'bot' && view?.heroCode ? (heroes as Record<string,{name:string;avatar:string;intro:string;title:string}>)[view.heroCode] ?? null : null;
 
   function accept(next: RoomSnapshot, restored = false) {
     if (disposed || (snapshot?.roomId === next.roomId && next.stateVersion < snapshot.stateVersion)) return;
+    if(next.rulesetVersion==='holdem-six-1'){
+      const parsed=parseHoldemTable(next.publicState);cancelIntroVoice?.();cancelIntroVoice=null;showIntro=false;clearAvatar();snapshot=next;tableView=parsed;view=null;
+      if(parsed.phase==='cancelled'){stopStream?.();stopStream=null;sessionStorage.removeItem('holdem-room');}
+      loadTableAvatars(next.roomId);
+      if(live&&parsed.balance!==null&&parsed.balance!==lastBalance){lastBalance=parsed.balance;onBalance(parsed.balance);}
+      seconds=parsed.deadline?Math.max(0,Math.ceil((Date.parse(parsed.deadline)-Date.now())/1000)):0;return;
+    }
+    if(next.rulesetVersion!=='holdem-v1'&&next.rulesetVersion!=='holdem-demo-1')throw new Error('Неизвестная версия Hold’em');
+    tableView=null;clearTableAvatars();
     const parsed = parseHoldem(next.publicState);
     if (snapshot?.roomId !== next.roomId || parsed.phase === 'settled') { cancelIntroVoice?.(); cancelIntroVoice = null; }
     snapshot = next; view = parsed;
@@ -78,7 +111,7 @@
     }) ?? null;
   }
   async function refresh() {
-    if (!live || !client || !snapshot || polling || busy) return;
+    if (!live || !client || !snapshot || tableView?.phase==='cancelled' || polling || busy) return;
     polling = true;
     const id = snapshot.roomId;
     try { const next = await client.getRoom(id); if (snapshot?.roomId === id) accept(next); }
@@ -91,10 +124,10 @@
     busy = true; error = ''; showIntro = false;
     try {
       if (live && client) {
-        pendingCreate ??= {mode,buyIn,id:crypto.randomUUID()};
+        pendingCreate ??= {mode,buyIn,id:crypto.randomUUID(),...(mode==='pvp'?{capacity:6 as const}:{})};
         sessionStorage.setItem('holdem-create',JSON.stringify(pendingCreate));
         mode = pendingCreate.mode; buyIn = pendingCreate.buyIn;
-        const next = await createHoldem(client, mode, buyIn, pendingCreate.id);
+        const next = mode==='pvp'&&pendingCreate.capacity===6 ? await createHoldemTable(client,buyIn,pendingCreate.id) : await createHoldem(client,mode,buyIn,pendingCreate.id);
         accept(next); pendingCreate = null;
         sessionStorage.removeItem('holdem-create');
         sessionStorage.setItem('holdem-room', JSON.stringify({id:next.roomId,mode}));
@@ -110,8 +143,8 @@
     finally {busy=false;}
   }
   async function action(name:string, fields:Record<string,unknown>={}) {
-    if (busy || !snapshot || !view) return;
-    if (!pendingAction && name !== 'cancel' && !view.legal.includes(name)) return;
+    if (busy || !snapshot || (!view&&!tableView)) return;
+    if (!pendingAction && name !== 'cancel' && !(tableView??view)?.legal.includes(name)) return;
     busy=true; error='';
     try {
       if (live && client) {
@@ -134,7 +167,7 @@
       if (client) {try{accept(await client.getRoom(snapshot.roomId));}catch{error+=' Синхронизация недоступна.';}}
     } finally {busy=false;}
   }
-  function lobby() { cancelIntroVoice?.();cancelIntroVoice=null;sound.stopEffects();clearAvatar();stopStream?.();stopStream=null;snapshot=null;view=null;pendingAction=null;sessionStorage.removeItem('holdem-room');sessionStorage.removeItem('holdem-action'); }
+  function lobby() { cancelIntroVoice?.();cancelIntroVoice=null;sound.stopEffects();clearAvatar();stopStream?.();stopStream=null;snapshot=null;view=null;tableView=null;clearTableAvatars();pendingAction=null;sessionStorage.removeItem('holdem-room');sessionStorage.removeItem('holdem-action'); }
   function focusIntro(node:HTMLButtonElement) {node.focus();}
   function restoreAction(roomId:string) {
     try {const p=JSON.parse(sessionStorage.getItem('holdem-action') ?? 'null');if(p?.roomId === roomId && typeof p.id === 'string' && Number.isSafeInteger(p.version) && ['fold','check','call','raise','cancel'].includes(p.payload?.action)){pendingAction=p;error='Остался неподтверждённый запрос. Повторите ход с тем же идентификатором.';}}
@@ -142,23 +175,27 @@
   }
   onMount(() => {
     pollTimer=setInterval(() => {void refresh();},2000);
-    clockTimer=setInterval(() => {seconds=view?.deadline ? Math.max(0,Math.ceil((Date.parse(view.deadline)-Date.now())/1000)) : 0;},250);
+    clockTimer=setInterval(() => {seconds=(tableView??view)?.deadline ? Math.max(0,Math.ceil((Date.parse((tableView??view)!.deadline!)-Date.now())/1000)) : 0;},250);
     if (live && client) {
       try {const pending=JSON.parse(sessionStorage.getItem('holdem-create') ?? 'null');if(pending && ['bot','pvp'].includes(pending.mode) && [100,500,1000].includes(pending.buyIn) && typeof pending.id === 'string') {pendingCreate=pending;void start();return;}} catch {sessionStorage.removeItem('holdem-create');}
       try { const stored=JSON.parse(sessionStorage.getItem('holdem-room') ?? 'null'); if(stored?.id && ['bot','pvp'].includes(stored.mode)) {mode=stored.mode;busy=true;client.getRoom(stored.id).then(next=>{accept(next,true);restoreAction(next.roomId);if(!disposed)stream(next.roomId);}).catch(()=>{sessionStorage.removeItem('holdem-room');error='Предыдущая раздача недоступна. Выберите стол.';}).finally(()=>{busy=false;});} } catch {sessionStorage.removeItem('holdem-room');}
     }
   });
-  onDestroy(() => {disposed=true;cancelIntroVoice?.();sound.stopEffects();clearAvatar();stopStream?.();clearInterval(pollTimer);clearInterval(clockTimer);});
+  onDestroy(() => {disposed=true;cancelIntroVoice?.();sound.stopEffects();clearAvatar();clearTableAvatars();stopStream?.();clearInterval(pollTimer);clearInterval(clockTimer);});
 </script>
 <svelte:head><link rel="stylesheet" href={`${base}/holdem/font.css`} /></svelte:head>
 <div class="poker-room" aria-busy={busy}>
-  <header><h2 class="neon">Kamurocho <span class="kanji">神室町</span></h2><p>{live ? 'Одна раздача. Два места. Итог с сервера.' : 'DEMO · записанная демонстрационная раздача. Баланс не меняется.'}</p></header>
+  <header><h2 class="neon">Kamurocho <span class="kanji">神室町</span></h2><p>{live ? 'С ботом или за общим столом до шести игроков. Итог с сервера.' : 'DEMO · записанная демонстрационная раздача. Баланс не меняется.'}</p></header>
   {#if error}<div class="error" role="alert">{error} {#if pendingCreate}<button on:click={start} disabled={busy}>Повторить</button>{/if}{#if pendingAction}<button on:click={() => action('retry')} disabled={busy}>Повторить ход</button>{/if}{#if snapshot}<button on:click={refresh} disabled={busy}>Синхронизировать</button>{/if}</div>{/if}
-  {#if !view}
+  {#if tableView}
+    {#if tableView.phase==='waiting'}<section class="search" role="status"><h3>Собираем общий стол</h3><p>{tableView.players.length} / 6 игроков · {seconds} с</p><p>При шести игроках начнём сразу. По окончании поиска достаточно двоих. Вход списывается только на старте.</p><button data-testid="holdem-cancel" on:click={()=>action('cancel')} disabled={busy||!!pendingAction}>Отменить поиск</button></section>
+    {:else if tableView.phase==='cancelled'}<p role="status">Поиск завершён. Вход не списан.</p><button on:click={lobby}>Выбрать стол</button>
+    {:else}<MultiplayerTable view={tableView} busy={busy||!!pendingAction} {seconds} {reducedMotion} avatars={tableAvatars} onAction={action} />{#if tableView.phase==='settled'}<button on:click={lobby}>Выбрать стол</button>{/if}{/if}
+  {:else if !view}
     <section class="lobby" aria-label="Лобби Hold’em">
-      <fieldset disabled={busy || !!pendingCreate}><legend>Соперник</legend><label><input type="radio" bind:group={mode} value="bot" /> Против бота</label><label><input type="radio" bind:group={mode} value="pvp" disabled={!live} /> Живой игрок</label></fieldset>
+      <fieldset disabled={busy || !!pendingCreate}><legend>Соперник</legend><label><input type="radio" bind:group={mode} value="bot" /> Против бота</label><label><input type="radio" bind:group={mode} value="pvp" disabled={!live} /> Живой игрок · до 6</label></fieldset>
       <fieldset disabled={busy || !!pendingCreate}><legend>Вход в раздачу</legend>{#each [100,500,1000] as table}<label><input type="radio" bind:group={buyIn} value={table} /> <b>{table.toLocaleString('ru')} <em>JG</em></b> <small>Блайнды {table/20}/{table/10}</small></label>{/each}</fieldset>
-      <button class="primary" data-testid="holdem-start" on:click={() => { sound.cue('confirm'); void start(); }} disabled={busy}>{busy ? 'Подключаемся…' : mode === 'pvp' ? 'Найти соперника' : 'Начать раздачу'}</button>
+      <button class="primary" data-testid="holdem-start" on:click={() => { sound.cue('confirm'); void start(); }} disabled={busy}>{busy ? 'Подключаемся…' : mode === 'pvp' ? 'Найти общий стол' : 'Начать раздачу'}</button>
     </section>
   {:else if view.phase === 'waiting'}
     <section class="search" role="status"><h3>Поиск соперника</h3><p>Стол {view.buyIn} JG · {seconds} с</p><p>Вход списывается при начале раздачи.</p><button data-testid="holdem-cancel" on:click={() => action('cancel')} disabled={busy}>Отменить поиск</button></section>

@@ -364,3 +364,43 @@ async def test_raise_bound_null_when_viewer_cannot_raise_and_cancel_ws_receipt(t
             await service(s).project_event(
                 room, service(s).rooms._event_from_action(room, action), 1
             )
+
+
+@pytest.mark.asyncio
+async def test_insolvent_departure_gets_final_ws_receipt_then_no_later_events(table_db):
+    from burmaldoza_domain.economy import LedgerReason
+
+    factory, service, _ = table_db
+    first = await create(table_db, 1)
+    for user in range(2, 6):
+        await create(table_db, user)
+    async with factory() as s:
+        await WalletService(s).apply_delta(1, -1000, LedgerReason.GAME_STAKE, uuid4(), uuid4())
+    sixth = await create(table_db, 6)
+    assert sixth.public_state["phase"] == "waiting"
+    async with factory() as s, s.begin():
+        room = await s.get(GameRoom, first.room_id)
+        row = await s.scalar(
+            select(GameAction).where(
+                GameAction.room_id == room.id, GameAction.sequence_no == sixth.state_version
+            )
+        )
+        event = service(s).rooms._event_from_action(room, row)
+        receipt = await service(s).project_event(room, event, 1)
+        assert receipt.payload["public_state"]["phase"] == "cancelled"
+        assert receipt.payload["public_state"]["cancel_reason"] == "insufficient_balance"
+        assert receipt.payload["public_state"]["players"] == []
+        survivor = await service(s).project_event(room, event, 2)
+        assert survivor.payload["public_state"]["phase"] == "waiting"
+        with pytest.raises(RoomAccessError):
+            await service(s).project_event(room, event, 8)
+    seventh = await create(table_db, 7)
+    async with factory() as s, s.begin():
+        room = await s.get(GameRoom, first.room_id)
+        row = await s.scalar(
+            select(GameAction).where(
+                GameAction.room_id == room.id, GameAction.sequence_no == seventh.state_version
+            )
+        )
+        with pytest.raises(RoomAccessError):
+            await service(s).project_event(room, service(s).rooms._event_from_action(room, row), 1)

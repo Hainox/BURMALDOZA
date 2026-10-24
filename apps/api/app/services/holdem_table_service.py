@@ -391,7 +391,14 @@ class HoldemTableService(HoldemService):
         receipts = copy.deepcopy(room.private_state_json.get("cancelled_receipts", {}))
         for creation_id in room.private_state_json.get("cancelled_creations", []):
             receipts.setdefault(creation_id, self.cancelled_snapshot(room).model_dump(mode="json"))
-        room.private_state_json = {**room.private_state_json, "cancelled_receipts": receipts}
+        departed = copy.deepcopy(room.private_state_json.get("departed", {}))
+        for departure in departed.values():
+            departure.setdefault("event_id", str(event.event_id))
+        room.private_state_json = {
+            **room.private_state_json,
+            "cancelled_receipts": receipts,
+            "departed": departed,
+        }
         return event
 
     async def depart(self, room, user_id, reason):
@@ -512,6 +519,23 @@ class HoldemTableService(HoldemService):
                     "payload": {
                         "action_id": str(event.event_id),
                         "public_state": self.cancelled_snapshot(room).public_state,
+                    }
+                }
+            )
+        departure = room.private_state_json.get("departed", {}).get(str(user_id), {})
+        if (
+            action is not None
+            and action.room_id == room.id
+            and departure.get("reason") == "insufficient_balance"
+            and departure.get("event_id") == str(event.event_id)
+        ):
+            public = self.cancelled_snapshot(room).public_state
+            public["cancel_reason"] = "insufficient_balance"
+            return event.model_copy(
+                update={
+                    "payload": {
+                        "action_id": str(event.event_id),
+                        "public_state": public,
                     }
                 }
             )

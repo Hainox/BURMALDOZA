@@ -1,0 +1,10 @@
+{
+  "provider": "Supericons",
+  "retrieved": "2026-10-22",
+  "icons": [
+    {"file": "table-users.svg", "reference": "lucide:users"},
+    {"file": "table-robot.svg", "reference": "material:robot"},
+    {"file": "table-timer.svg", "reference": "lucide:timer"},
+    {"file": "table-log-out.svg", "reference": "lucide:log-out"}
+  ]
+}

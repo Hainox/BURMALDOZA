@@ -20,11 +20,25 @@ async function stub(page:Page, options:{pvp?:boolean;conflict?:boolean;lost?:boo
   await page.route('**/api/v1/wallet',r=>r.fulfill({json:{balance:1000,currency_code:'JOKERGEM',version:1}}));
   await page.route('**/api/v1/wallet/ledger',r=>r.fulfill({json:[]}));
   await page.route('**/api/v1/leaderboard',r=>r.fulfill({json:{week_start:'2026-10-12T00:00:00+03:00',week_end:'2026-10-19T00:00:00+03:00',entries:[]}}));
-  let p:Record<string,unknown>={};let v=1;let calls=0;
+  let p:Record<string,unknown>={};let v=1;let calls=0;let six=false;
+  // Only explicit capacity6 searches use the new wire shape. Legacy restores keep v1.
+  function tableProjection(){
+    const phase=p.phase;const playing=phase==='active'||phase==='settled';
+    const stacks=(p.stacks??[p.buy_in,p.buy_in]) as number[];
+    const contributions=(p.street_contributions??[0,0]) as number[];
+    const result=p.last_result as {winner_seats:number[];payouts:number[];net_deltas:number[];outcome:string}|undefined;
+    return {...p,capacity:6,viewer_seat:phase==='cancelled'?null:0,
+      players:phase==='cancelled'?[]:Array.from({length:playing?2:1},(_,seat)=>({seat,stack:stacks[seat],committed:contributions[seat],street_committed:contributions[seat],folded:phase==='settled'&&p.showdown===false&&seat===0,all_in:stacks[seat]===0,nickname:`@fixture${seat}`,cards:playing?(seat===0?p.hole_cards:p.showdown?p.opponent_cards:[{hidden:true},{hidden:true}]):[]})),
+      button_seat:playing?0:null,small_blind_seat:playing?0:null,big_blind_seat:playing?1:null,current_seat:phase==='active'?p.current_seat:null,pot:p.pot??0,current_bet:p.current_bet??0,
+      min_raise_to:(p.legal_actions as string[]).includes('raise')?p.minimum_raise:null,max_raise_to:playing?contributions[0]+stacks[0]:0,to_call:playing?(p.current_bet as number)-contributions[0]:0,
+      legal_actions:phase==='waiting'?['cancel']:p.legal_actions,hole_cards:playing?p.hole_cards:[],community_cards:p.community_cards??[],
+      ...(result?{last_result:{outcome:result.outcome,pots:[{amount:p.pot,eligible_seats:result.winner_seats,winner_seats:result.winner_seats,shares:Object.fromEntries(result.winner_seats.map((seat,i)=>[seat,Math.floor((p.pot as number)/result.winner_seats.length)+(i===0?(p.pot as number)%result.winner_seats.length:0)]))}],refunds:{},cashouts:{0:result.payouts[0],1:result.payouts[1]},net_deltas:{0:result.net_deltas[0],1:result.net_deltas[1]}}}:{})};
+  }
+
   const ids:string[]=[];
   const active=(buy:number)=>({phase:'active',game_phase:'pre_flop',buy_in:buy,seat:0,hero_code:options.pvp?null:'Kazuma_Kiryu',pot:buy*.15,current_seat:0,current_bet:buy/10,stacks:[buy*.95,buy*.9],street_contributions:[buy/20,buy/10],minimum_raise:buy/5,legal_actions:['fold','call','raise'],community_cards:[],hole_cards:[{rank:'A',suit:'S'},{rank:'K',suit:'S'}],opponent_cards:[{hidden:true},{hidden:true}],showdown:false,wallet_balance:1000-buy,turn_deadline:options.pvp?new Date(Date.now()+20000).toISOString():null});
-  const snapshot=()=>({room_id:room,game_type:'holdem',mode:options.pvp?'pvp':'bot',status:p.phase,ruleset_version:'holdem-v1',state_version:v,public_state:options.profile && p.phase !== 'waiting' ? {...p,opponent_profile:{nickname:'@fixture_opponent',avatar_path:`/api/v1/rooms/${room}/opponent-avatar`}} : p});
-  await page.route('**/api/v1/rooms',async r=>{const body=r.request().postDataJSON();expect(body.game_type).toBe('holdem');expect([100,500,1000]).toContain(body.buy_in);expect(body.action_id).toBe(r.request().headers()['x-request-id']);p=options.pvp?{phase:'waiting',buy_in:body.buy_in,seat:0,legal_actions:[],search_deadline:new Date(Date.now()+60000).toISOString(),wallet_balance:1000}:active(body.buy_in);await r.fulfill({json:snapshot()});});
+  const snapshot=()=>({room_id:room,game_type:'holdem',mode:options.pvp?'pvp':'bot',status:p.phase,ruleset_version:six?'holdem-six-1':'holdem-v1',state_version:v,public_state:six?tableProjection():options.profile && p.phase !== 'waiting' ? {...p,opponent_profile:{nickname:'@fixture_opponent',avatar_path:`/api/v1/rooms/${room}/opponent-avatar`}} : p});
+  await page.route('**/api/v1/rooms',async r=>{const body=r.request().postDataJSON();expect(body.game_type).toBe('holdem');expect([100,500,1000]).toContain(body.buy_in);expect(body.action_id).toBe(r.request().headers()['x-request-id']);six=body.table_capacity===6;p=options.pvp?{phase:'waiting',buy_in:body.buy_in,seat:0,legal_actions:[],search_deadline:new Date(Date.now()+60000).toISOString(),wallet_balance:1000}:active(body.buy_in);await r.fulfill({json:snapshot()});});
   await page.route(`**/api/v1/rooms/${room}`,r=>r.fulfill({json:snapshot()}));
   await page.routeWebSocket(`**/api/v1/rooms/${room}/events`,()=>{});
   await page.route(`**/api/v1/rooms/${room}/actions`,async r=>{
@@ -34,7 +48,7 @@ async function stub(page:Page, options:{pvp?:boolean;conflict?:boolean;lost?:boo
     v++;
     if(request.payload.action==='cancel'){p={...p,phase:'cancelled',search_deadline:null};}
     else {const buy=p.buy_in as number;p={...p,phase:'settled',game_phase:'showdown',legal_actions:[],turn_deadline:null,showdown:true,community_cards:[{rank:'Q',suit:'S'},{rank:'J',suit:'S'},{rank:'10',suit:'S'},{rank:'2',suit:'D'},{rank:'7',suit:'C'}],opponent_cards:[{rank:'9',suit:'H'},{rank:'9',suit:'D'}],wallet_balance:1000+buy,last_result:{winner_seats:[0],payouts:[buy*2,0],net_deltas:[buy,-buy],outcome:'showdown'}};}
-    await r.fulfill({json:{event:{event_id:request.action_id,room_id:room,state_version:v,type:'holdem.action.accepted',payload:{public_state:p},server_time:new Date().toISOString()}}});
+    await r.fulfill({json:{event:{event_id:request.action_id,room_id:room,state_version:v,type:'holdem.action.accepted',payload:{public_state:six?tableProjection():p},server_time:new Date().toISOString()}}});
   });
   return {ids,match:()=>{v++;p=active(p.buy_in as number);},timeout:()=>{v++;p={...p,phase:'cancelled',search_deadline:null};},turnTimeout:()=>{const buy=p.buy_in as number;v++;p={...p,phase:'settled',game_phase:'settled',legal_actions:[],turn_deadline:null,showdown:false,wallet_balance:1000-buy/20,last_result:{winner_seats:[1],payouts:[buy-buy/20,buy+buy/20],net_deltas:[-buy/20,buy/20],outcome:'fold'}};}};
 }
@@ -71,14 +85,15 @@ test('restoring a settled hand does not replay result haptics or hero intro', as
 });
 test('pvp cancel and server search timeout never charge entry',async({page})=>{
   const state=await stub(page,{pvp:true});await page.goto('/');await openRoom(page,'holdem');await page.getByLabel('Живой игрок').check();await page.getByTestId('holdem-start').click();
-  await expect(page.getByText('Поиск соперника',{exact:true})).toBeVisible();await page.getByTestId('holdem-cancel').click();await expect(page.getByText('Поиск завершён. Вход не списан.')).toBeVisible();
+  await expect(page.getByText('Собираем общий стол',{exact:true})).toBeVisible();await page.getByTestId('holdem-cancel').click();await expect(page.getByText('Поиск завершён. Вход не списан.')).toBeVisible();
   await page.getByRole('button',{name:'Выбрать стол'}).click();await page.getByTestId('holdem-start').click();state.timeout();await expect(page.getByText('Поиск завершён. Вход не списан.')).toBeVisible({timeout:6000});
 });
 test('pvp match uses server timer and no character intro',async({page})=>{
-  const state=await stub(page,{pvp:true});await page.goto('/');await openRoom(page,'holdem');await page.getByLabel('Живой игрок').check();await page.getByTestId('holdem-start').click();await expect(page.getByTestId('holdem-cancel')).toBeVisible();state.match();await expect(page.getByTestId('holdem-timer')).toBeVisible({timeout:6000});await expect(page.getByTestId('holdem-intro')).toHaveCount(0);state.turnTimeout();await expect(page.getByTestId('holdem-result')).toContainText('Поражение',{timeout:6000});await expect(page.getByTestId('holdem-opponent').getByLabel('Закрытая карта')).toHaveCount(2);await expect(page.getByTestId('holdem-timer')).toHaveCount(0);
+  const state=await stub(page,{pvp:true});await page.goto('/');await openRoom(page,'holdem');await page.getByLabel('Живой игрок').check();await page.getByTestId('holdem-start').click();await expect(page.getByTestId('holdem-cancel')).toBeVisible();state.match();await expect(page.getByTestId('holdem-timer')).toBeVisible({timeout:6000});await expect(page.getByTestId('holdem-intro')).toHaveCount(0);state.turnTimeout();await expect(page.getByTestId('holdem-result')).toContainText('Поражение',{timeout:6000});await expect(page.getByTestId('holdem-opponent-1').getByLabel('Закрытая карта')).toHaveCount(2);await expect(page.getByTestId('holdem-timer')).toHaveCount(0);
 });
 test('pvp profile loads authenticated blob, restores on reload and falls back on failure',async({page})=>{
   const state=await stub(page,{pvp:true,profile:true});
+  await page.addInitScript(()=>{if(!sessionStorage.getItem('legacy-started')){sessionStorage.setItem('legacy-started','1');sessionStorage.setItem('holdem-create',JSON.stringify({mode:'pvp',buyIn:100,id:'00000000-0000-0000-0000-000000000081'}));}});
   await page.addInitScript(()=>{const revoke=URL.revokeObjectURL.bind(URL);URL.revokeObjectURL=(url)=>{sessionStorage.setItem('avatar-revoked',url);revoke(url);};});
   let requests=0;let fail=false;
   await page.route(`**/api/v1/rooms/${room}/opponent-avatar`,async r=>{
@@ -88,7 +103,7 @@ test('pvp profile loads authenticated blob, restores on reload and falls back on
     if(fail){await r.fulfill({status:503});return;}
     await r.fulfill({contentType:'image/png',path:'tests/e2e/fixtures/opponent-avatar.png'});
   });
-  await page.goto('/');await openRoom(page,'holdem');await page.getByLabel('Живой игрок').check();await page.getByTestId('holdem-start').click();
+  await page.goto('/');await openRoom(page,'holdem');await expect(page.getByTestId('holdem-cancel')).toBeVisible();
   expect(requests).toBe(0);state.match();
   await expect(page.getByTestId('holdem-opponent-nickname')).toHaveText('@fixture_opponent',{timeout:6000});
   await expect(page.getByAltText('Аватар соперника')).toBeVisible();
