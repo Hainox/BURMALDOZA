@@ -440,7 +440,7 @@
 
 {/if}
 <style>
- .mode-picker{display:flex;gap:8px;margin-bottom:16px}.mode-picker button{display:flex;align-items:center;justify-content:center;gap:7px;flex:1;min-height:48px;padding:10px;border:1px solid #a5afbd66;border-radius:12px;background:#151e2d;color:#e8eaf0;font:600 12px system-ui;cursor:pointer}.mode-picker button[aria-pressed=true]{border-color:#e1c18b;background:#463522}.mode-picker img{width:21px;height:21px;filter:invert(1)}.mode-picker button:focus-visible{outline:3px solid #e1c18b;outline-offset:3px}
+ .mode-picker{display:flex;gap:8px;margin-bottom:8px}.mode-picker button{display:flex;align-items:center;justify-content:center;gap:7px;flex:1;min-height:48px;padding:10px;border:1px solid #a5afbd66;border-radius:12px;background:#151e2d;color:#e8eaf0;font:600 12px system-ui;cursor:pointer}.mode-picker button[aria-pressed=true]{border-color:#e1c18b;background:#463522}.mode-picker img{width:21px;height:21px;filter:invert(1)}.mode-picker button:focus-visible{outline:3px solid #e1c18b;outline-offset:3px}
 
   .game-room { position: relative; z-index: 1; display: grid; gap: 14px; }
   .room-intro { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
@@ -520,9 +520,11 @@
   .blackjack-room[data-game-phase='player_turn'] .room-intro { display: none; }
   .blackjack-room[data-game-phase='settled'] .room-intro { display: none; }
   .felt-table { min-height: 280px; padding: 14px 12px; gap: 8px; }
-  .blackjack-room[data-game-phase='player_turn'] .felt-table { margin-top: 70px; }
+  /* The mode picker occupies the former empty top space during a hand. */
+  .blackjack-room[data-game-phase='player_turn'] .felt-table { margin-top: 6px; }
   .playing-card { width: 78px; padding: 0 6px 6px; }
-  .blackjack-room[data-game-phase='settled'] .playing-card { width: 66px; flex-basis: 66px; }
+  .blackjack-room[data-game-phase='settled'] .felt-table { min-height: 240px; padding: 10px 12px; gap: 4px; }
+  .blackjack-room[data-game-phase='settled'] .playing-card { width: 62px; flex-basis: 62px; }
   .blackjack-room[data-game-phase='settled'] .total { display: none; }
   .blackjack-room[data-game-phase='waiting'] .felt-table { min-height: 190px; }
   .dealer-line { padding: 3px 9px 3px 3px; }

@@ -26,7 +26,7 @@ for (const width of [320,390,1440]) test(`six seats, private hands, server bound
   await page.route(`**/api/v1/rooms/${room}`, r=>r.fulfill({json:snapshot()}));
   await page.route(`**/api/v1/rooms/${room}/actions`, async r=>{
     const body=r.request().postDataJSON();expect(body.action_id).toBe(r.request().headers()['x-request-id']);version++;
-    p={...p,phase:'settled',current_seat:null,legal_actions:[],min_raise_to:null,turn_deadline:null,last_result:{outcome:'fold',pots:[{amount:60,eligible_seats:[0],winner_seats:[0],shares:{0:60}}],refunds:{0:20},cashouts:{0:150,1:90,2:90,3:90,4:90,5:90},net_deltas:{0:50,1:-10,2:-10,3:-10,4:-10,5:-10}}};
+    p={...p,phase:'settled',game_phase:'settled',wallet_balance:1050,pot:80,players:(p.players as Array<Record<string,unknown>>).map(player=>player.seat===0?{...player,stack:70,committed:30,street_committed:30,folded:false}:{...player,folded:true}),current_seat:null,legal_actions:[],min_raise_to:null,turn_deadline:null,last_result:{outcome:'fold',pots:[{amount:60,eligible_seats:[0],winner_seats:[0],shares:{0:60}}],refunds:{0:20},cashouts:{0:150,1:90,2:90,3:90,4:90,5:90},net_deltas:{0:50,1:-10,2:-10,3:-10,4:-10,5:-10}}};
     await r.fulfill({json:{event:{state_version:version,payload:{public_state:p}}}});
   });
   await page.goto('/');await openRoom(page,'holdem');await page.getByLabel('Живой игрок').check();await page.getByTestId('holdem-start').click();await expect(page.getByText('Собираем общий стол')).toBeVisible();
@@ -40,7 +40,7 @@ for (const width of [320,390,1440]) test(`six seats, private hands, server bound
   await page.getByLabel('Сумма рейза').fill('101');await expect(page.getByTestId('holdem-raise')).toBeDisabled();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await page.reload();await openRoom(page,'holdem');await expect(page.getByTestId('holdem-multiplayer')).toBeVisible();
-  await page.getByTestId('holdem-check').click();await expect(page.getByTestId('holdem-result')).toContainText('+50 JG');await expect(page.getByTestId('holdem-result')).toContainText('Непокрытая ставка');
+  await page.getByTestId('holdem-check').click();await expect(page.getByTestId('holdem-result')).toContainText('+50 JG');await expect(page.getByTestId('holdem-result')).toContainText('Непокрытая ставка');await expect(page.getByTestId('resync-button')).toHaveAttribute('aria-label',/Баланс 1050 JG/);
   await page.screenshot({path:`test-results/poker-six-${width}.png`,fullPage:true});
 });
 test('short stack call displays the actual all-in amount',async({page})=>{
