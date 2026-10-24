@@ -17,7 +17,7 @@
 
 | Часть | Сейчас | Граница |
 |---|---|---|
-| Domain | 3×7 Slot, Blackjack GFL, heads-up Hold’em / RGG Poker | чистые правила, CSPRNG adapter, seeded Monte Carlo вне request path |
+| Domain | 3×7 Slot, Blackjack GFL (solo и стол до 3), Hold’em / RGG Poker (бот и PvP до 6) | чистые правила, CSPRNG adapter, seeded Monte Carlo вне request path |
 | Economy | Jokergem (`JOKERGEM`), welcome/daily/relief baseline | целые единицы, append-only ledger, no cash value |
 | API | FastAPI auth, wallet и история операций, rooms, snapshots/events, reconnect | raw Telegram `initData`, idempotency, state version |
 | Bot | aiogram `/start`, `/casino`, `/balance`, `/top`, `/help` | ответы по явной команде, API-backed balance/top |
@@ -30,9 +30,9 @@
 
 | Комната | Тема | Что в `main` | В работе |
 |---|---|---|---|
-| **Blackjack** | Girls' Frontline: колоды Deck A/B с персонажами, сцена Sector 09 | Hit / Stand / Double, закрытая карта дилера, DEMO-стол, resync после 409 | — |
+| **Blackjack** | Girls' Frontline: колоды Deck A/B с персонажами, сцена Sector 09 | Hit / Stand / Double, solo/DEMO и общий стол до 3, готовность/старт и восстановление | — |
 | **Slot 3×7** | Rainbow Six Siege: символы-оперативники, «операции» с недельной ротацией лиц | правила `slot-siege-2` (8 символов, 9 линий: 7 рядов и 2 диагонали, RTP ≈ 96 %) для новых комнат; комнаты на `slot-siege-1` (три линии) доигрывают по своим правилам, staged stop; превью дизайна — `assets/design/slot-r6` | символы-оперативники в интерфейсе комнаты (сейчас живой режим показывает коды `D1`…`W`), ротация операций на сервере |
-| **Hold’em** | игры RGG (Yakuza / Judgment): Камуро-тё, герои-соперники по столам | серверная игра против бота и живого игрока, столы 100 / 500 / 1 000, таймер хода 20 с; превью дизайна — `assets/design/holdem-rgg` | интерфейс комнаты в Mini App |
+| **Hold’em** | игры RGG (Yakuza / Judgment): Камуро-тё, герои-соперники по столам | игра против бота и PvP до 6, столы 100 / 500 / 1 000, таймер 20 с, all-in и побочные банки; превью дизайна — `assets/design/holdem-rgg` | интерфейс комнаты в Mini App |
 
 Портреты персонажей используются в некоммерческом фанатском превью с атрибуцией источников (`sources.json` рядом с ассетами).
 

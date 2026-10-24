@@ -28,3 +28,4 @@ describe('shared blackjack boundary', () => {
     expect(() => resolveBlackjackTableAction(snapshot,event,'request','hit')).toThrow();
   });
 });
+it('validates a replayed leave receipt with the saved room identity and no readable snapshot',()=>{const event={room_id:'room',event_id:'request',state_version:6,payload:{action_id:'request',public_state:{phase:'left',legal_actions:[]}}};expect(resolveBlackjackTableAction(null,event,'request','leave','room')).toBeNull();expect(()=>resolveBlackjackTableAction(null,event,'request','leave','other')).toThrow();});

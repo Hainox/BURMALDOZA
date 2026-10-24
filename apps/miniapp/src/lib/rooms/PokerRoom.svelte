@@ -50,6 +50,7 @@
   let stopStream: (() => void) | null = null;
   let polling = false;
   let disposed = false;
+  let restoreRoomId: string | null = null;
   let avatarUrl = '';
   let avatarRoom = '';
   let avatarRequest: AbortController | null = null;
@@ -73,7 +74,7 @@
   let pollTimer: ReturnType<typeof setInterval>;
   let clockTimer: ReturnType<typeof setInterval>;
   let pendingCreate: {mode:HoldemMode;buyIn:number;id:string;capacity?:6} | null = null;
-  let pendingAction: {roomId:string;version:number;id:string;payload:Record<string,unknown>} | null = null;
+  let pendingAction: {roomId:string;version:number;id:string;payload:Record<string,unknown>;rulesetVersion?:string} | null = null;
   $: hero = mode === 'bot' && view?.heroCode ? (heroes as Record<string,{name:string;avatar:string;intro:string;title:string}>)[view.heroCode] ?? null : null;
 
   function accept(next: RoomSnapshot, restored = false) {
@@ -118,9 +119,9 @@
     catch { error = 'Не удалось обновить раздачу. Повторите синхронизацию.'; }
     finally { polling = false; }
   }
-  export async function resync() {error='';await refresh();if(snapshot && !disposed){stream(snapshot.roomId);void loadAvatar(snapshot.roomId,true);}}
+  export async function resync() {error='';if(restoreRoomId)await restoreRoom();else await refresh();if(snapshot && !disposed){stream(snapshot.roomId);void loadAvatar(snapshot.roomId,true);}}
   async function start() {
-    if (busy) return;
+    if (busy || pendingAction || restoreRoomId) return;
     busy = true; error = ''; showIntro = false;
     try {
       if (live && client) {
@@ -143,42 +144,64 @@
     finally {busy=false;}
   }
   async function action(name:string, fields:Record<string,unknown>={}) {
-    if (busy || !snapshot || (!view&&!tableView)) return;
+    if (busy || (!snapshot&&!pendingAction) || (!view&&!tableView&&!pendingAction)) return;
     if (!pendingAction && name !== 'cancel' && !(tableView??view)?.legal.includes(name)) return;
     busy=true; error='';
     try {
       if (live && client) {
-        pendingAction ??= {roomId:snapshot.roomId,version:snapshot.stateVersion,id:crypto.randomUUID(),payload:{action:name,...fields}};
+        pendingAction ??= {roomId:snapshot!.roomId,version:snapshot!.stateVersion,id:crypto.randomUUID(),payload:{action:name,...fields},rulesetVersion:snapshot!.rulesetVersion};
         sessionStorage.setItem('holdem-action',JSON.stringify(pendingAction));
         const p = pendingAction;
         const response = await client.applyAction(p.roomId,p.version,p.id,p.payload);
-        accept({...snapshot,stateVersion:response.event.state_version,publicState:response.event.payload.public_state as Record<string,unknown>});
+        const previous=snapshot?.roomId===p.roomId?snapshot:null;
+        const ruleset=response.event.ruleset_version??p.rulesetVersion??previous?.rulesetVersion;
+        if(!ruleset)throw new Error('В ответе отсутствует версия игры');
+        if(response.event.room_id&&response.event.room_id!==p.roomId)throw new Error('Ответ другой комнаты');
+        if(response.event.event_id&&response.event.event_id!==p.id)throw new Error('Ответ другого запроса');
+        accept({roomId:p.roomId,gameType:'holdem',title:'Kamurocho 神室町',rulesetVersion:ruleset,stateVersion:response.event.state_version,publicState:response.event.payload.public_state as Record<string,unknown>},!previous);
+        restoreRoomId=null;
+        if(tableView?.phase!=='cancelled'&&view?.phase!=='cancelled'){
+          sessionStorage.setItem('holdem-room',JSON.stringify({id:p.roomId,mode}));
+          if(!stopStream&&!disposed)stream(p.roomId);
+        }
         pendingAction=null;
         sessionStorage.removeItem('holdem-action');
       } else {
-        const p=snapshot.publicState;
+        const p=snapshot!.publicState;
         // A fixed recorded scene, never a live outcome or a wallet update.
-        accept({...snapshot,stateVersion:snapshot.stateVersion+1,publicState:{...p,phase:'settled',game_phase:'showdown',legal_actions:[],showdown:name !== 'fold',pot:buyIn,stacks:[buyIn/2,buyIn/2],street_contributions:[buyIn/2,buyIn/2],community_cards:name === 'fold' ? [] : [{rank:'Q',suit:'S'},{rank:'J',suit:'S'},{rank:'10',suit:'S'},{rank:'2',suit:'D'},{rank:'7',suit:'C'}],opponent_cards:[{rank:'9',suit:'H'},{rank:'9',suit:'D'}],last_result:{winner_seats:[name === 'fold' ? 1 : 0],payouts:name === 'fold' ? [buyIn/2,buyIn*1.5] : [buyIn*1.5,buyIn/2],net_deltas:name === 'fold' ? [-buyIn/2,buyIn/2] : [buyIn/2,-buyIn/2],outcome:name === 'fold' ? 'fold' : 'showdown'}}});
+        accept({...snapshot!,stateVersion:snapshot!.stateVersion+1,publicState:{...p,phase:'settled',game_phase:'showdown',legal_actions:[],showdown:name !== 'fold',pot:buyIn,stacks:[buyIn/2,buyIn/2],street_contributions:[buyIn/2,buyIn/2],community_cards:name === 'fold' ? [] : [{rank:'Q',suit:'S'},{rank:'J',suit:'S'},{rank:'10',suit:'S'},{rank:'2',suit:'D'},{rank:'7',suit:'C'}],opponent_cards:[{rank:'9',suit:'H'},{rank:'9',suit:'D'}],last_result:{winner_seats:[name === 'fold' ? 1 : 0],payouts:name === 'fold' ? [buyIn/2,buyIn*1.5] : [buyIn*1.5,buyIn/2],net_deltas:name === 'fold' ? [-buyIn/2,buyIn/2] : [buyIn/2,-buyIn/2],outcome:name === 'fold' ? 'fold' : 'showdown'}}});
       }
     } catch (e) {
       const status = typeof e === 'object' && e !== null && 'status' in e ? e.status : null;
       if (typeof status === 'number' && status >= 400 && status < 500) {pendingAction=null;sessionStorage.removeItem('holdem-action');}
       error=pendingAction ? 'Ответ не получен. Повторите тот же запрос.' : 'Ход отклонён. Состояние перечитано; выберите доступное действие.';
-      if (client) {try{accept(await client.getRoom(snapshot.roomId));}catch{error+=' Синхронизация недоступна.';}}
+      if (client && snapshot) {try{accept(await client.getRoom(snapshot.roomId));}catch{error+=' Синхронизация недоступна.';}}
     } finally {busy=false;}
   }
-  function lobby() { cancelIntroVoice?.();cancelIntroVoice=null;sound.stopEffects();clearAvatar();stopStream?.();stopStream=null;snapshot=null;view=null;tableView=null;clearTableAvatars();pendingAction=null;sessionStorage.removeItem('holdem-room');sessionStorage.removeItem('holdem-action'); }
+  function lobby() { cancelIntroVoice?.();cancelIntroVoice=null;sound.stopEffects();clearAvatar();stopStream?.();stopStream=null;snapshot=null;view=null;tableView=null;restoreRoomId=null;clearTableAvatars();pendingAction=null;sessionStorage.removeItem('holdem-room');sessionStorage.removeItem('holdem-action'); }
   function focusIntro(node:HTMLButtonElement) {node.focus();}
-  function restoreAction(roomId:string) {
-    try {const p=JSON.parse(sessionStorage.getItem('holdem-action') ?? 'null');if(p?.roomId === roomId && typeof p.id === 'string' && Number.isSafeInteger(p.version) && ['fold','check','call','raise','cancel'].includes(p.payload?.action)){pendingAction=p;error='Остался неподтверждённый запрос. Повторите ход с тем же идентификатором.';}}
+  function restoreAction(roomId?:string) {
+    try {const p=JSON.parse(sessionStorage.getItem('holdem-action') ?? 'null');if(typeof p?.roomId==='string' && (!roomId||p.roomId===roomId) && typeof p.id === 'string' && Number.isSafeInteger(p.version) && ['fold','check','call','raise','cancel'].includes(p.payload?.action)){pendingAction=p;error='Остался неподтверждённый запрос. Повторите ход с тем же идентификатором.';}}
     catch {sessionStorage.removeItem('holdem-action');}
+  }
+  async function restoreRoom() {
+    if(!client||!restoreRoomId||busy)return;
+    const id=restoreRoomId;busy=true;
+    try{const next=await client.getRoom(id);accept(next,true);restoreRoomId=null;if(!disposed)stream(id);if(pendingAction)error='Остался неподтверждённый запрос. Повторите ход с тем же идентификатором.';else error='';}
+    catch(e){const status=typeof e==='object'&&e!==null&&'status'in e?e.status:null;
+      if((status===403||status===404)&&!pendingAction){sessionStorage.removeItem('holdem-room');restoreRoomId=null;error='Предыдущая раздача недоступна. Выберите стол.';}
+      else error=pendingAction?'Остался неподтверждённый запрос. Повторите ход с тем же идентификатором.':'Не удалось восстановить раздачу. Повторите синхронизацию.';
+    }finally{busy=false;}
   }
   onMount(() => {
     pollTimer=setInterval(() => {void refresh();},2000);
     clockTimer=setInterval(() => {seconds=(tableView??view)?.deadline ? Math.max(0,Math.ceil((Date.parse((tableView??view)!.deadline!)-Date.now())/1000)) : 0;},250);
     if (live && client) {
       try {const pending=JSON.parse(sessionStorage.getItem('holdem-create') ?? 'null');if(pending && ['bot','pvp'].includes(pending.mode) && [100,500,1000].includes(pending.buyIn) && typeof pending.id === 'string') {pendingCreate=pending;void start();return;}} catch {sessionStorage.removeItem('holdem-create');}
-      try { const stored=JSON.parse(sessionStorage.getItem('holdem-room') ?? 'null'); if(stored?.id && ['bot','pvp'].includes(stored.mode)) {mode=stored.mode;busy=true;client.getRoom(stored.id).then(next=>{accept(next,true);restoreAction(next.roomId);if(!disposed)stream(next.roomId);}).catch(()=>{sessionStorage.removeItem('holdem-room');error='Предыдущая раздача недоступна. Выберите стол.';}).finally(()=>{busy=false;});} } catch {sessionStorage.removeItem('holdem-room');}
+      restoreAction();
+      try {const stored=JSON.parse(sessionStorage.getItem('holdem-room')??'null');if(stored?.id&&['bot','pvp'].includes(stored.mode)){mode=stored.mode;restoreRoomId=stored.id;}else if(pendingAction)restoreRoomId=pendingAction.roomId;}catch{if(pendingAction)restoreRoomId=pendingAction.roomId;else sessionStorage.removeItem('holdem-room');}
+      if(pendingAction?.payload.action==='cancel'){error='Остался неподтверждённый запрос. Повторите ход с тем же идентификатором.';return;}
+      if(restoreRoomId)void restoreRoom();
     }
   });
   onDestroy(() => {disposed=true;cancelIntroVoice?.();sound.stopEffects();clearAvatar();clearTableAvatars();stopStream?.();clearInterval(pollTimer);clearInterval(clockTimer);});
@@ -186,16 +209,16 @@
 <svelte:head><link rel="stylesheet" href={`${base}/holdem/font.css`} /></svelte:head>
 <div class="poker-room" aria-busy={busy}>
   <header><h2 class="neon">Kamurocho <span class="kanji">神室町</span></h2><p>{live ? 'С ботом или за общим столом до шести игроков. Итог с сервера.' : 'DEMO · записанная демонстрационная раздача. Баланс не меняется.'}</p></header>
-  {#if error}<div class="error" role="alert">{error} {#if pendingCreate}<button on:click={start} disabled={busy}>Повторить</button>{/if}{#if pendingAction}<button on:click={() => action('retry')} disabled={busy}>Повторить ход</button>{/if}{#if snapshot}<button on:click={refresh} disabled={busy}>Синхронизировать</button>{/if}</div>{/if}
+  {#if error}<div class="error" role="alert">{error} {#if pendingCreate}<button on:click={start} disabled={busy}>Повторить</button>{/if}{#if pendingAction}<button on:click={() => action('retry')} disabled={busy}>Повторить ход</button>{/if}{#if restoreRoomId&&!pendingAction}<button on:click={restoreRoom} disabled={busy}>Восстановить раздачу</button>{:else if snapshot}<button on:click={refresh} disabled={busy}>Синхронизировать</button>{/if}</div>{/if}
   {#if tableView}
     {#if tableView.phase==='waiting'}<section class="search" role="status"><h3>Собираем общий стол</h3><p>{tableView.players.length} / 6 игроков · {seconds} с</p><p>При шести игроках начнём сразу. По окончании поиска достаточно двоих. Вход списывается только на старте.</p><button data-testid="holdem-cancel" on:click={()=>action('cancel')} disabled={busy||!!pendingAction}>Отменить поиск</button></section>
     {:else if tableView.phase==='cancelled'}<p role="status">Поиск завершён. Вход не списан.</p><button on:click={lobby}>Выбрать стол</button>
     {:else}<MultiplayerTable view={tableView} busy={busy||!!pendingAction} {seconds} {reducedMotion} avatars={tableAvatars} onAction={action} />{#if tableView.phase==='settled'}<button on:click={lobby}>Выбрать стол</button>{/if}{/if}
   {:else if !view}
     <section class="lobby" aria-label="Лобби Hold’em">
-      <fieldset disabled={busy || !!pendingCreate}><legend>Соперник</legend><label><input type="radio" bind:group={mode} value="bot" /> Против бота</label><label><input type="radio" bind:group={mode} value="pvp" disabled={!live} /> Живой игрок · до 6</label></fieldset>
-      <fieldset disabled={busy || !!pendingCreate}><legend>Вход в раздачу</legend>{#each [100,500,1000] as table}<label><input type="radio" bind:group={buyIn} value={table} /> <b>{table.toLocaleString('ru')} <em>JG</em></b> <small>Блайнды {table/20}/{table/10}</small></label>{/each}</fieldset>
-      <button class="primary" data-testid="holdem-start" on:click={() => { sound.cue('confirm'); void start(); }} disabled={busy}>{busy ? 'Подключаемся…' : mode === 'pvp' ? 'Найти общий стол' : 'Начать раздачу'}</button>
+      <fieldset disabled={busy || !!pendingCreate || !!pendingAction || !!restoreRoomId}><legend>Соперник</legend><label><input type="radio" bind:group={mode} value="bot" /> Против бота</label><label><input type="radio" bind:group={mode} value="pvp" disabled={!live} /> Живой игрок · до 6</label></fieldset>
+      <fieldset disabled={busy || !!pendingCreate || !!pendingAction || !!restoreRoomId}><legend>Вход в раздачу</legend>{#each [100,500,1000] as table}<label><input type="radio" bind:group={buyIn} value={table} /> <b>{table.toLocaleString('ru')} <em>JG</em></b> <small>Блайнды {table/20}/{table/10}</small></label>{/each}</fieldset>
+      <button class="primary" data-testid="holdem-start" on:click={() => { sound.cue('confirm'); void start(); }} disabled={busy || !!pendingAction || !!restoreRoomId}>{busy ? 'Подключаемся…' : mode === 'pvp' ? 'Найти общий стол' : 'Начать раздачу'}</button>
     </section>
   {:else if view.phase === 'waiting'}
     <section class="search" role="status"><h3>Поиск соперника</h3><p>Стол {view.buyIn} JG · {seconds} с</p><p>Вход списывается при начале раздачи.</p><button data-testid="holdem-cancel" on:click={() => action('cancel')} disabled={busy}>Отменить поиск</button></section>

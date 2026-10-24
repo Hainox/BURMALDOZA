@@ -92,3 +92,44 @@ test('blackjack three clients ready, start, turns, results, next readiness and f
   expect(await pages[0].evaluate(()=>sessionStorage.getItem('blackjack-table-room'))).toBeNull();
   await Promise.all(contexts.map(context=>context.close()));
 });
+test('lost Blackjack leave response replays the same UUID after remount despite forbidden snapshot',async({page})=>{
+  await auth(page);let left=false;let calls=0;const ids:string[]=[];
+  const publicState={phase:'lobby',capacity:3,viewer_seat:0,host_seat:0,active_seat:null,players:[{seat:0,nickname:'@fixture',cards:[],total:null,bet:0,status:'waiting',ready:false,outcome:null}],dealer_cards:[],dealer_total:null,legal_actions:['ready','leave'],wallet_balance:1000,turn_deadline:null,round_id:null};
+  const snapshot={room_id:room,game_type:'blackjack',mode:'table',ruleset_version:'blackjack-gfl-table-1',state_version:1,public_state:publicState};
+  await page.route('**/api/v1/rooms',r=>r.fulfill({json:r.request().postDataJSON().mode==='solo'?{...snapshot,room_id:'solo',mode:'solo',ruleset_version:'blackjack-skeleton-1',public_state:{phase:'waiting',legal_actions:['deal']}}:snapshot}));
+  await page.route(`**/api/v1/rooms/${room}`,r=>left?r.fulfill({status:403,json:{detail:'not member'}}):r.fulfill({json:snapshot}));
+  await page.route(`**/api/v1/rooms/${room}/actions`,async r=>{const body=r.request().postDataJSON();ids.push(body.action_id);calls++;left=true;if(calls===1){await r.abort();return;}await r.fulfill({json:{event:{room_id:room,event_id:body.action_id,ruleset_version:'blackjack-gfl-table-1',state_version:2,payload:{action_id:body.action_id,public_state:{phase:'left',legal_actions:[]}}}}});});
+  await page.goto('/');await openRoom(page,'blackjack');await page.getByRole('button',{name:'Общий стол · до 3',exact:true}).click();await page.getByTestId('blackjack-table-create').click();await page.getByTestId('blackjack-table-leave').click();await expect(page.getByRole('button',{name:'Повторить запрос'})).toBeVisible();
+  await page.reload();await openRoom(page,'blackjack');
+  // Pending leave must be deliverable without membership or a successful snapshot read.
+  if(await page.getByRole('button',{name:'Повторить запрос'}).isVisible())await page.getByRole('button',{name:'Повторить запрос'}).click();
+  await expect(page.getByTestId('blackjack-table-create')).toBeEnabled({timeout:7000});expect(ids).toHaveLength(2);expect(ids[0]).toBe(ids[1]);expect(await page.evaluate(()=>sessionStorage.getItem('blackjack-table-pending'))).toBeNull();
+});
+test('lost poker cancellation survives denied restore and retries its original UUID',async({page})=>{
+  await auth(page);let cancelled=false;let calls=0;const ids:string[]=[];
+  const waiting={phase:'waiting',capacity:6,buy_in:100,viewer_seat:0,players:[{seat:0,stack:100,committed:0,street_committed:0,folded:false,all_in:false,nickname:'@own',cards:[]}],legal_actions:['cancel'],search_deadline:new Date(Date.now()+60000).toISOString(),wallet_balance:1000};
+  const snapshot={room_id:room,game_type:'holdem',mode:'pvp',ruleset_version:'holdem-six-1',state_version:1,public_state:waiting};
+  await page.route('**/api/v1/rooms',r=>r.fulfill({json:snapshot}));await page.route(`**/api/v1/rooms/${room}`,r=>cancelled?r.fulfill({status:403,json:{detail:'not member'}}):r.fulfill({json:snapshot}));
+  await page.route(`**/api/v1/rooms/${room}/actions`,async r=>{const body=r.request().postDataJSON();ids.push(body.action_id);calls++;cancelled=true;if(calls===1){await r.abort();return;}await r.fulfill({json:{event:{room_id:room,event_id:body.action_id,ruleset_version:'holdem-six-1',state_version:2,payload:{action_id:body.action_id,public_state:{phase:'cancelled',capacity:6,buy_in:100,viewer_seat:null,players:[],legal_actions:[],search_deadline:null,turn_deadline:null}}}}});});
+  await page.goto('/');await openRoom(page,'holdem');await page.getByLabel('Живой игрок').check();await page.getByTestId('holdem-start').click();await page.getByTestId('holdem-cancel').click();await expect(page.getByRole('button',{name:'Повторить ход'})).toBeVisible();
+  await page.reload();await openRoom(page,'holdem');await expect(page.getByRole('button',{name:'Повторить ход'})).toBeVisible();await page.getByRole('button',{name:'Повторить ход'}).click();await expect(page.getByText('Поиск завершён. Вход не списан.')).toBeVisible();expect(ids).toHaveLength(2);expect(ids[0]).toBe(ids[1]);expect(await page.evaluate(()=>sessionStorage.getItem('holdem-action'))).toBeNull();
+});
+test('lost poker action survives a transient snapshot failure and blocks a fresh entry',async({page})=>{
+  await auth(page);let failed=false;let calls=0;const ids:string[]=[];const active=activePoker();
+  const settled={...active,phase:'settled',current_seat:null,legal_actions:[],min_raise_to:null,turn_deadline:null,last_result:{outcome:'fold',pots:[{amount:60,eligible_seats:[0],winner_seats:[0],shares:{0:60}}],refunds:{},cashouts:{0:150,1:90,2:90,3:90,4:90,5:90},net_deltas:{0:50,1:-10,2:-10,3:-10,4:-10,5:-10}}};
+  const snapshot={room_id:room,game_type:'holdem',mode:'pvp',ruleset_version:'holdem-six-1',state_version:1,public_state:active};
+  await page.route('**/api/v1/rooms',r=>r.fulfill({json:snapshot}));await page.route('**/avatar',r=>r.fulfill({status:204}));
+  await page.route(`**/api/v1/rooms/${room}`,r=>failed?r.fulfill({status:503,json:{detail:'temporary'}}):r.fulfill({json:snapshot}));
+  await page.route(`**/api/v1/rooms/${room}/actions`,async r=>{const body=r.request().postDataJSON();ids.push(body.action_id);calls++;failed=true;if(calls===1){await r.abort();return;}await r.fulfill({json:{event:{room_id:room,event_id:body.action_id,ruleset_version:'holdem-six-1',state_version:2,payload:{action_id:body.action_id,public_state:settled}}}});});
+  await page.goto('/');await openRoom(page,'holdem');await page.getByLabel('Живой игрок').check();await page.getByTestId('holdem-start').click();await page.getByTestId('holdem-check').click();await expect(page.getByRole('button',{name:'Повторить ход'})).toBeVisible();
+  await page.reload();await openRoom(page,'holdem');await expect(page.getByRole('button',{name:'Повторить ход'})).toBeVisible();await expect(page.getByTestId('holdem-start')).toBeDisabled();
+  expect(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('holdem-room')!).id)).toBe(room);
+  await page.getByRole('button',{name:'Повторить ход'}).click();await expect(page.getByTestId('holdem-result')).toContainText('+50 JG');expect(ids).toHaveLength(2);expect(ids[0]).toBe(ids[1]);
+});
+test('temporary restore failure keeps the room token and offers retry instead of a new game',async({page})=>{
+  await auth(page);let failed=false;const active=activePoker();const snapshot={room_id:room,game_type:'holdem',mode:'pvp',ruleset_version:'holdem-six-1',state_version:1,public_state:active};
+  await page.route('**/api/v1/rooms',r=>r.fulfill({json:snapshot}));await page.route('**/avatar',r=>r.fulfill({status:204}));await page.route(`**/api/v1/rooms/${room}`,r=>failed?r.fulfill({status:503,json:{detail:'temporary'}}):r.fulfill({json:snapshot}));
+  await page.goto('/');await openRoom(page,'holdem');await page.getByLabel('Живой игрок').check();await page.getByTestId('holdem-start').click();await expect(page.getByTestId('holdem-multiplayer')).toBeVisible();failed=true;
+  await page.reload();await openRoom(page,'holdem');await expect(page.getByRole('button',{name:'Восстановить раздачу'})).toBeVisible();await expect(page.getByTestId('holdem-start')).toBeDisabled();expect(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('holdem-room')!).id)).toBe(room);
+  failed=false;await page.getByRole('button',{name:'Восстановить раздачу'}).click();await expect(page.getByTestId('holdem-multiplayer')).toBeVisible();
+});

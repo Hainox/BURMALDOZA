@@ -52,14 +52,15 @@ export async function joinBlackjackTable(client: ApiClient, roomId: string, acti
   const snapshot = mapRoomSnapshot(raw); parseBlackjackTable(snapshot.publicState); return snapshot;
 }
 /** A successful leave is a receipt, not a table snapshot available to a former member. */
-export function resolveBlackjackTableAction(snapshot: RoomSnapshot, event: unknown, actionId: string, action: string): RoomSnapshot | null {
+export function resolveBlackjackTableAction(snapshot: RoomSnapshot | null, event: unknown, actionId: string, action: string, roomId = snapshot?.roomId): RoomSnapshot | null {
   const envelope = record(event); const payload = record(envelope.payload); const publicState = record(payload.public_state);
-  if (envelope.room_id !== snapshot.roomId || envelope.event_id !== actionId || payload.action_id !== actionId) throw new Error('Ответ относится к другому запросу');
+  if (!roomId || envelope.room_id !== roomId || envelope.event_id !== actionId || payload.action_id !== actionId) throw new Error('Ответ относится к другому запросу');
   const stateVersion = integer(envelope.state_version);
   if (action === 'leave') {
     if (publicState.phase !== 'left' || !Array.isArray(publicState.legal_actions) || publicState.legal_actions.length) throw new Error('Выход не подтверждён сервером');
     return null;
   }
   parseBlackjackTable(publicState);
-  return { ...snapshot, stateVersion, publicState };
+  const previous = snapshot ?? { roomId: roomId!, gameType: 'blackjack' as const, title: 'Blackjack', rulesetVersion: 'blackjack-gfl-table-1', stateVersion: 0, publicState: {} };
+  return { ...previous, stateVersion, publicState };
 }

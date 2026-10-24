@@ -20,6 +20,7 @@
   let bet = 25;
   let seconds = 0;
   let disposed = false;
+  let restoreRoomId: string | null = null;
   let stopStream: (() => void) | null = null;
   let pollTimer: ReturnType<typeof setInterval>;
   let clockTimer: ReturnType<typeof setInterval>;
@@ -51,9 +52,18 @@
     catch(e){const status=typeof e==='object'&&e!==null&&'status'in e?e.status:null;if(status===403){stopStream?.();stopStream=null;error='Вы покинули стол. Доступ к его обновлениям закрыт.';}else error='Связь прервалась. Повторите синхронизацию.';}
     finally{polling=false;}
   }
-  export async function resync(){error='';await refresh();if(snapshot&&!disposed)stream(snapshot.roomId);}
+  async function restoreRoom() {
+    if(!client||!restoreRoomId||busy)return;
+    const id=restoreRoomId;busy=true;error='';
+    try{accept(await client.getRoom(id));restoreRoomId=null;if(!disposed)stream(id);}
+    catch(e){const status=typeof e==='object'&&e!==null&&'status'in e?e.status:null;
+      if((status===403||status===404)&&!pending){sessionStorage.removeItem('blackjack-table-room');restoreRoomId=null;error='Предыдущий стол недоступен.';}
+      else error='Не удалось восстановить стол. Повторите синхронизацию.';
+    }finally{busy=false;}
+  }
+  export async function resync(){error='';if(restoreRoomId)await restoreRoom();else await refresh();if(snapshot&&!disposed)stream(snapshot.roomId);}
   function savePending(){if(pending)sessionStorage.setItem('blackjack-table-pending',JSON.stringify(pending));else sessionStorage.removeItem('blackjack-table-pending');}
-  function leaveConfirmed() {stopStream?.();stopStream=null;snapshot=null;view=null;sessionStorage.removeItem('blackjack-table-room');}
+  function leaveConfirmed() {restoreRoomId=null;stopStream?.();stopStream=null;snapshot=null;view=null;sessionStorage.removeItem('blackjack-table-room');}
   async function send() {
     if(!client||!live||!pending||busy)return;
     busy=true;error='';savePending();const p=pending;
@@ -63,9 +73,9 @@
         accept(next);sessionStorage.setItem('blackjack-table-room',next.roomId);if(!disposed)stream(next.roomId);
       }else{
         const response=await client.applyAction(p.room,p.version,p.id,p.payload);
-        if(!snapshot||snapshot.roomId!==p.room)throw new Error('Комната изменилась');
-        const next=resolveBlackjackTableAction(snapshot,response.event,p.id,String(p.payload.action));
-        if(next)accept(next);else leaveConfirmed();
+        if(snapshot&&snapshot.roomId!==p.room)throw new Error('Комната изменилась');
+        const next=resolveBlackjackTableAction(snapshot,response.event,p.id,String(p.payload.action),p.room);
+        if(next){accept(next);restoreRoomId=null;sessionStorage.setItem('blackjack-table-room',p.room);if(!disposed&&!stopStream)stream(p.room);}else leaveConfirmed();
       }
       pending=null;savePending();
     }catch(e){
@@ -81,20 +91,20 @@
   onMount(()=>{
     pollTimer=setInterval(()=>{void refresh();},2000);
     clockTimer=setInterval(()=>{seconds=view?.deadline?Math.max(0,Math.ceil((Date.parse(view.deadline)-Date.now())/1000)):0;},250);
-    if(!live||!client)return;const api=client;
+    if(!live||!client)return;
     try{const raw=JSON.parse(sessionStorage.getItem('blackjack-table-pending')??'null');if(raw&&['create','join','action'].includes(raw.kind)&&typeof raw.id==='string'&&(raw.kind==='create'||typeof raw.room==='string')&&(raw.kind!=='action'||(Number.isSafeInteger(raw.version)&&['ready','unready','start','hit','stand','double','leave'].includes(raw.payload?.action))))pending=raw;else sessionStorage.removeItem('blackjack-table-pending');}catch{sessionStorage.removeItem('blackjack-table-pending');}
     const id=sessionStorage.getItem('blackjack-table-room');
-    if(id){busy=true;api.getRoom(id).then(next=>{accept(next);if(!disposed)stream(id);if(pending)error='Остался неподтверждённый запрос. Повторите его с тем же идентификатором.';}).catch(()=>{sessionStorage.removeItem('blackjack-table-room');error='Предыдущий стол недоступен.';}).finally(()=>{busy=false;});}
-    else if(pending)void send();
+    if(pending){if(pending.kind==='action')restoreRoomId=pending.room;error='Остался неподтверждённый запрос. Повторите его с тем же идентификатором.';return;}
+    if(id){restoreRoomId=id;void restoreRoom();}
   });
   onDestroy(()=>{disposed=true;stopStream?.();clearInterval(pollTimer);clearInterval(clockTimer);});
 </script>
 <section class="shared-table" aria-label="Общий стол Blackjack" aria-busy={busy}>
   <header><h3><img src={`${base}/icons/table-users.svg`} alt="" /> Общий стол · до 3 игроков</h3><p>Один дилер, отдельная ставка и результат для каждого. На решение — 20 секунд.</p></header>
-  {#if error}<div class="error" role="status">{error}{#if pending}<button on:click={send} disabled={busy}>Повторить запрос</button>{/if}</div>{/if}
+  {#if error}<div class="error" role="status">{error}{#if pending}<button on:click={send} disabled={busy}>Повторить запрос</button>{:else if restoreRoomId}<button on:click={restoreRoom} disabled={busy}>Восстановить стол</button>{/if}</div>{/if}
   {#if !live||!client}<p role="status">Общий стол доступен в Telegram при подключении к игровому серверу. В DEMO можно играть с ботом.</p>
   {:else if !view}
-    <div class="entrance"><button class="primary" data-testid="blackjack-table-create" on:click={create} disabled={busy||!!pending}>Создать стол</button><div class="join"><label for="blackjack-table-code">Код стола</label><input id="blackjack-table-code" bind:value={code} placeholder="UUID из приглашения" disabled={busy||!!pending} autocapitalize="none" spellcheck="false" /><button on:click={join} disabled={busy||!!pending}>Войти по коду</button></div></div>
+    <div class="entrance"><button class="primary" data-testid="blackjack-table-create" on:click={create} disabled={busy||!!pending||!!restoreRoomId}>Создать стол</button><div class="join"><label for="blackjack-table-code">Код стола</label><input id="blackjack-table-code" bind:value={code} placeholder="UUID из приглашения" disabled={busy||!!pending||!!restoreRoomId} autocapitalize="none" spellcheck="false" /><button on:click={join} disabled={busy||!!pending||!!restoreRoomId}>Войти по коду</button></div></div>
   {:else}
     <div class="invitation"><label for="blackjack-invite-code">Пригласить за стол</label><div><input id="blackjack-invite-code" readonly value={snapshot?.roomId??''} /><button on:click={copyCode}>Копировать</button></div><small>Передайте код друзьям. Telegram-авторизация обязательна.</small></div>
     <div class="dealer"><img class="scene" src={`${base}/blackjack/room.webp`} alt="" /><b>Общий дилер{view.dealerTotal!==null?` · ${view.dealerTotal}`:''}</b><div class="cards">{#each view.dealer as card}<TableCard {card} {reducedMotion} />{/each}{#if !view.dealer.length}<p>Карты появятся после старта</p>{/if}</div></div>

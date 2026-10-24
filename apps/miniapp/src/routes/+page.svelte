@@ -65,7 +65,7 @@
       gameType: 'holdem' as const,
       eyebrow: 'HEADS-UP · KAMUROCHO 神室町',
       title: 'Hold’em',
-      description: 'Один pot, два места и понятная линия действия.',
+      description: 'Игра с ботом или живой стол до шести игроков.',
       accent: '#ce86f2',
       icon: '♣',
       rulesetVersion: 'holdem-v1'
@@ -662,7 +662,7 @@
 
 <svelte:head>
   <title>Бурмалдоза · Casino lounge</title>
-  <meta name="description" content="Игровой лаунж Бурмалдозы: слоты, blackjack и heads-up hold’em." />
+  <meta name="description" content="Игровой лаунж Бурмалдозы: слоты, blackjack до трёх игроков и покер до шести." />
 </svelte:head>
 
 <div class="app-shell" class:hub-mode={!selectedGame || !roomState.snapshot}>
