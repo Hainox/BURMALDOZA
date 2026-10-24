@@ -19,25 +19,24 @@ from app.services.event_bus import EventBus
 
 
 async def _holdem_timer(application: FastAPI) -> None:
+    from app.services.blackjack_table_service import BlackjackTableService
     from app.services.holdem_service import HoldemService
+    from app.services.holdem_table_service import HoldemTableService
     from app.services.room_service import RoomService
 
     while True:
         delay = 1
-        try:
-            async with asyncio.timeout(5):
-                async with application.state.session_factory() as session:
-                    await HoldemService(
-                        RoomService(session=session, event_bus=application.state.event_bus)
-                    ).expire_due()
-        except Exception as error:  # noqa: BLE001 - supervisor loop must survive any tick failure
-            # Driver errors (e.g. asyncpg auth failures) are not all SQLAlchemyError/OSError;
-            # an uncaught one would stop deadline expiry for good and resurface on shutdown.
-            # Bounded static message: DB exceptions can contain connection credentials.
-            logging.getLogger(__name__).error(
-                "holdem_deadline_tick_failed", extra={"error_type": type(error).__name__}
-            )
-            delay = 5
+        for service_type in (HoldemService, HoldemTableService, BlackjackTableService):
+            try:
+                async with asyncio.timeout(5):
+                    async with application.state.session_factory() as session:
+                        await service_type(RoomService(
+                            session=session, event_bus=application.state.event_bus
+                        )).expire_due()
+            except Exception as error:  # noqa: BLE001
+                logging.getLogger(__name__).error("game_deadline_tick_failed", extra={
+                    "error_type": type(error).__name__, "game": service_type.__name__})
+                delay = 5
         await asyncio.sleep(delay)
 
 
