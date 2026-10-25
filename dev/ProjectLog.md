@@ -853,10 +853,13 @@
   checkpoint опубликован отдельно codex/multiplayer-recovery. Main не изменён.
 - Восстановлены Blackjack3/Poker6, durable services, contracts/dispatch/timers,
   персональные аватары и история. HTTP реальные полные раунды:2 passed.
-- Новый полный прогон: PostgreSQL16.2 + Redis6.2.14, pytest412 passed,5 warnings,
-  26.77s, без skipped. Redis отличается от CI7; scratch-only uid shim применяется
+- Новый полный прогон: PostgreSQL16.2 + Redis6.2.14, pytest413 passed,3 warnings,
+  25.56s, без skipped. Redis отличается от CI7; scratch-only uid shim применяется
   только к локальному PostgreSQL, не к приложению и не к production.
 - Закрыты замечания review: null raise bound при запрете; персональное cancel
   перед закрытием WS; receipt при исключении неплатёжеспособного участника.
 - Реальные Telegram iOS/Android и production deploy этим прогоном не проверены.
-- Frontend check/test/build/E2E финальные результаты будут дополнены после прогона.
+- Frontend check0/0, Vitest77 passed, build passed; полный Playwright77/77
+  на80d12d6. Loss/reload403/503 regression RED→GREEN, solo390 сохранён.
+- CI версии181765a завершился success; последние quiet/board-copy изменения
+  проходят отдельную проверку multiplayer. Подробности docs/Multiplayer-Recovery.md.

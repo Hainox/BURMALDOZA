@@ -1,23 +1,33 @@
-# Восстановление multiplayer — 24.10.2026
+# Blackjack и Poker — итог реализации
 
-Поручение: завершить Blackjack table до3 и Poker до6 с сохранением solo/bot.
-Публикация разрешена владельцем24.10.2026. После автоматической очистки рабочая
-копия восстановлена; исторические тесты22.10 не являются проверкой новых байтов.
+Поручение владельца: отдельный Blackjack до 3 игроков, Poker до 6,
+с сохранением solo/bot. Все действия, включая публикацию, разрешены24.10.2026.
+Код восстановлен после автоматической очистки; результаты ниже получены заново.
 
-## Текущий подтверждённый checkpoint
+## Реализовано
 
-- Blackjack domain/service:20 passed.
-- Poker domain/service:62 passed.
-- Старый Hold'em server/timer:29 passed,2 предупреждения зависимостей.
-- Ruff по восстановленным серверным файлам — passed.
-- PostgreSQL/Redis среда восстанавливается; её тесты пока не засчитаны.
-- Интерфейсы и браузерная приёмка восстанавливаются; не завершены.
+- Blackjack: создание/вход по коду,3 места,ready/start,общая колода и дилер,
+  Hit/Stand/Double,20 секунд и Stand по сроку,повторные раунды,late join/leave.
+- Poker: очередь6/60 секунд,старт2–6,одиночный поиск без списания,all-in/reopening,
+  side pots/refunds/odd chips,20 секунд и check/fold,личная история.
+- Durable actor-bound UUID replay,атомарный ledger,сохранение deadline и private
+  state; общие HTTP/WS-проекции не раскрывают чужие карты и балансы.
+- Потеря ответа и перезагрузка сохраняют pending UUID; отмена/выход повторяются
+  даже при403 на snapshot; временный503 не теряет комнату.
+- GFL/RGG оформление,Supericons,320/390/1440px,reduced motion и пауза анимаций.
 
-Ветки: локальная codex/multiplayer-completion; удалённый checkpoint
-codex/multiplayer-recovery. Новые версии blackjack-gfl-table-1 и holdem-six-1
-выбираются явно. Общий EventBus не должен содержать private cards/балансы.
-Неизвестная версия не декодируется старым движком. Новые stakes/payouts проходят
-через WalletService. Новых runtime dependencies и миграций нет.
+## Подтверждённые проверки
 
-Остаток: общий HTTP/WS regression, PostgreSQL гонки, frontend check/test/build/E2E,
-исправления замечаний ревью и финальные документы. Не считать checkpoint релизом.
+- Полный pytest:413 passed,3 warnings,без skipped; PostgreSQL16.2 + Redis6.2.14.
+- Ruff и git diff --check:passed.
+- Frontend check:0 errors/0 warnings; Vitest77 passed; production build passed.
+- Полный Playwright:77/77 passed на80d12d6,включая solo/slot/sound/reconnect.
+- Последние две правки (quiet/terminal board copy) проверяются отдельным новым
+  quiet-тестом и повтором всех multiplayer браузерных сценариев.
+- CI основной версии181765a:success (PostgreSQL16/Redis7,Docker,E2E,Monte Carlo).
+
+PR: https://github.com/Hainox/BURMALDOZA/pull/121
+Ветка:codex/multiplayer-recovery. Main и production не изменены.
+Ручная Telegram-приёмка настоящими аккаунтами и server deploy не выполнялись.
+Scratch Chromium153.0.8010.0 отличается патчем от ожидаемого .12; Redis6.2 локально
+отличается от CI7. Новых runtime dependencies и миграций нет.

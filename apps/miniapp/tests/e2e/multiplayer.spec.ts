@@ -40,7 +40,7 @@ for (const width of [320,390,1440]) test(`six seats, private hands, server bound
   await page.getByLabel('Сумма рейза').fill('101');await expect(page.getByTestId('holdem-raise')).toBeDisabled();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await page.reload();await openRoom(page,'holdem');await expect(page.getByTestId('holdem-multiplayer')).toBeVisible();
-  await page.getByTestId('holdem-check').click();await expect(page.getByTestId('holdem-result')).toContainText('+50 JG');await expect(page.getByTestId('holdem-result')).toContainText('Непокрытая ставка');await expect(page.getByTestId('resync-button')).toHaveAttribute('aria-label',/Баланс 1050 JG/);
+  await page.getByTestId('holdem-check').click();await expect(page.getByTestId('holdem-result')).toContainText('+50 JG');await expect(page.getByTestId('holdem-result')).toContainText('Непокрытая ставка');await expect(page.getByTestId('holdem-multiplayer')).toContainText('Раздача завершена до открытия борда');await expect(page.getByTestId('resync-button')).toHaveAttribute('aria-label',/Баланс 1050 JG/);
   await page.screenshot({path:`test-results/poker-six-${width}.png`,fullPage:true});
 });
 test('short stack call displays the actual all-in amount',async({page})=>{
@@ -132,4 +132,13 @@ test('temporary restore failure keeps the room token and offers retry instead of
   await page.goto('/');await openRoom(page,'holdem');await page.getByLabel('Живой игрок').check();await page.getByTestId('holdem-start').click();await expect(page.getByTestId('holdem-multiplayer')).toBeVisible();failed=true;
   await page.reload();await openRoom(page,'holdem');await expect(page.getByRole('button',{name:'Восстановить раздачу'})).toBeVisible();await expect(page.getByTestId('holdem-start')).toBeDisabled();expect(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('holdem-room')!).id)).toBe(room);
   failed=false;await page.getByRole('button',{name:'Восстановить раздачу'}).click();await expect(page.getByTestId('holdem-multiplayer')).toBeVisible();
+});
+test('shared blackjack honors the hub motion pause independently of system preferences',async({page})=>{
+  await auth(page);await page.emulateMedia({reducedMotion:'no-preference'});
+  const p={phase:'active',capacity:3,viewer_seat:0,host_seat:0,active_seat:0,players:[{seat:0,nickname:'@fixture',cards:[{rank:'10',suit:'spades'},{rank:'7',suit:'hearts'}],total:17,bet:25,status:'playing',ready:false,outcome:null}],dealer_cards:[{rank:'K',suit:'clubs'},{hidden:true}],dealer_total:null,legal_actions:['hit','stand','double','leave'],wallet_balance:975,turn_deadline:new Date(Date.now()+20000).toISOString(),round_id:room};
+  const snapshot={room_id:room,game_type:'blackjack',mode:'table',ruleset_version:'blackjack-gfl-table-1',state_version:1,public_state:p};
+  await page.route('**/api/v1/rooms',r=>r.fulfill({json:r.request().postDataJSON().mode==='solo'?{...snapshot,room_id:'solo',mode:'solo',ruleset_version:'blackjack-skeleton-1',public_state:{phase:'waiting',legal_actions:['deal']}}:snapshot}));await page.route(`**/api/v1/rooms/${room}`,r=>r.fulfill({json:snapshot}));
+  await page.goto('/');await page.getByTestId('hub-motion-toggle').click();await expect(page.getByTestId('dashboard')).toHaveAttribute('data-motion-paused','true');await openRoom(page,'blackjack');await page.getByRole('button',{name:'Общий стол · до 3',exact:true}).click();await page.getByTestId('blackjack-table-create').click();
+  await expect(page.getByTestId('blackjack-table-stand')).toBeVisible();await expect(page.getByTestId('room-shell')).toHaveClass(/quiet/);
+  expect(await page.locator('.shared-table .card').first().evaluate(node=>getComputedStyle(node).animationName)).toBe('none');
 });

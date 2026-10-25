@@ -99,7 +99,7 @@
   });
   onDestroy(()=>{disposed=true;stopStream?.();clearInterval(pollTimer);clearInterval(clockTimer);});
 </script>
-<section class="shared-table" aria-label="Общий стол Blackjack" aria-busy={busy}>
+<section class="shared-table game-room" aria-label="Общий стол Blackjack" aria-busy={busy}>
   <header><h3><img src={`${base}/icons/table-users.svg`} alt="" /> Общий стол · до 3 игроков</h3><p>Один дилер, отдельная ставка и результат для каждого. На решение — 20 секунд.</p></header>
   {#if error}<div class="error" role="status">{error}{#if pending}<button on:click={send} disabled={busy}>Повторить запрос</button>{:else if restoreRoomId}<button on:click={restoreRoom} disabled={busy}>Восстановить стол</button>{/if}</div>{/if}
   {#if !live||!client}<p role="status">Общий стол доступен в Telegram при подключении к игровому серверу. В DEMO можно играть с ботом.</p>
