@@ -305,15 +305,26 @@ class RoomService:
     async def create_room(
         self, user_id: int, game_type: GameType, mode: str, *,
         buy_in: int | None = None, action_id: UUID | None = None,
+        table_capacity: int | None = None,
     ) -> RoomSnapshot:
         try:
             game_type = GameType(game_type)
         except ValueError as error:
             raise RoomServiceError("unknown game type") from error
         if game_type is GameType.HOLDEM:
+            if table_capacity is not None:
+                if mode != "pvp" or type(table_capacity) is not int or table_capacity != 6:
+                    raise RoomServiceError("table_capacity=6 requires Hold'em pvp")
+                from app.services.holdem_table_service import HoldemTableService
+                return await HoldemTableService(self).create(user_id, buy_in, action_id)
             from app.services.holdem_service import HoldemService
             return await HoldemService(self).create(user_id, mode, buy_in, action_id)
-        if buy_in is not None or action_id is not None:
+        if game_type is GameType.BLACKJACK and mode == "table":
+            if buy_in is not None or table_capacity is not None or not isinstance(action_id, UUID):
+                raise RoomServiceError("table requires UUID without buy_in/capacity")
+            from app.services.blackjack_table_service import BlackjackTableService
+            return await BlackjackTableService(self).create(user_id, action_id)
+        if buy_in is not None or action_id is not None or table_capacity is not None:
             raise RoomServiceError("buy_in and creation action_id are only accepted for Hold'em")
         if not mode or len(mode) > 32:
             raise RoomServiceError("room mode is invalid")
@@ -367,9 +378,9 @@ class RoomService:
         async with self.session.begin():
             room = await self._load_db_room(room_id, lock=False)
             await self._require_db_member(room_id, user_id)
-            if room.game_type == 'holdem':
-                from app.services.holdem_service import HoldemService
-                return await HoldemService(self).project_snapshot(room, user_id)
+            service = self._table_service(room.game_type, room.mode, room.ruleset_version)
+            if service is not None:
+                return await service.project_snapshot(room, user_id)
             return self._with_slot_operation(self._db_snapshot(room))
 
     async def apply_action(self, room_id: UUID, user_id: int, request: ActionRequest) -> EventEnvelope:
@@ -391,10 +402,15 @@ class RoomService:
 
         assert self.session is not None
         async with self.session.begin():
-            game_type = await self.session.scalar(select(GameRoom.game_type).where(GameRoom.id == room_id))
-        if game_type == 'holdem':
-            from app.services.holdem_service import HoldemService
-            return await HoldemService(self).apply(room_id, user_id, request)
+            identity = (await self.session.execute(
+                select(GameRoom.game_type, GameRoom.mode, GameRoom.ruleset_version)
+                .where(GameRoom.id == room_id)
+            )).one_or_none()
+            if identity is None:
+                raise RoomNotFoundError("room not found")
+            service = self._table_service(*identity)
+        if service is not None:
+            return await service.apply(room_id, user_id, request)
         event: EventEnvelope
         async with self.session.begin():
             room = await self._load_db_room(room_id, lock=True)
@@ -431,13 +447,34 @@ class RoomService:
             })
         return snapshot
 
-    async def personalize_event(self, event: EventEnvelope, user_id: int) -> EventEnvelope:
-        if event.type.startswith('holdem.'):
+    def _table_service(self, game_type: str, mode: str, version: str):
+        if game_type == "holdem":
+            if version == "holdem-six-1":
+                from app.services.holdem_table_service import HoldemTableService
+                return HoldemTableService(self)
+            if version != "holdem-v1":
+                raise RoomServiceError("Hold'em room uses an unknown ruleset")
             from app.services.holdem_service import HoldemService
+            return HoldemService(self)
+        if game_type == "blackjack" and mode == "table":
+            if version != "blackjack-gfl-table-1":
+                raise RoomServiceError("Blackjack table uses an unknown ruleset")
+            from app.services.blackjack_table_service import BlackjackTableService
+            return BlackjackTableService(self)
+        return None
+
+    async def join_room(self, room_id: UUID, user_id: int, action_id: UUID) -> RoomSnapshot:
+        from app.services.blackjack_table_service import BlackjackTableService
+        return await BlackjackTableService(self).join(room_id, user_id, action_id)
+
+    async def personalize_event(self, event: EventEnvelope, user_id: int) -> EventEnvelope:
+        if event.type.startswith(("holdem.", "blackjack.table.")):
             assert self.session is not None
             async with self.session.begin():
                 room = await self._load_db_room(event.room_id, lock=False)
-                return await HoldemService(self).project_event(room, event, user_id)
+                service = self._table_service(room.game_type, room.mode, room.ruleset_version)
+                if service is not None:
+                    return await service.project_event(room, event, user_id)
         return event
 
     async def authenticate_websocket(self, first_message: WebSocketAuthMessage) -> CurrentUser:

@@ -207,6 +207,20 @@ export class ApiClient {
     return blob;
   }
 
+  async getPlayerAvatar(roomId: string, seat: number, signal?: AbortSignal): Promise<Blob | null> {
+    if (!Number.isInteger(seat) || seat < 0 || seat > 5) throw new Error('Некорректное место');
+    const response = await this.fetcher(`${this.baseUrl}/api/v1/rooms/${encodeURIComponent(roomId)}/players/${seat}/avatar`, {
+      method: 'GET', headers: { 'X-Telegram-Init-Data': this.initData }, cache: 'no-store', signal
+    });
+    if (response.status === 204) return null;
+    if (!response.ok) throw new ApiError(response.status, 'Аватар недоступен');
+    const type = response.headers.get('Content-Type')?.split(';')[0];
+    if (!['image/jpeg','image/png'].includes(type ?? '')) throw new Error('Некорректный аватар');
+    const blob = await response.blob();
+    if (!blob.size || blob.size > 256 * 1024) throw new Error('Некорректный размер аватара');
+    return blob;
+  }
+
   async applyAction(
     roomId: string,
     expectedStateVersion: number,

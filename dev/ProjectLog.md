@@ -845,3 +845,21 @@
 - Проверки: `ruff check .` — passed; `pytest -q` с PostgreSQL 16 / Redis 7 (Docker) — 290 passed, включая 4 интеграционных и 5 unit на админку.
 - Владельцу после merge: вписать свой Telegram ID в `ADMIN_TELEGRAM_IDS` в `.env` сервера и перезапустить api и bot.
 - Review Codex (PR #114) — все 6 замечаний исправлены: неоднозначный @ник → 409 «укажите Telegram ID» (P1, деньги не тому игроку); повтор определяется после блокировки кошелька — два одновременных подтверждения дают одну проводку и один аудит (тест падает при старом порядке 3/3); ответ на пересланное сообщение адресуется исходному автору, скрытый автор — просьба указать @ник; комментарий > 200 отклоняется до карточки; уведомление уходит по первому успешному ответу карточки (после потерянного ответа тоже) и защищено от двойного нажатия; `ADMIN_TELEGRAM_IDS` в локальном `docker-compose.yml` и `.env.example`. Проверки: `pytest -q` (PostgreSQL 16) — 295 passed; `ruff` — passed.
+
+
+## 2026-10-24 — восстановление multiplayer
+
+- После автоматической очистки рабочей среды код восстановлен по контексту;
+  checkpoint опубликован отдельно codex/multiplayer-recovery. Main не изменён.
+- Восстановлены Blackjack3/Poker6, durable services, contracts/dispatch/timers,
+  персональные аватары и история. HTTP реальные полные раунды:2 passed.
+- Новый полный прогон: PostgreSQL16.2 + Redis6.2.14, pytest413 passed,3 warnings,
+  25.56s, без skipped. Redis отличается от CI7; scratch-only uid shim применяется
+  только к локальному PostgreSQL, не к приложению и не к production.
+- Закрыты замечания review: null raise bound при запрете; персональное cancel
+  перед закрытием WS; receipt при исключении неплатёжеспособного участника.
+- Реальные Telegram iOS/Android и production deploy этим прогоном не проверены.
+- Frontend check0/0, Vitest77 passed, build passed; полный Playwright77/77
+  на80d12d6. Loss/reload403/503 regression RED→GREEN, solo390 сохранён.
+- CI версии181765a завершился success; последние quiet/board-copy изменения
+  проходят отдельную проверку multiplayer. Подробности docs/Multiplayer-Recovery.md.

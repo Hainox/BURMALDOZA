@@ -7,6 +7,7 @@ from burmaldoza_contracts.common import GameType
 from burmaldoza_contracts.rooms import (
     ActionRequest,
     RoomCreateRequest,
+    RoomJoinRequest,
     RoomSnapshot,
     WebSocketAuthMessage,
 )
@@ -17,6 +18,7 @@ from fastapi import (
     Depends,
     Header,
     HTTPException,
+    Path,
     Query,
     Request,
     WebSocket,
@@ -70,7 +72,8 @@ async def opponent_avatar(
             avatars = AvatarService(get_app_settings(request).bot_token)
             request.app.state.opponent_avatars = avatars
         avatars.check_viewer(current_user.user_id)
-        if snapshot.game_type != GameType.HOLDEM or snapshot.mode != "pvp":
+        if (snapshot.game_type != GameType.HOLDEM or snapshot.mode != "pvp"
+                or snapshot.ruleset_version != "holdem-v1"):
             return Response(status_code=204, headers=headers)
         async with service.session.begin():
             members = await HoldemService(service).members(room_id)
@@ -89,6 +92,50 @@ async def opponent_avatar(
                         headers={**headers, "Retry-After": str(error.retry_after)})
     try:
         photo = await avatars.get(telegram_id)
+    except AvatarError as error:
+        return Response(status_code=error.status,
+                        headers={**headers, "Retry-After": str(error.retry_after)})
+    if photo is None:
+        return Response(status_code=204, headers=headers)
+    body, media_type = photo
+    return Response(body, media_type=media_type, headers=headers)
+
+
+@router.get("/rooms/{room_id}/players/{seat}/avatar")
+async def player_avatar(
+    room_id: UUID, request: Request, seat: int = Path(ge=0, le=5),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: RoomService = Depends(get_room_service),
+):
+    from fastapi.responses import Response
+    from sqlalchemy import select
+
+    from app.db.models import GamePlayer, User
+    from app.services.opponent_avatar import AvatarError, AvatarService
+
+    headers = {"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"}
+    try:
+        snapshot = await service.snapshot(room_id, current_user.user_id)
+        if snapshot.ruleset_version != "holdem-six-1":
+            raise HTTPException(status_code=404, detail="player avatar not found")
+        async with service.session.begin():
+            target = await service.session.scalar(
+                select(User.telegram_user_id).join(GamePlayer, GamePlayer.user_id == User.id)
+                .where(GamePlayer.room_id == room_id, GamePlayer.seat == seat))
+        if target is None:
+            raise HTTPException(status_code=404, detail="player seat not found")
+        avatars = getattr(request.app.state, "opponent_avatars", None)
+        if avatars is None:
+            avatars = AvatarService(get_app_settings(request).bot_token)
+            request.app.state.opponent_avatars = avatars
+        avatars.check_viewer(current_user.user_id)
+        photo = await avatars.get(target)
+    except RoomNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except RoomAccessError as error:
+        raise HTTPException(status_code=403, detail=str(error)) from error
+    except RoomServiceError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
     except AvatarError as error:
         return Response(status_code=error.status,
                         headers={**headers, "Retry-After": str(error.retry_after)})
@@ -151,6 +198,12 @@ async def ruleset(
     current_user: CurrentUser = Depends(get_current_user),
 ) -> dict[str, object]:
     del current_user
+    if game_type is GameType.HOLDEM and version == "holdem-six-1":
+        return {**_RULESETS[game_type], "version": version, "max_players": 6,
+                "min_players": 2, "modes": ["pvp"]}
+    if game_type is GameType.BLACKJACK and version == "blackjack-gfl-table-1":
+        return {**_RULESETS[game_type], "version": version, "max_players": 3,
+                "min_players": 1, "modes": ["table"], "turn_timeout_seconds": 20}
     definition = _RULESETS.get(game_type)
     if game_type is GameType.SLOT and version in SLOT_RULESET_VERSIONS:
         return {**_RULESETS[GameType.SLOT], "version": version}
@@ -188,9 +241,26 @@ async def create_room(
             payload.mode,
             buy_in=payload.buy_in,
             action_id=payload.action_id,
+            table_capacity=payload.table_capacity,
         )
     except RoomServiceError as error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
+
+
+@router.post("/rooms/{room_id}/join", response_model=RoomSnapshot)
+async def join_room(
+    room_id: UUID, payload: RoomJoinRequest,
+    current_user: CurrentUser = Depends(get_current_user),
+    service: RoomService = Depends(get_room_service),
+) -> RoomSnapshot:
+    try:
+        return await service.join_room(room_id, current_user.user_id, payload.action_id)
+    except RoomNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except RoomAccessError as error:
+        raise HTTPException(status_code=403, detail=str(error)) from error
+    except RoomServiceError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
 
 
 @router.get("/rooms/{room_id}", response_model=RoomSnapshot)
@@ -205,6 +275,8 @@ async def room_snapshot(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
     except RoomAccessError as error:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
+    except RoomServiceError as error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
 
 
 @router.post("/rooms/{room_id}/actions", response_model=None)
@@ -271,6 +343,9 @@ async def room_events(websocket: WebSocket, room_id: UUID) -> None:
                 event = await events.get()
                 event = await service.personalize_event(event, current_user.user_id)
                 await websocket.send_json({"type": "event", "event": event.model_dump(mode="json")})
+                if event.payload.get("public_state", {}).get("phase") in ("cancelled", "left"):
+                    await websocket.close(code=1000, reason="room participation ended")
+                    return
     except TimeoutError:
         await websocket.close(code=4401, reason="authentication timeout")
     except (RoomNotFoundError, RoomAccessError, RoomServiceError, ValueError) as error:

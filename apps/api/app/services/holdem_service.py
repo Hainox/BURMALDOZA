@@ -124,15 +124,16 @@ class HoldemService:
                         .where(
                             GameRoom.game_type == "holdem",
                             GameRoom.mode == "pvp",
-                            GameRoom.status == "waiting",
+                            GameRoom.status.in_(["waiting", "active"]),
                             GamePlayer.user_id == user_id,
                         )
                         .with_for_update()
                     )
                 ).all()
             )
-            if any(
-                room.deadline_at and utc(room.deadline_at) > utc(self.rooms.now())
+            if mode == "pvp" and any(
+                room.status == "active" or room.ruleset_version == "holdem-six-1"
+                or (room.deadline_at and utc(room.deadline_at) > utc(self.rooms.now()))
                 for room in waiting
             ):
                 raise RoomServiceError("player is already searching for an opponent")
@@ -145,6 +146,7 @@ class HoldemService:
                                 GameRoom.game_type == "holdem",
                                 GameRoom.mode == "pvp",
                                 GameRoom.status == "waiting",
+                                GameRoom.ruleset_version == "holdem-v1",
                                 GameRoom.deadline_at > utc(self.rooms.now()),
                                 GameRoom.state_json["buy_in"].as_integer() == buy_in,
                             )
@@ -623,7 +625,7 @@ class HoldemService:
         async with self.session.begin():
             rows = (
                 await self.session.execute(
-                    select(GameRound, GamePlayer.seat)
+                    select(GameRound, GamePlayer.seat, GameRoom.ruleset_version)
                     .join(GamePlayer, GamePlayer.room_id == GameRound.room_id)
                     .join(GameRoom, GameRoom.id == GameRound.room_id)
                     .where(GameRoom.game_type == "holdem", GamePlayer.user_id == user_id)
@@ -633,8 +635,17 @@ class HoldemService:
                 )
             ).all()
             history = []
-            for hand, seat in rows:
+            for hand, seat, version in rows:
                 outcome = hand.outcome_json
+                if version == "holdem-six-1":
+                    payout = outcome.get("cashouts", {}).get(str(seat))
+                    net = outcome.get("net_deltas", {}).get(str(seat))
+                elif version == "holdem-v1":
+                    payout = outcome.get("payouts", [None, None])[seat]
+                    net = outcome.get("net_deltas", [None, None])[seat]
+                else:
+                    from app.services.room_service import RoomServiceError
+                    raise RoomServiceError("unknown ruleset in history")
                 history.append(
                     {
                         "room_id": str(hand.room_id),
@@ -644,8 +655,8 @@ class HoldemService:
                         "mode": outcome["mode"],
                         "hero_code": outcome["hero_code"],
                         "seat": seat,
-                        "payout": outcome.get("payouts", [None, None])[seat],
-                        "net_delta": outcome.get("net_deltas", [None, None])[seat],
+                        "payout": payout,
+                        "net_delta": net,
                         "outcome": outcome.get("outcome"),
                     }
                 )
@@ -660,6 +671,7 @@ class HoldemService:
                         select(GameRoom.id)
                         .where(
                             GameRoom.game_type == "holdem",
+                            GameRoom.ruleset_version == "holdem-v1",
                             GameRoom.deadline_at <= utc(self.rooms.now()),
                             GameRoom.status.in_(["waiting", "active"]),
                         )

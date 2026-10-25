@@ -23,6 +23,7 @@ class RoomCreateRequest(BaseModel):
     mode: str = Field(min_length=1, max_length=32)
     buy_in: StrictInt | None = None
     action_id: UUID | None = None
+    table_capacity: StrictInt | None = None
 
     @model_validator(mode="after")
     def validate_holdem_table(self) -> RoomCreateRequest:
@@ -31,7 +32,12 @@ class RoomCreateRequest(BaseModel):
                 raise ValueError("Hold'em mode must be bot or pvp")
             if self.buy_in not in (100, 500, 1000) or self.action_id is None:
                 raise ValueError("Hold'em requires buy_in 100/500/1000 and action_id")
-        elif self.buy_in is not None or self.action_id is not None:
+            if self.table_capacity is not None and (self.mode != "pvp" or self.table_capacity != 6):
+                raise ValueError("table_capacity=6 requires Hold'em pvp")
+        elif self.game_type is GameType.BLACKJACK and self.mode == "table":
+            if self.action_id is None or self.buy_in is not None or self.table_capacity is not None:
+                raise ValueError("Blackjack table requires action_id without buy_in or capacity")
+        elif self.buy_in is not None or self.action_id is not None or self.table_capacity is not None:
             raise ValueError("buy_in and creation action_id are only accepted for Hold'em")
         return self
 
@@ -60,3 +66,8 @@ class HoldemOpponentProfile(BaseModel):
 
     nickname: str = Field(min_length=1, max_length=256)
     avatar_path: str
+
+
+class RoomJoinRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    action_id: UUID

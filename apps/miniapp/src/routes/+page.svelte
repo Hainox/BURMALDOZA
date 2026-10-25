@@ -65,7 +65,7 @@
       gameType: 'holdem' as const,
       eyebrow: 'HEADS-UP · KAMUROCHO 神室町',
       title: 'Hold’em',
-      description: 'Один pot, два места и понятная линия действия.',
+      description: 'Игра с ботом или живой стол до шести игроков.',
       accent: '#ce86f2',
       icon: '♣',
       rulesetVersion: 'holdem-v1'
@@ -124,6 +124,7 @@
     };
   }
   let pokerRoom: PokerRoom | null = null;
+  let blackjackRoom: BlackjackRoom | null = null;
   let isRunning = false;
   let timers: number[] = [];
   let motionQuery: MediaQueryList | undefined;
@@ -585,6 +586,9 @@
 
   async function resync() {
     if (selectedGame === 'holdem') { await pokerRoom?.resync(); return; }
+    if (selectedGame === 'blackjack' && blackjackRoom?.isTableMode()) {
+      await blackjackRoom.resync(); return;
+    }
     if (!roomState.snapshot) return;
     clearTimers();
     isRunning = false;
@@ -658,7 +662,7 @@
 
 <svelte:head>
   <title>Бурмалдоза · Casino lounge</title>
-  <meta name="description" content="Игровой лаунж Бурмалдозы: слоты, blackjack и heads-up hold’em." />
+  <meta name="description" content="Игровой лаунж Бурмалдозы: слоты, blackjack до трёх игроков и покер до шести." />
 </svelte:head>
 
 <div class="app-shell" class:hub-mode={!selectedGame || !roomState.snapshot}>
@@ -669,6 +673,10 @@
         <SlotRoom motion={roomState.motion} result={roomState.result} busy={isRunning} balance={session.balance} onAction={runAction} resultSource={liveApiEnabled ? 'live' : 'demo'} rulesetVersion={roomState.snapshot.rulesetVersion} publicState={roomState.snapshot.publicState} />
       {:else if selectedGame === 'blackjack'}
         <BlackjackRoom
+          bind:this={blackjackRoom}
+          client={apiClient}
+          live={liveApiEnabled}
+          onBalance={(balance) => { session.setBalance(balance); ledgerRevision += 1; }}
           snapshot={roomState.snapshot}
           motion={roomState.motion}
           result={roomState.result}
