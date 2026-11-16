@@ -9,8 +9,8 @@
   import { sound } from '$lib/audio/sound';
   import ResultBand from '$lib/components/ResultBand.svelte';
   import {
-    SLOT_LAUNCH_DURATION,
     SLOT_ROW_COUNT,
+    SLOT_REEL_COPIES,
     SLOT_SPIN_DURATION,
     buildReelTrack,
     getSlotLaunchDelay,
@@ -68,6 +68,7 @@
   let spinBet = BET_MIN;
   let reducedMotion = false;
   let reelOffsets = [0, 0, 0];
+  let startingReels: string[][] | null = null;
   let ticker: number | null = null;
 
   $: slotOutcome = result?.slotOutcome ?? null;
@@ -75,7 +76,7 @@
   $: bannerState = slotOutcome && typeof lastResult === 'object' && lastResult !== null ? lastResult as Record<string,unknown> : isSpinning ? frozenMetadata : publicState;
   $: confirmedReels = slotOutcome?.reels?.length === 3 ? slotOutcome.reels : reelBases;
   $: reelTracks = reelBases.map((base, reelIndex) =>
-    buildReelTrack(base, confirmedReels[reelIndex] ?? base)
+    buildReelTrack(base, confirmedReels[reelIndex] ?? base, SLOT_REEL_COPIES, startingReels?.[reelIndex] ?? base)
   );
   $: reelPhases = reelBases.map((_, reelIndex): SlotReelPhase =>
     slotPhase === 'idle' ? 'idle' : getSlotReelPhase(reelIndex, elapsedMs, reducedMotion)
@@ -118,6 +119,8 @@
 
   function startSpin() {
     cancelTicker();
+    // Offset resets to zero, so its first window must be the previous visible result.
+    startingReels = confirmedReels.map((reel) => [...reel]);
     spinSeq += 1;
     spinBet = bet;
     frozenOperation = knownOperation(publicState.operation_id) ? publicState.operation_id : 'op1';
@@ -227,7 +230,6 @@
           data-stop-start={getSlotStopStart(reelIndex)}
           data-reel-phase={reelPhases[reelIndex]}
           aria-label={`Барабан ${reelIndex + 1}`}
-          style={`--reel-launch-delay: ${getSlotLaunchDelay(reelIndex)}ms; --reel-launch-duration: ${SLOT_LAUNCH_DURATION}ms;`}
         >
           <div class="reel-window">
             <div
@@ -321,9 +323,7 @@
   .machine-rim { position: absolute; inset: 11px; border: 1px solid rgb(231 187 112 / 18%); border-radius: 18px; pointer-events: none; }
   .reel-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; width: min(100%, 390px); }
   .reel { min-width: 0; padding: 8px 5px; border: 1px solid rgb(255 247 237 / 11%); border-radius: 14px; background: rgb(255 247 237 / 5%); transform: translate3d(0, 0, 0); backface-visibility: hidden; will-change: transform, opacity; }
-  .reel.travel { animation: reelLaunchWave var(--reel-launch-duration) var(--ease-spring) var(--reel-launch-delay) both; }
-  .reel.landing { animation: reelLandingWave 320ms var(--ease-smooth) both; }
-  .reel.landed { animation: reelLanded 300ms var(--ease-smooth) both; }
+  /* Motion belongs to the track; bouncing/scaling/fading its frame adds a second kick. */
   .reel-window { --symbol-size: clamp(34px, 8vw, 52px); --reel-gap: 6px; position: relative; height: calc(7 * (var(--symbol-size) + var(--reel-gap)) - var(--reel-gap)); overflow: hidden; mask-image: linear-gradient(to bottom, transparent 0, #000 8%, #000 92%, transparent 100%); contain: paint; }
   .reel-track { display: grid; gap: var(--reel-gap); transform: translate3d(0, calc(var(--reel-offset-rows) * (var(--symbol-size) + var(--reel-gap))), 0); will-change: transform; backface-visibility: hidden; contain: layout paint; }
   .symbol { display: grid; place-items: center; width: 100%; height: var(--symbol-size); border-radius: 10px; background: rgb(11 11 17 / 66%); color: var(--ivory); font-size: clamp(20px, 7vw, 32px); font-weight: 800; line-height: 1; text-shadow: 0 2px 12px rgb(231 187 112 / 22%); }
@@ -349,13 +349,10 @@
   .free-spin-action:hover { transform: translateY(-1px); background: rgb(142 228 182 / 19%); }
   .primary-action { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; border: 0; border-radius: 15px; background: linear-gradient(120deg, var(--brass-300), #c98f4e); color: #2a1820; font: inherit; font-size: 14px; font-weight: 850; cursor: pointer; box-shadow: 0 10px 24px rgb(231 187 112 / 18%); transition: transform 160ms ease, opacity 160ms ease; }
   .primary-action:hover { filter: brightness(1.06); transform: translateY(-2px); } .primary-action:active { transform: translateY(1px); } .primary-action:disabled { cursor: wait; filter: saturate(0.7); } .action-icon { font-size: 21px; }
-  @keyframes reelLaunchWave { 0% { transform: translate3d(0, 5px, 0) scale(.98); opacity: .72; } 55% { transform: translate3d(0, -2px, 0) scale(1.01); opacity: 1; } 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 1; } }
-  @keyframes reelLandingWave { 0% { transform: translate3d(0, 0, 0) scale(1); } 55% { transform: translate3d(0, -1px, 0) scale(1.012); } 100% { transform: translate3d(0, 0, 0) scale(1); } }
-  @keyframes reelLanded { from { opacity: .8; } to { opacity: 1; } }
   @keyframes confirmedGridIn { from { opacity: 0; transform: translate3d(0, -7px, 0) scale(.97); } to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); } }
   @keyframes winningPulse { from { transform: scale(1); } to { transform: scale(1.04); } } @keyframes lightBlink { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
   @media (max-width: 390px) { .free-spins-panel { align-items: stretch; flex-direction: column; } .free-spin-action { width: 100%; } }
-  @media (prefers-reduced-motion: reduce) { .reel.travel, .reel.landing, .reel.landed, .symbol.winning, .machine-lights i { animation: none; } .reel-track { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .symbol.winning, .machine-lights i { animation: none; } .reel-track { transition: none; } }
 
   /* Siege в стиле хаба: стекло поверх тактической сцены, холодное свечение рамки и луч сканера.
      Без backdrop-filter и анимированного blur: они срывали плавность вращения барабанов. */

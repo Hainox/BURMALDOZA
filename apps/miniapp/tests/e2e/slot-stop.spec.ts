@@ -5,7 +5,64 @@ async function sampleTrackTransform(page: Page, index: number) {
   return page.getByTestId(`slot-reel-track-${index}`).evaluate((element) => getComputedStyle(element).transform);
 }
 
+async function mockRepeatedSlotResults(page: Page) {
+  const roomId = '00000000-0000-0000-0000-000000000042';
+  let version = 0;
+  const outcome = () => ({
+    grid: Array.from({ length: 3 }, () => Array(7).fill(version === 1 ? 'A' : 'B')),
+    reel_stops: [0, 0, 0], winning_lines: [], gross_payout: 0, net_delta: -10,
+    balance_after: 1000 - version * 10, ruleset_version: 'slot-skeleton-1'
+  });
+  await page.addInitScript(() => {
+    (window as typeof window & { Telegram?: unknown }).Telegram = { WebApp: {
+      initData: 'query_id=verified', ready() {}, expand() {}, setHeaderColor() {}, setBackgroundColor() {}
+    } };
+  });
+  await page.route('**/api/v1/**', async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    let body: unknown;
+    if (path.endsWith('/me')) body = { user_id: 12345, telegram_user_id: 12345, display_name: 'Test User' };
+    else if (path.endsWith('/wallet')) body = { user_id: 12345, balance: 1000 - version * 10, currency_code: 'JOKERGEM', version };
+    else if (path.endsWith('/actions')) {
+      version += 1;
+      const { action_id } = route.request().postDataJSON();
+      body = { event: { event_id: action_id, room_id: roomId, state_version: version,
+        type: 'slot.action.accepted', ruleset_version: 'slot-skeleton-1', server_time: new Date().toISOString(),
+        payload: { action_id, public_state: { phase: 'active', last_result: outcome() }, result: outcome() },
+        animation_hint: 'slot.reels.stop.staggered' } };
+    } else if (path.endsWith('/rooms') || path.endsWith(roomId)) body = {
+      room_id: roomId, game_type: 'slot', mode: 'solo', status: version ? 'active' : 'waiting',
+      ruleset_version: 'slot-skeleton-1', state_version: version,
+      public_state: version ? { phase: 'active', last_result: outcome() } : { phase: 'waiting', legal_actions: ['spin'], action_count: 0 }
+    };
+    else return route.continue();
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
+  });
+}
+
 test.describe('Slot v2 stop continuity', () => {
+  for (const width of [390, 1280]) {
+    test(`keeps the previous visible symbols when starting another spin at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await mockRepeatedSlotResults(page);
+      await page.goto('/');
+      await openRoom(page, 'slot');
+      const machine = page.getByTestId('slot-machine');
+      await page.getByTestId('slot-spin').click();
+      await expect(machine).toHaveAttribute('data-slot-phase', 'settled', { timeout: 5_000 });
+      const previous = await machine.locator('.reel-track').evaluateAll((tracks) =>
+        tracks.map((track) => Array.from(track.querySelectorAll('[data-symbol]')).slice(-7).map((cell) => cell.getAttribute('data-symbol')))
+      );
+      await expect(page.getByTestId('slot-spin')).toBeEnabled();
+      await page.getByTestId('slot-spin').click();
+      const launch = await machine.locator('.reel-track').evaluateAll((tracks) =>
+        tracks.map((track) => Array.from(track.querySelectorAll('[data-symbol]')).slice(0, 7).map((cell) => cell.getAttribute('data-symbol')))
+      );
+      expect(launch).toEqual(previous);
+      await expect(machine).toHaveAttribute('data-slot-phase', 'settled', { timeout: 5_000 });
+    });
+  }
+
   test('moves the computed transform through travel and lands reels at staggered times', async ({ page }) => {
     await page.goto('/');
     await openRoom(page, 'slot');
@@ -42,6 +99,8 @@ test.describe('Slot v2 stop continuity', () => {
       const frames: Array<{
         t: number;
         transforms: string[];
+        frameTransforms: string[];
+        opacities: string[];
         offsets: number[];
         phases: Array<string | null>;
       }> = [];
@@ -59,6 +118,8 @@ test.describe('Slot v2 stop continuity', () => {
         frames.push({
           t: performance.now() - started,
           transforms: [0, 1, 2].map((index) => getComputedStyle(readTrack(index)).transform),
+          frameTransforms: [0, 1, 2].map((index) => getComputedStyle(readTrack(index).parentElement!.parentElement!).transform),
+          opacities: [0, 1, 2].map((index) => getComputedStyle(readTrack(index).parentElement!.parentElement!).opacity),
           offsets: [0, 1, 2].map((index) =>
             Number.parseFloat(getComputedStyle(readTrack(index)).getPropertyValue('--reel-offset-rows'))
           ),
@@ -74,6 +135,8 @@ test.describe('Slot v2 stop continuity', () => {
       frames: Array<{
         t: number;
         transforms: string[];
+        frameTransforms: string[];
+        opacities: string[];
         offsets: number[];
         phases: Array<string | null>;
       }>;
@@ -88,6 +151,9 @@ test.describe('Slot v2 stop continuity', () => {
     // then jerked out of standstill by the landing phase. Every reel must keep travelling at
     // its own cruising speed right up to its own stop start.
     for (let reelIndex = 0; reelIndex < 3; reelIndex += 1) {
+      // The symbol strip moves; its frame must not independently bounce, scale or fade.
+      expect(new Set(frames.map((frame) => frame.frameTransforms[reelIndex])).size).toBe(1);
+      expect(new Set(frames.map((frame) => frame.opacities[reelIndex]))).toEqual(new Set(['1']));
       const landingIndex = frames.findIndex((frame) => frame.phases[reelIndex] === 'landing');
       expect(landingIndex, `reel ${reelIndex} must pass through a landing phase`).toBeGreaterThan(0);
       const beforeLanding = frames.slice(Math.max(0, landingIndex - 12), landingIndex);
