@@ -51,6 +51,12 @@ describe('slot v2 motion contract', () => {
     ]);
   });
 
+  it('preserves the launch window while keeping varied cruising symbols', () => {
+    expect(buildReelTrack(['A', 'B'], ['Y', 'Z'], 3, ['X', 'X'])).toEqual([
+      'X', 'X', 'A', 'B', 'A', 'B', 'Y', 'Z'
+    ]);
+  });
+
   it('keeps the server-confirmed timeline deterministic', () => {
     expect(getSlotStopDelay(0)).toBe(0);
     expect(getSlotStopDelay(1)).toBe(SLOT_LANDING_TAILS[1] - SLOT_LANDING_TAILS[0]);

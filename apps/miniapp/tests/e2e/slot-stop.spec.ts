@@ -99,6 +99,8 @@ test.describe('Slot v2 stop continuity', () => {
       const frames: Array<{
         t: number;
         transforms: string[];
+        frameTransforms: string[];
+        opacities: string[];
         offsets: number[];
         phases: Array<string | null>;
       }> = [];
@@ -116,6 +118,8 @@ test.describe('Slot v2 stop continuity', () => {
         frames.push({
           t: performance.now() - started,
           transforms: [0, 1, 2].map((index) => getComputedStyle(readTrack(index)).transform),
+          frameTransforms: [0, 1, 2].map((index) => getComputedStyle(readTrack(index).parentElement!.parentElement!).transform),
+          opacities: [0, 1, 2].map((index) => getComputedStyle(readTrack(index).parentElement!.parentElement!).opacity),
           offsets: [0, 1, 2].map((index) =>
             Number.parseFloat(getComputedStyle(readTrack(index)).getPropertyValue('--reel-offset-rows'))
           ),
@@ -131,6 +135,8 @@ test.describe('Slot v2 stop continuity', () => {
       frames: Array<{
         t: number;
         transforms: string[];
+        frameTransforms: string[];
+        opacities: string[];
         offsets: number[];
         phases: Array<string | null>;
       }>;
@@ -145,6 +151,9 @@ test.describe('Slot v2 stop continuity', () => {
     // then jerked out of standstill by the landing phase. Every reel must keep travelling at
     // its own cruising speed right up to its own stop start.
     for (let reelIndex = 0; reelIndex < 3; reelIndex += 1) {
+      // The symbol strip moves; its frame must not independently bounce, scale or fade.
+      expect(new Set(frames.map((frame) => frame.frameTransforms[reelIndex])).size).toBe(1);
+      expect(new Set(frames.map((frame) => frame.opacities[reelIndex]))).toEqual(new Set(['1']));
       const landingIndex = frames.findIndex((frame) => frame.phases[reelIndex] === 'landing');
       expect(landingIndex, `reel ${reelIndex} must pass through a landing phase`).toBeGreaterThan(0);
       const beforeLanding = frames.slice(Math.max(0, landingIndex - 12), landingIndex);

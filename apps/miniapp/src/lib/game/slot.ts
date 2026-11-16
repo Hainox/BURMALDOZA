@@ -47,8 +47,13 @@ export interface SlotOutcome {
   winningLines?: SlotWinningLine[];
 }
 
-export function buildReelTrack(baseSymbols: string[], confirmedSymbols: string[], copies = SLOT_REEL_COPIES) {
-  return [...Array.from({ length: copies }, () => baseSymbols).flat(), ...confirmedSymbols];
+export function buildReelTrack(
+  baseSymbols: string[],
+  confirmedSymbols: string[],
+  copies = SLOT_REEL_COPIES,
+  startingSymbols = baseSymbols
+) {
+  return [...startingSymbols, ...Array.from({ length: copies - 1 }, () => baseSymbols).flat(), ...confirmedSymbols];
 }
 
 function clamp(value: number, minimum = 0, maximum = 1) {

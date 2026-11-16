@@ -10,6 +10,7 @@
   import ResultBand from '$lib/components/ResultBand.svelte';
   import {
     SLOT_ROW_COUNT,
+    SLOT_REEL_COPIES,
     SLOT_SPIN_DURATION,
     buildReelTrack,
     getSlotLaunchDelay,
@@ -75,7 +76,7 @@
   $: bannerState = slotOutcome && typeof lastResult === 'object' && lastResult !== null ? lastResult as Record<string,unknown> : isSpinning ? frozenMetadata : publicState;
   $: confirmedReels = slotOutcome?.reels?.length === 3 ? slotOutcome.reels : reelBases;
   $: reelTracks = reelBases.map((base, reelIndex) =>
-    buildReelTrack(startingReels?.[reelIndex] ?? base, confirmedReels[reelIndex] ?? base)
+    buildReelTrack(base, confirmedReels[reelIndex] ?? base, SLOT_REEL_COPIES, startingReels?.[reelIndex] ?? base)
   );
   $: reelPhases = reelBases.map((_, reelIndex): SlotReelPhase =>
     slotPhase === 'idle' ? 'idle' : getSlotReelPhase(reelIndex, elapsedMs, reducedMotion)
