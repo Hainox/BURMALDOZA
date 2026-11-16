@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Smooth slot reel acceleration and braking without changing the total spin duration or server-confirmed outcomes; preserve the previous symbols when the next spin starts and remove frame bounce/fade at landing.
+
 - Add separate shared Blackjack tables for up to three players with ready/start,
   turn deadlines, reconnect and atomic per-player settlement.
 - Add versioned six-player Hold'em matchmaking, short all-ins, side pots,

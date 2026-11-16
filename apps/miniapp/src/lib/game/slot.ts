@@ -8,8 +8,9 @@ export const SLOT_SERVER_RESULT_PRELUDE = 520;
 export const SLOT_LAUNCH_DURATION = 280;
 export const SLOT_LAUNCH_STAGGER = 110;
 export const SLOT_RAMP_DURATION = 260;
-export const SLOT_TRAVEL_DURATION = 2_000;
-export const SLOT_LANDING_TAILS = [320, 480, 640] as const;
+// Start braking earlier; keep the established 2320/2480/2640 ms landing times.
+export const SLOT_TRAVEL_DURATION = 1_500;
+export const SLOT_LANDING_TAILS = [820, 980, 1_140] as const;
 export const SLOT_LANDING_DURATION = SLOT_LANDING_TAILS[0];
 export const SLOT_SETTLE_DURATION = 300;
 export const SLOT_REEL_TRAVEL_DURATION = SLOT_TRAVEL_DURATION + SLOT_LANDING_TAILS[0];
@@ -54,6 +55,15 @@ function clamp(value: number, minimum = 0, maximum = 1) {
   return Math.min(maximum, Math.max(minimum, value));
 }
 
+// Velocity and acceleration join the stationary/cruise phases without a kick.
+function smoothVelocity(progress: number) {
+  return progress ** 3 * (10 - 15 * progress + 6 * progress ** 2);
+}
+
+function integratedSmoothVelocity(progress: number) {
+  return 2.5 * progress ** 4 - 3 * progress ** 5 + progress ** 6;
+}
+
 export function getSlotLaunchDelay(reelIndex: number) {
   return Math.max(0, reelIndex) * SLOT_LAUNCH_STAGGER;
 }
@@ -76,7 +86,7 @@ export function getSlotStopEnd(reelIndex: number) {
 export function getSlotReelCruiseVelocityRowsPerMs(reelIndex: number) {
   const cruiseWindow =
     getSlotStopStart(reelIndex) - getSlotLaunchDelay(reelIndex) - SLOT_RAMP_DURATION;
-  return SLOT_FINAL_OFFSET_ROWS / (SLOT_RAMP_DURATION / 2 + cruiseWindow + SLOT_LANDING_DURATION / 3);
+  return SLOT_FINAL_OFFSET_ROWS / (SLOT_RAMP_DURATION / 2 + cruiseWindow + SLOT_LANDING_DURATION / 2);
 }
 
 export function getSlotReelVelocityRowsPerMs(
@@ -89,11 +99,11 @@ export function getSlotReelVelocityRowsPerMs(
   const localMs = elapsedMs - launchDelay;
   if (localMs <= 0) return 0;
   const cruiseVelocity = getSlotReelCruiseVelocityRowsPerMs(reelIndex);
-  if (localMs < SLOT_RAMP_DURATION) return (cruiseVelocity * localMs) / SLOT_RAMP_DURATION;
+  if (localMs < SLOT_RAMP_DURATION) return cruiseVelocity * smoothVelocity(localMs / SLOT_RAMP_DURATION);
   const landingStart = getSlotStopStart(reelIndex);
   if (elapsedMs < landingStart) return cruiseVelocity;
   const landingProgress = clamp((elapsedMs - landingStart) / SLOT_LANDING_DURATION);
-  return cruiseVelocity * (1 - landingProgress) ** 2;
+  return cruiseVelocity * (1 - smoothVelocity(landingProgress));
 }
 
 export function getSlotPhase(elapsedMs: number, reducedMotion = false): SlotPhase {
@@ -131,7 +141,7 @@ export function getSlotReelOffsetRows(
   const landingStart = getSlotStopStart(reelIndex);
 
   if (localMs < SLOT_RAMP_DURATION) {
-    return -(0.5 * cruiseVelocity * localMs * localMs) / SLOT_RAMP_DURATION;
+    return -cruiseVelocity * SLOT_RAMP_DURATION * integratedSmoothVelocity(localMs / SLOT_RAMP_DURATION);
   }
 
   const rampDistance = (cruiseVelocity * SLOT_RAMP_DURATION) / 2;
@@ -142,7 +152,7 @@ export function getSlotReelOffsetRows(
 
   const travelledBeforeLanding = rampDistance + cruiseVelocity * (landingStart - launchDelay - SLOT_RAMP_DURATION);
   const landingProgress = clamp((elapsedMs - landingStart) / SLOT_LANDING_DURATION);
-  const landingDistance = cruiseVelocity * SLOT_LANDING_DURATION * (landingProgress - landingProgress ** 2 + landingProgress ** 3 / 3);
+  const landingDistance = cruiseVelocity * SLOT_LANDING_DURATION * (landingProgress - integratedSmoothVelocity(landingProgress));
   return -(travelledBeforeLanding + landingDistance);
 }
 

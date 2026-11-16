@@ -25,6 +25,19 @@ import {
 } from './slot';
 
 describe('slot v2 motion contract', () => {
+  it('brakes gradually for at least 700 ms without a sudden acceleration change', () => {
+    for (let reel = 0; reel < 3; reel += 1) {
+      const start = getSlotStopStart(reel);
+      const end = getSlotStopEnd(reel);
+      expect(end - start).toBeGreaterThanOrEqual(700);
+      const cruise = getSlotReelVelocityRowsPerMs(reel, start);
+      // At 60 Hz, entering the brake must not immediately shed a visible chunk of speed.
+      expect(getSlotReelVelocityRowsPerMs(reel, start + 16) / cruise).toBeGreaterThan(0.995);
+      expect(getSlotReelVelocityRowsPerMs(reel, end - 16) / cruise).toBeLessThan(0.005);
+      expect(getSlotReelVelocityRowsPerMs(reel, start + (end - start) / 2) / cruise).toBeCloseTo(0.5, 5);
+    }
+  });
+
   it('builds a long reel track that ends with the confirmed symbols', () => {
     expect(buildReelTrack(['A', 'B'], ['X', 'Y'], 3)).toEqual([
       'A',
@@ -72,7 +85,7 @@ describe('slot v2 motion contract', () => {
         SLOT_FINAL_OFFSET_ROWS /
         (SLOT_RAMP_DURATION / 2 +
           (landingStart - getSlotLaunchDelay(reelIndex) - SLOT_RAMP_DURATION) +
-          SLOT_LANDING_DURATION / 3);
+          SLOT_LANDING_DURATION / 2);
       expect(cruiseVelocity).toBeCloseTo(expectedCruiseVelocity, 8);
 
       const velocityBefore = getSlotReelVelocityRowsPerMs(reelIndex, landingStart - 8);
@@ -92,6 +105,22 @@ describe('slot v2 motion contract', () => {
         -SLOT_FINAL_OFFSET_ROWS,
         4
       );
+    }
+  });
+
+  it('integrates the visible track without jumps, reversal or endpoint overshoot', () => {
+    for (let reel = 0; reel < 3; reel += 1) {
+      let previous = 0;
+      for (let ms = 0; ms <= SLOT_TOTAL_DURATION; ms += 8) {
+        const position = getSlotReelOffsetRows(reel, ms);
+        expect(position).toBeLessThanOrEqual(previous + 1e-10);
+        expect(position).toBeGreaterThanOrEqual(-SLOT_FINAL_OFFSET_ROWS - 1e-10);
+        if (ms > getSlotLaunchDelay(reel) + 1 && ms < getSlotStopEnd(reel) - 1) {
+          const actualVelocity = -(getSlotReelOffsetRows(reel, ms + 0.1) - getSlotReelOffsetRows(reel, ms - 0.1)) / 0.2;
+          expect(actualVelocity).toBeCloseTo(getSlotReelVelocityRowsPerMs(reel, ms), 6);
+        }
+        previous = position;
+      }
     }
   });
 
